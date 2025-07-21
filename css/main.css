@@ -2,16 +2,13 @@ body {
   font-family: 'Segoe UI', Arial, sans-serif;
   background-color: #f3f4f6;
 }
-.main-card {
-  width: 100%;
-  max-width: 900px;
-  min-width: 320px;
+#mainContent {
   margin-top: 2rem;
   background: #fff;
   border-radius: 1.5rem;
   box-shadow: 0 7px 40px 0 #0001;
 }
-.tabs-row {
+.tablist, #tabs {
   width: 100%;
   display: flex;
   flex-direction: row !important;
@@ -87,10 +84,10 @@ textarea { min-height: 92px; resize: vertical; }
 ul, ol { margin: 0.7rem 0 0.6rem 0.2rem; padding: 0; }
 li { list-style-type: disc; margin-left: 1.3rem; margin-bottom: 0.38rem; font-size: 1.03rem; }
 @media (max-width: 950px) {
-  .main-card { max-width: 98vw; }
+  #mainContent { max-width: 98vw; }
 }
 @media (max-width: 640px) {
-  .main-card { padding: 0.1rem; }
+  #mainContent { padding: 0.1rem; }
   .tab, .tab-btn { font-size: 0.97rem; padding: 0.6rem 0.1rem 0.2rem 0.1rem; }
-  .tabs-row { flex-direction: row !important; }
+  .tablist, #tabs { flex-direction: row !important; }
 }

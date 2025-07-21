@@ -6,15 +6,16 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
-  <link href="https://cdn.tailwindcss.com" rel="stylesheet">
+  <meta name="google" content="notranslate">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <title>Buscador de Documentos</title>
   <link href="css/main.css" rel="stylesheet">
   <link href="css/modals.css" rel="stylesheet">
-  <title>Buscador de Documentos</title>
 </head>
-<body class="bg-gray-100 min-h-screen flex items-start justify-center py-8">
+<body class="bg-gray-100 min-h-screen flex items-start justify-center p-6">
 
   <!-- Login Modal -->
-  <div id="loginOverlay" class="overlay hidden">
+  <div id="loginOverlay" class="overlay">
     <div class="modal">
       <h2 class="text-xl font-semibold">Acceso Restringido</h2>
       <p class="mt-2 text-gray-700">Ingrese su número de acceso:</p>
@@ -33,7 +34,7 @@
     </div>
   </div>
 
-  <!-- Delete Key Modal (solo aparece cuando se llama) -->
+  <!-- Delete Key Modal -->
   <div id="deleteOverlay" class="overlay hidden">
     <div class="modal deleteKey">
       <h2 class="text-xl font-semibold">Clave de Eliminación</h2>
@@ -49,14 +50,12 @@
   <div id="toast-container"></div>
 
   <!-- Main Content -->
-  <div id="mainContent" class="main-card w-full max-w-xl mx-auto bg-white rounded-2xl shadow-lg">
-    <!-- Encabezado -->
-    <div class="py-7">
-      <h1 class="text-3xl font-black text-center text-gray-900 tracking-tight">KINO COMPANY SAS V1</h1>
+  <div id="mainContent" class="w-full max-w-4xl bg-white rounded-2xl shadow-lg hidden">
+    <div class="bg-white border-b">
+      <h1 class="text-2xl font-bold text-center py-4">KINO COMPANY SAS V1</h1>
     </div>
-    <!-- Tabs en fila -->
     <nav class="border-b bg-white shadow-sm">
-      <ul id="tabs" class="flex tabs-row">
+      <ul id="tabs" class="flex">
         <li class="tab flex-1 text-center cursor-pointer px-6 py-4 active" data-tab="tab-search">Buscar</li>
         <li class="tab flex-1 text-center cursor-pointer px-6 py-4" data-tab="tab-upload">Subir</li>
         <li class="tab flex-1 text-center cursor-pointer px-6 py-4" data-tab="tab-list">Consultar</li>
