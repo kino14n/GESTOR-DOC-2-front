@@ -2,24 +2,37 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Buscador de Documentos</title>
+    <title>Buscador de Documentos PRO</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="css/styles.css">
+    <link href="css/tailwind.css" rel="stylesheet">
+    <link href="css/main.css" rel="stylesheet">
+    <link href="css/modals.css" rel="stylesheet">
 </head>
 <body class="bg-gray-50">
-    <header>
-        <h1>Buscador de Documentos</h1>
-    </header>
-    <main>
-        <section>
-            <input id="buscar" type="text" placeholder="Buscar documento por código o nombre...">
-            <button onclick="buscar()">Buscar</button>
-        </section>
-        <section id="resultados"></section>
-    </main>
-    <footer>
-        <p>&copy; 2025 Buscador Docs</p>
-    </footer>
-    <script src="js/app.js"></script>
+    <div id="app" class="max-w-2xl mx-auto mt-6">
+        <h1 class="text-3xl font-bold text-center mb-4">KINO COMPANY SAS V1</h1>
+        <nav>
+            <ul class="flex border-b mb-4">
+                <li class="tab-btn" data-tab="buscar">Buscar</li>
+                <li class="tab-btn" data-tab="subir">Subir</li>
+                <li class="tab-btn" data-tab="consultar">Consultar</li>
+                <li class="tab-btn" data-tab="codigo">Búsqueda por Código</li>
+            </ul>
+        </nav>
+        <div id="tab-content">
+            <!-- Contenidos de pestañas renderizados por JS -->
+        </div>
+    </div>
+    <!-- Modales y Toasts -->
+    <div id="modals"></div>
+    <div id="toasts"></div>
+    <script src="js/main.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/modals.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/upload.js"></script>
+    <script src="js/autocomplete.js"></script>
+    <script src="js/consulta.js"></script>
+    <script src="js/toasts.js"></script>
 </body>
 </html>
