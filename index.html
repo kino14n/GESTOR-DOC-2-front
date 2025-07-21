@@ -11,10 +11,10 @@
   <link href="css/modals.css" rel="stylesheet">
   <title>Buscador de Documentos</title>
 </head>
-<body class="bg-gray-100 min-h-screen flex items-start justify-center p-6">
+<body class="bg-gray-100 min-h-screen flex items-start justify-center py-8">
 
   <!-- Login Modal -->
-  <div id="loginOverlay" class="overlay">
+  <div id="loginOverlay" class="overlay hidden">
     <div class="modal">
       <h2 class="text-xl font-semibold">Acceso Restringido</h2>
       <p class="mt-2 text-gray-700">Ingrese su número de acceso:</p>
@@ -33,7 +33,7 @@
     </div>
   </div>
 
-  <!-- Delete Key Modal -->
+  <!-- Delete Key Modal (solo aparece cuando se llama) -->
   <div id="deleteOverlay" class="overlay hidden">
     <div class="modal deleteKey">
       <h2 class="text-xl font-semibold">Clave de Eliminación</h2>
@@ -49,12 +49,14 @@
   <div id="toast-container"></div>
 
   <!-- Main Content -->
-  <div id="mainContent" class="w-full max-w-4xl bg-white rounded-2xl shadow-lg hidden">
-    <div class="bg-white border-b">
-      <h1 class="text-2xl font-bold text-center py-4">KINO COMPANY SAS V1</h1>
+  <div id="mainContent" class="main-card w-full max-w-xl mx-auto bg-white rounded-2xl shadow-lg">
+    <!-- Encabezado -->
+    <div class="py-7">
+      <h1 class="text-3xl font-black text-center text-gray-900 tracking-tight">KINO COMPANY SAS V1</h1>
     </div>
+    <!-- Tabs en fila -->
     <nav class="border-b bg-white shadow-sm">
-      <ul id="tabs" class="flex">
+      <ul id="tabs" class="flex tabs-row">
         <li class="tab flex-1 text-center cursor-pointer px-6 py-4 active" data-tab="tab-search">Buscar</li>
         <li class="tab flex-1 text-center cursor-pointer px-6 py-4" data-tab="tab-upload">Subir</li>
         <li class="tab flex-1 text-center cursor-pointer px-6 py-4" data-tab="tab-list">Consultar</li>
@@ -62,7 +64,6 @@
       </ul>
     </nav>
     <div class="p-6 space-y-6">
-
       <!-- TAB SEARCH -->
       <div id="tab-search" class="tab-content">
         <h2 class="text-xl font-semibold mb-4">Búsqueda Inteligente</h2>
@@ -74,7 +75,6 @@
         <div id="search-alert" class="text-red-600 font-medium text-lg mb-4"></div>
         <div id="results-search" class="space-y-4"></div>
       </div>
-
       <!-- TAB UPLOAD -->
       <div id="tab-upload" class="tab-content hidden">
         <h2 class="text-xl font-semibold mb-4">Subir / Editar Documento</h2>
@@ -102,7 +102,6 @@
           <button type="submit" class="btn btn--primary btn--full text-lg">Guardar</button>
         </form>
       </div>
-
       <!-- TAB LIST -->
       <div id="tab-list" class="tab-content hidden">
         <h2 class="text-xl font-semibold mb-4">Consultar Documentos</h2>
@@ -114,7 +113,6 @@
         </div>
         <div id="results-list" class="space-y-4"></div>
       </div>
-
       <!-- TAB CODE -->
       <div id="tab-code" class="tab-content hidden">
         <h2 class="text-xl font-semibold mb-4">Búsqueda por Código</h2>
@@ -127,7 +125,6 @@
       </div>
     </div>
   </div>
-
   <script src="js/app.js"></script>
 </body>
 </html>
