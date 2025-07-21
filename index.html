@@ -2,25 +2,25 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>KINO DOCS PRO</title>
+  <title>KINO COMPANY SAS V1</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link href="css/tailwind.css" rel="stylesheet">
   <link href="css/main.css" rel="stylesheet">
   <link href="css/modals.css" rel="stylesheet">
 </head>
-<body class="bg-gradient-to-br from-gray-50 via-white to-red-50 min-h-screen">
-  <div class="flex flex-col items-center justify-center min-h-screen">
-    <div class="glass-card w-full max-w-2xl p-6 mt-10 shadow-xl rounded-3xl">
-      <h1 class="text-4xl font-black text-center text-red-500 mb-6 tracking-tight drop-shadow-md">KINO COMPANY SAS V1</h1>
+<body class="bg-gray-100 min-h-screen">
+  <div class="flex flex-col items-center min-h-screen pt-10">
+    <div class="card shadow-lg rounded-2xl w-full max-w-3xl bg-white">
+      <h1 class="text-3xl font-black text-center text-gray-900 pt-6 pb-2 tracking-tight">KINO COMPANY SAS V1</h1>
       <nav>
-        <ul class="tabs flex justify-between rounded-xl overflow-hidden bg-white/80 shadow mb-8">
-          <li class="tab-btn active" data-tab="buscar">🔎 Buscar</li>
-          <li class="tab-btn" data-tab="subir">⬆️ Subir</li>
-          <li class="tab-btn" data-tab="consultar">📋 Consultar</li>
-          <li class="tab-btn" data-tab="codigo">🧩 Buscar por Código</li>
+        <ul class="tablist flex flex-row px-4 pt-2 border-b border-gray-200">
+          <li class="tab-btn active" data-tab="buscar">Buscar</li>
+          <li class="tab-btn" data-tab="subir">Subir</li>
+          <li class="tab-btn" data-tab="consultar">Consultar</li>
+          <li class="tab-btn" data-tab="codigo">Búsqueda por Código</li>
         </ul>
       </nav>
-      <div id="tab-content" class="transition-all"></div>
+      <div id="tab-content" class="p-6 transition-all"></div>
     </div>
     <div id="modals"></div>
     <div id="toasts"></div>

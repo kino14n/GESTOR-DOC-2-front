@@ -1,4 +1,4 @@
-// Tabs animadas y renderizado premium
+// Tabs tipo ficha profesional
 document.addEventListener('DOMContentLoaded', () => {
   document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.addEventListener('click', function() {
