@@ -14,7 +14,8 @@
 </head>
 <body class="bg-gray-100 min-h-screen flex items-start justify-center p-6">
 
-  <!-- Login Modal (desactivado para desarrollo)
+  <!-- Modal de acceso (comentado para desarrollo) -->
+  <!--
   <div id="loginOverlay" class="overlay">
     <div class="modal">
       <h2 class="text-xl font-semibold">Acceso Restringido</h2>
@@ -57,74 +58,17 @@
     </div>
     <nav class="border-b bg-white shadow-sm">
       <ul id="tabs" class="flex">
-        <li class="tab flex-1 text-center cursor-pointer px-6 py-4 active" data-tab="tab-search">Buscar</li>
-        <li class="tab flex-1 text-center cursor-pointer px-6 py-4" data-tab="tab-upload">Subir</li>
-        <li class="tab flex-1 text-center cursor-pointer px-6 py-4" data-tab="tab-list">Consultar</li>
-        <li class="tab flex-1 text-center cursor-pointer px-6 py-4" data-tab="tab-code">Búsqueda por Código</li>
+        <li class="tab flex-1 text-center cursor-pointer px-6 py-4 active" data-tab="buscar">Buscar</li>
+        <li class="tab flex-1 text-center cursor-pointer px-6 py-4" data-tab="subir">Subir</li>
+        <li class="tab flex-1 text-center cursor-pointer px-6 py-4" data-tab="consultar">Consultar</li>
+        <li class="tab flex-1 text-center cursor-pointer px-6 py-4" data-tab="codigo">Búsqueda por Código</li>
       </ul>
     </nav>
-    <div class="p-6 space-y-6">
-      <!-- TAB SEARCH -->
-      <div id="tab-search" class="tab-content">
-        <h2 class="text-xl font-semibold mb-4">Búsqueda Inteligente</h2>
-        <textarea id="searchInput" rows="6" class="w-full border rounded px-3 py-2 text-lg mb-4" placeholder="Pega aquí tus códigos o bloque de texto…"></textarea>
-        <div class="flex gap-4 mb-4">
-          <button onclick="doSearch()" class="btn btn--primary btn--flex1 text-lg">Buscar</button>
-          <button onclick="clearSearch()" class="btn btn--secondary btn--flex1 text-lg">Limpiar</button>
-        </div>
-        <div id="search-alert" class="text-red-600 font-medium text-lg mb-4"></div>
-        <div id="results-search" class="space-y-4"></div>
-      </div>
-      <!-- TAB UPLOAD -->
-      <div id="tab-upload" class="tab-content hidden">
-        <h2 class="text-xl font-semibold mb-4">Subir / Editar Documento</h2>
-        <form id="form-upload" enctype="multipart/form-data" class="space-y-4">
-          <input id="docId" type="hidden" name="id" />
-          <div>
-            <label class="block mb-1 text-lg">Nombre</label>
-            <input id="name" name="name" type="text" required class="w-full border rounded px-3 py-2 text-lg"/>
-          </div>
-          <div>
-            <label class="block mb-1 text-lg">Fecha</label>
-            <input id="date" name="date" type="date" required class="w-full border rounded px-3 py-2 text-lg"/>
-          </div>
-          <div>
-            <label class="block mb-1 text-lg">PDF o Documento</label>
-            <input id="file" name="file" type="file" accept="application/pdf,image/*" class="w-full text-lg"/>
-            <p id="uploadWarning" class="mt-1 text-red-600 text-sm hidden">
-              El archivo excede los 10 MB. Por favor, sube uno menor.
-            </p>
-          </div>
-          <div>
-            <label class="block mb-1 text-lg">Códigos</label>
-            <textarea id="codes" name="codes" rows="4" class="w-full border rounded px-3 py-2 text-lg"></textarea>
-          </div>
-          <button type="submit" class="btn btn--primary btn--full text-lg">Guardar</button>
-        </form>
-      </div>
-      <!-- TAB LIST -->
-      <div id="tab-list" class="tab-content hidden">
-        <h2 class="text-xl font-semibold mb-4">Consultar Documentos</h2>
-        <div class="flex gap-4 mb-4">
-          <input id="consultFilterInput" type="text" class="flex-1 border rounded px-3 py-2 text-lg" placeholder="Filtrar por nombre o PDF" oninput="doConsultFilter()" />
-          <button onclick="clearConsultFilter()" class="btn btn--secondary text-lg">Limpiar</button>
-          <button onclick="downloadCsv()" class="btn btn--primary text-lg">Descargar CSV</button>
-          <button onclick="downloadPdfs()" class="btn btn--dark text-lg">Descargar PDFs</button>
-        </div>
-        <div id="results-list" class="space-y-4"></div>
-      </div>
-      <!-- TAB CODE -->
-      <div id="tab-code" class="tab-content hidden">
-        <h2 class="text-xl font-semibold mb-4">Búsqueda por Código</h2>
-        <div class="relative mb-4">
-          <input id="codeInput" type="text" class="w-full border rounded px-3 py-2 text-lg" placeholder="Código en MAYÚSCULAS (ej: ABC123)" autocomplete="off" />
-          <div id="suggestions" class="absolute top-full left-0 right-0 bg-white border rounded-b px-2 shadow max-h-48 overflow-auto hidden z-20"></div>
-        </div>
-        <button onclick="doCodeSearch()" class="btn btn--primary btn--full mb-4 text-lg">Buscar por Código</button>
-        <div id="results-code" class="space-y-4"></div>
-      </div>
-    </div>
+
+    <!-- Aquí es clave: este div es el que usa tu main.js -->
+    <div id="tab-content" class="p-6 transition-all"></div>
   </div>
+
   <!-- Scripts JS -->
   <script src="js/main.js"></script>
   <script src="js/api.js"></script>
