@@ -2,47 +2,60 @@ body {
   font-family: 'Segoe UI', Arial, sans-serif;
   background-color: #f3f4f6;
 }
-.card {
-  margin-top: 1rem;
+
+#mainContent {
+  margin-top: 2rem;
   background: #fff;
   border-radius: 1.5rem;
   box-shadow: 0 7px 40px 0 #0001;
 }
+
 .tablist {
   width: 100%;
+  display: flex;
+  flex-direction: row !important;
   background: transparent;
   margin-bottom: 0;
-  display: flex;
-  flex-direction: row !important; /* ¡Forzar fila siempre! */
+  border-bottom: 2px solid #e5e7eb;
 }
-.tab, .tab-btn {
+
+.tab,
+.tab-btn {
   flex: 1;
   text-align: center;
   cursor: pointer;
   color: #a1a1aa;
-  padding: 1.05rem 0.2rem 0.8rem 0.2rem;
+  padding: 1rem 0.2rem 0.8rem 0.2rem;
   font-weight: 600;
-  font-size: 1.1rem;
+  font-size: 1.12rem;
   border: none;
   background: none;
   outline: none;
   margin-bottom: -2px;
   border-bottom: 2.5px solid transparent;
-  transition: color .18s, border-bottom .21s;
+  transition: color .18s, border-bottom .21s, background .2s;
   position: relative;
   z-index: 2;
+  letter-spacing: .01em;
 }
-.tab.active, .tab-btn.active {
+
+.tab.active,
+.tab-btn.active {
   color: #ef4444;
   border-bottom: 3px solid #ef4444;
   background: #fff;
   z-index: 3;
 }
-.tab:not(.active):hover, .tab-btn:not(.active):hover {
+
+.tab:not(.active):hover,
+.tab-btn:not(.active):hover {
   color: #ef4444;
   background: #fafafa;
 }
-input, textarea, select {
+
+input,
+textarea,
+select {
   border-radius: 0.7rem;
   border: 1.5px solid #e5e7eb;
   background: #fff;
@@ -52,11 +65,15 @@ input, textarea, select {
   transition: border .2s, box-shadow .2s;
   font-size: 1rem;
 }
-input:focus, textarea:focus {
+
+input:focus,
+textarea:focus {
   border: 1.7px solid #ef4444;
   box-shadow: 0 2px 9px 0 #ef444420;
 }
-button, .btn {
+
+.btn,
+button {
   background: #ef4444;
   color: #fff;
   border-radius: 0.8rem;
@@ -70,25 +87,63 @@ button, .btn {
   cursor: pointer;
   font-size: 1.06rem;
 }
-button:hover, .btn:hover {
+
+.btn--primary {
+  background: #ef4444;
+  color: #fff;
+}
+
+.btn--secondary {
+  background: #e5e7eb;
+  color: #333;
+}
+
+.btn--dark {
+  background: #1e293b;
+  color: #fff;
+}
+
+.btn--full {
+  width: 100%;
+}
+
+.btn--flex1 {
+  flex: 1;
+}
+
+button:hover,
+.btn:hover,
+.btn--primary:hover {
   background: #b91c1c;
 }
+
+.btn--secondary:hover {
+  background: #d1d5db;
+}
+
+.btn--dark:hover {
+  background: #334155;
+}
+
 textarea {
   min-height: 92px;
   resize: vertical;
 }
+
 ul, ol {
   margin: 0.7rem 0 0.6rem 0.2rem;
   padding: 0;
 }
+
 li {
   list-style-type: disc;
   margin-left: 1.3rem;
   margin-bottom: 0.38rem;
   font-size: 1.03rem;
 }
+
 @media (max-width: 640px) {
-  .card { padding: 0.2rem; }
+  #mainContent { padding: 0.1rem; }
   .tab, .tab-btn { font-size: 0.97rem; padding: 0.6rem 0.1rem 0.2rem 0.1rem; }
   .tablist { flex-direction: row !important; }
 }
