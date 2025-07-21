@@ -1,4 +1,4 @@
-// Tabs tipo ficha profesional
+// Tabs fila horizontal pro
 document.addEventListener('DOMContentLoaded', () => {
   document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.addEventListener('click', function() {
