@@ -10,7 +10,6 @@ function showModalLogin(onOk) {
   document.getElementById('modals').innerHTML = html;
   window.loginClave = function() {
     const clave = document.getElementById('clave-admin').value;
-    // Aquí AJAX para validar clave, luego onOk()
     document.getElementById('modals').innerHTML = '';
     if(typeof onOk === 'function') onOk();
   }

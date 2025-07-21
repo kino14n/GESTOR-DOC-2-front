@@ -1,7 +1,6 @@
 // Edición y eliminación en la consulta
 function editarDoc(id) {
   requireAuth(() => {
-    // Mostrar modal de edición o navegar a edición
     showModalConfirm('¿Editar este documento?', ()=>{alert('Editar ' + id)});
   });
 }

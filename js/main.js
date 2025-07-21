@@ -1,12 +1,14 @@
 // Control de pestañas y renderizado de contenido dinámico
-document.querySelectorAll('.tab-btn').forEach(btn => {
-  btn.addEventListener('click', function() {
-    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-    this.classList.add('active');
-    renderTab(this.dataset.tab);
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      this.classList.add('active');
+      renderTab(this.dataset.tab);
+    });
   });
+  renderTab('buscar');
 });
-window.addEventListener('DOMContentLoaded', () => renderTab('buscar'));
 
 function renderTab(tab) {
   let html = '';
@@ -43,7 +45,6 @@ function renderTab(tab) {
       break;
   }
   document.getElementById('tab-content').innerHTML = html;
-  // Inicialización extra para forms
   if(tab === 'subir') initSubirForm();
   if(tab === 'consultar') cargarConsulta();
   if(tab === 'codigo') initAutocompleteCodigo();
