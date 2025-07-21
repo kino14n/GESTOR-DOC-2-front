@@ -1,3 +1,84 @@
-body { font-family: 'Segoe UI', Arial, sans-serif; }
-.tab-btn { cursor:pointer; padding: 1rem; }
-.tab-btn.active { border-bottom: 4px solid #ef4444; color: #ef4444; }
+
+body {
+  font-family: 'Segoe UI', Arial, sans-serif;
+}
+.tabs {
+  background: rgba(255,255,255,0.8);
+  box-shadow: 0 2px 12px 0 #ef444444;
+}
+.tab-btn {
+  flex: 1;
+  text-align: center;
+  padding: 1.1rem 0.5rem;
+  cursor: pointer;
+  font-weight: 600;
+  color: #9ca3af;
+  border-bottom: 3px solid transparent;
+  transition: color .2s, border .2s, background .2s;
+  font-size: 1.09rem;
+  letter-spacing: .01em;
+  background: transparent;
+}
+.tab-btn.active {
+  color: #ef4444;
+  background: rgba(255,255,255,0.9);
+  border-bottom: 4px solid #ef4444;
+}
+.tab-btn:not(.active):hover {
+  background: #f3f4f6;
+  color: #d9463b;
+}
+.glass-card {
+  background: rgba(255,255,255,0.82);
+  box-shadow: 0 6px 32px 0 #ef444488;
+  backdrop-filter: blur(8px);
+}
+input, textarea, select {
+  border-radius: 0.8rem;
+  border: 1.5px solid #f3f4f6;
+  background: #fff;
+  padding: 0.85rem;
+  margin-bottom: 1rem;
+  outline: none;
+  transition: border .2s, box-shadow .2s;
+  font-size: 1rem;
+  box-shadow: 0 0 0 0 #ef444420;
+}
+input:focus, textarea:focus {
+  border: 1.5px solid #ef4444;
+  box-shadow: 0 2px 10px 0 #ef444415;
+}
+button, .btn {
+  background: #ef4444;
+  color: #fff;
+  border-radius: 1rem;
+  border: none;
+  padding: 0.9rem 1.2rem;
+  font-weight: 600;
+  box-shadow: 0 3px 10px 0 #ef44441a;
+  margin-top: 0.7rem;
+  transition: background .2s, box-shadow .2s;
+  cursor: pointer;
+}
+button:hover, .btn:hover {
+  background: #b91c1c;
+  box-shadow: 0 6px 28px 0 #ef444430;
+}
+textarea {
+  min-height: 90px;
+  resize: vertical;
+}
+ul, ol {
+  margin: 0.8rem 0 0.6rem 0.2rem;
+  padding: 0;
+}
+li {
+  list-style-type: disc;
+  margin-left: 1.3rem;
+  margin-bottom: 0.5rem;
+  font-size: 1.01rem;
+}
+@media (max-width: 640px) {
+  .glass-card { padding: 0.9rem; }
+  .tab-btn { font-size: 0.98rem; padding: 0.7rem 0.1rem; }
+}
