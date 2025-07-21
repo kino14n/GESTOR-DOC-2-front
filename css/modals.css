@@ -1,6 +1,5 @@
-
-#modals, .modal { z-index: 1000; }
-.modal {
+#modals, .modal, .overlay { z-index: 1000; }
+.overlay, .modal {
   background: rgba(16,18,19,0.18);
   position: fixed; top:0; left:0; right:0; bottom:0;
   display: flex; align-items: center; justify-content: center;
@@ -8,16 +7,16 @@
   backdrop-filter: blur(5px);
 }
 @keyframes modalIn { from { opacity: 0; } to { opacity: 1; } }
-.modal-content {
+.modal-content, .modal {
   background: #fff;
-  border-radius: 1.6rem;
+  border-radius: 1.3rem;
   padding: 2.3rem 1.3rem 1.3rem 1.3rem;
   box-shadow: 0 7px 32px 0 #ef444430;
-  min-width: 250px; max-width: 410px;
+  min-width: 220px; max-width: 410px;
   animation: cardPop .23s cubic-bezier(.74,-0.1,.44,1.6);
 }
 @keyframes cardPop { from { transform: scale(.89);} to { transform: scale(1);}}
-.modal-content input[type="password"], .modal-content input[type="text"] {
+.modal-content input[type="password"], .modal-content input[type="text"], .modal input[type="password"], .modal input[type="text"] {
   border: 1.5px solid #e5e7eb;
   border-radius: 1rem;
   width: 100%;
@@ -25,7 +24,7 @@
   margin-bottom: 1rem;
   font-size: 1.04rem;
 }
-.modal-content button {
+.modal-content button, .modal button {
   width: 100%;
   margin: 0.2rem 0 0 0;
 }

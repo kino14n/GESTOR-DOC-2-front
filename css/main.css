@@ -15,7 +15,7 @@ body {
   display: flex;
   flex-direction: row !important; /* ¡Forzar fila siempre! */
 }
-.tab-btn {
+.tab, .tab-btn {
   flex: 1;
   text-align: center;
   cursor: pointer;
@@ -32,13 +32,13 @@ body {
   position: relative;
   z-index: 2;
 }
-.tab-btn.active {
+.tab.active, .tab-btn.active {
   color: #ef4444;
   border-bottom: 3px solid #ef4444;
   background: #fff;
   z-index: 3;
 }
-.tab-btn:not(.active):hover {
+.tab:not(.active):hover, .tab-btn:not(.active):hover {
   color: #ef4444;
   background: #fafafa;
 }
@@ -89,6 +89,6 @@ li {
 }
 @media (max-width: 640px) {
   .card { padding: 0.2rem; }
-  .tab-btn { font-size: 0.97rem; padding: 0.6rem 0.1rem 0.2rem 0.1rem; }
+  .tab, .tab-btn { font-size: 0.97rem; padding: 0.6rem 0.1rem 0.2rem 0.1rem; }
   .tablist { flex-direction: row !important; }
 }
