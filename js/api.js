@@ -1,5 +1,5 @@
 // Llamadas AJAX al backend
-const API_URL = 'https://TUBACKENDURL/api.php';
+const API_URL = 'https://gestor-doc-backend.up.railway.app/api.php';
 
 function buscarVoraz() {
   const txt = document.getElementById('buscador-texto').value.trim();
