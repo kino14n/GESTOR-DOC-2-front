@@ -1,4 +1,3 @@
-
 export function showModalLogin(onSuccess) {
   const html = `
     <div class="modal" id="modal-login">
@@ -17,5 +16,25 @@ export function showModalLogin(onSuccess) {
     } else {
       alert('Clave incorrecta');
     }
+  };
+}
+
+export function showModalConfirm(message, onConfirm) {
+  const html = `
+    <div class="modal" id="modal-confirm">
+      <p>${message}</p>
+      <button id="confirmOk" class="btn btn--primary mr-2">Aceptar</button>
+      <button id="confirmCancel" class="btn btn--secondary">Cancelar</button>
+    </div>
+  `;
+  document.getElementById('modals').innerHTML = html;
+
+  document.getElementById('confirmOk').onclick = () => {
+    document.getElementById('modals').innerHTML = '';
+    if (typeof onConfirm === 'function') onConfirm();
+  };
+
+  document.getElementById('confirmCancel').onclick = () => {
+    document.getElementById('modals').innerHTML = '';
   };
 }

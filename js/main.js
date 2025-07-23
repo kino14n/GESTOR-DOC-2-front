@@ -110,7 +110,7 @@ async function handleUpload(e) {
   }
 }
 
-// Hacer globales las funciones que usa el HTML inline
+// Exponer funciones globales para el HTML inline
 window.doSearch = doSearch;
 window.clearSearch = clearSearch;
 window.cargarConsulta = cargarConsulta;

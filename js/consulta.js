@@ -1,4 +1,3 @@
-
 import { requireAuth } from './auth.js';
 import { showModalConfirm } from './modals.js';
 import { showToast } from './toasts.js';
