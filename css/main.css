@@ -1,93 +1,142 @@
-body {
-  font-family: 'Segoe UI', Arial, sans-serif;
-  background-color: #f3f4f6;
+// Activa una pestaña específica y la renderiza
+function activateTab(tabElement) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  tabElement.classList.add('active');
+  renderTab(tabElement.dataset.tab);
 }
-#mainContent {
-  margin-top: 2rem;
-  background: #fff;
-  border-radius: 1.5rem;
-  box-shadow: 0 7px 40px 0 #0001;
+
+// Inicializa eventos de pestañas tras carga del DOM
+document.addEventListener("DOMContentLoaded", function() {
+  const tabs = document.querySelectorAll('.tab');
+  
+  if (tabs.length === 0) {
+    console.error('⚠️ No se encontraron elementos .tab');
+    return;
+  }
+
+  tabs.forEach(tab => {
+    tab.addEventListener('click', function () {
+      activateTab(this);
+    });
+  });
+
+  // Activa por defecto la primera pestaña ("buscar")
+  activateTab(tabs[0]);
+});
+
+// Renderiza el contenido según la pestaña activa
+function renderTab(tabName) {
+  const tabContent = document.getElementById('tab-content');
+  if (!tabContent) {
+    console.error('⚠️ Elemento #tab-content no encontrado.');
+    return;
+  }
+
+  let html = '';
+  switch (tabName) {
+    case 'buscar':
+      html = `
+        <h2 class="text-xl font-semibold mb-4">Búsqueda Inteligente</h2>
+        <textarea id="searchInput" rows="6" class="w-full border rounded px-3 py-2 text-lg mb-4"
+                  placeholder="Pega aquí tus códigos o bloque de texto…"></textarea>
+        <div class="flex gap-4 mb-4">
+          <button onclick="doSearch()" class="btn btn--primary btn--flex1 text-lg">Buscar</button>
+          <button onclick="clearSearch()" class="btn btn--secondary btn--flex1 text-lg">Limpiar</button>
+        </div>
+        <div id="search-alert" class="text-red-600 font-medium text-lg mb-4"></div>
+        <div id="results-search" class="space-y-4"></div>
+      `;
+      break;
+
+    case 'subir':
+      html = `
+        <h2 class="text-xl font-semibold mb-4">Subir / Editar Documento</h2>
+        <form id="form-upload" enctype="multipart/form-data" class="space-y-4">
+          <input id="docId" type="hidden" name="id" />
+          <div>
+            <label class="block mb-1 text-lg">Nombre</label>
+            <input id="name" name="name" type="text" required class="w-full border rounded px-3 py-2 text-lg"/>
+          </div>
+          <div>
+            <label class="block mb-1 text-lg">Fecha</label>
+            <input id="date" name="date" type="date" required class="w-full border rounded px-3 py-2 text-lg"/>
+          </div>
+          <div>
+            <label class="block mb-1 text-lg">PDF o Documento</label>
+            <input id="file" name="file" type="file" accept="application/pdf,image/*" class="w-full text-lg"/>
+            <p id="uploadWarning" class="mt-1 text-red-600 text-sm hidden">
+              El archivo excede los 10 MB. Por favor, sube uno menor.
+            </p>
+          </div>
+          <div>
+            <label class="block mb-1 text-lg">Códigos</label>
+            <textarea id="codes" name="codes" rows="4" class="w-full border rounded px-3 py-2 text-lg"></textarea>
+          </div>
+          <button type="submit" class="btn btn--primary btn--full text-lg">Guardar</button>
+        </form>
+      `;
+      break;
+
+    case 'consultar':
+      html = `
+        <h2 class="text-xl font-semibold mb-4">Consultar Documentos</h2>
+        <div class="flex gap-4 mb-4">
+          <input id="consultFilterInput" type="text" class="flex-1 border rounded px-3 py-2 text-lg"
+                 placeholder="Filtrar por nombre o PDF" />
+          <button onclick="limpiarConsulta()" class="btn btn--secondary text-lg">Limpiar</button>
+          <button onclick="descargarCSV()" class="btn btn--primary text-lg">Descargar CSV</button>
+          <button onclick="descargarPDFs()" class="btn btn--dark text-lg">Descargar PDFs</button>
+        </div>
+        <div id="results-list" class="space-y-4"></div>
+      `;
+      break;
+
+    case 'codigo':
+      html = `
+        <h2 class="text-xl font-semibold mb-4">Búsqueda por Código</h2>
+        <div class="relative mb-4">
+          <input id="codeInput" type="text" class="w-full border rounded px-3 py-2 text-lg"
+                 placeholder="Código en MAYÚSCULAS (ej: ABC123)" autocomplete="off" />
+          <div id="suggestions" class="absolute top-full left-0 right-0 bg-white border rounded-b px-2 shadow max-h-48 overflow-auto hidden z-20"></div>
+        </div>
+        <button onclick="buscarPorCodigo()" class="btn btn--primary btn--full mb-4 text-lg">Buscar por Código</button>
+        <div id="results-code" class="space-y-4"></div>
+      `;
+      break;
+
+    default:
+      html = `<p class="text-lg text-gray-600">Selecciona una pestaña para empezar.</p>`;
+  }
+
+  tabContent.innerHTML = html;
 }
-.tablist, #tabs {
-  width: 100%;
-  display: flex;
-  flex-direction: row !important;
-  background: transparent;
-  margin-bottom: 0;
-  border-bottom: 2px solid #e5e7eb;
+
+//
+// ⚡️ Funciones placeholder para botones (implementar posteriormente)
+//
+
+function doSearch() {
+  alert('🔍 Ejecutar búsqueda...');
 }
-.tab, .tab-btn {
-  flex: 1;
-  text-align: center;
-  cursor: pointer;
-  color: #a1a1aa;
-  padding: 1rem 0.2rem 0.8rem 0.2rem;
-  font-weight: 600;
-  font-size: 1.12rem;
-  border: none;
-  background: none;
-  outline: none;
-  margin-bottom: -2px;
-  border-bottom: 2.5px solid transparent;
-  transition: color .18s, border-bottom .21s, background .2s;
-  position: relative;
-  z-index: 2;
-  letter-spacing: .01em;
+
+function clearSearch() {
+  const input = document.getElementById('searchInput');
+  if (input) input.value = '';
 }
-.tab.active, .tab-btn.active {
-  color: #ef4444;
-  border-bottom: 3px solid #ef4444;
-  background: #fff;
-  z-index: 3;
+
+function limpiarConsulta() {
+  const input = document.getElementById('consultFilterInput');
+  if (input) input.value = '';
 }
-.tab:not(.active):hover, .tab-btn:not(.active):hover {
-  color: #ef4444;
-  background: #fafafa;
+
+function descargarCSV() {
+  alert('📥 Descargar CSV (función pendiente)...');
 }
-input, textarea, select {
-  border-radius: 0.7rem;
-  border: 1.5px solid #e5e7eb;
-  background: #fff;
-  padding: 0.93rem;
-  margin-bottom: 1.2rem;
-  outline: none;
-  transition: border .2s, box-shadow .2s;
-  font-size: 1rem;
+
+function descargarPDFs() {
+  alert('📥 Descargar PDFs (función pendiente)...');
 }
-input:focus, textarea:focus {
-  border: 1.7px solid #ef4444;
-  box-shadow: 0 2px 9px 0 #ef444420;
-}
-.btn, button {
-  background: #ef4444;
-  color: #fff;
-  border-radius: 0.8rem;
-  border: none;
-  padding: 1rem 1.25rem;
-  font-weight: 600;
-  box-shadow: 0 3px 16px 0 #ef444420;
-  margin-top: 0.7rem;
-  margin-bottom: 0.35rem;
-  transition: background .18s, box-shadow .19s;
-  cursor: pointer;
-  font-size: 1.06rem;
-}
-.btn--primary { background: #ef4444; color: #fff; }
-.btn--secondary { background: #e5e7eb; color: #333; }
-.btn--dark { background: #1e293b; color: #fff; }
-.btn--full { width: 100%; }
-.btn--flex1 { flex: 1; }
-button:hover, .btn:hover, .btn--primary:hover { background: #b91c1c; }
-.btn--secondary:hover { background: #d1d5db; }
-.btn--dark:hover { background: #334155; }
-textarea { min-height: 92px; resize: vertical; }
-ul, ol { margin: 0.7rem 0 0.6rem 0.2rem; padding: 0; }
-li { list-style-type: disc; margin-left: 1.3rem; margin-bottom: 0.38rem; font-size: 1.03rem; }
-@media (max-width: 950px) {
-  #mainContent { max-width: 98vw; }
-}
-@media (max-width: 640px) {
-  #mainContent { padding: 0.1rem; }
-  .tab, .tab-btn { font-size: 0.97rem; padding: 0.6rem 0.1rem 0.2rem 0.1rem; }
-  .tablist, #tabs { flex-direction: row !important; }
+
+function buscarPorCodigo() {
+  alert('🔎 Buscar por código (función pendiente)...');
 }
