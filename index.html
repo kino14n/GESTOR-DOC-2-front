@@ -8,54 +8,46 @@
   <meta http-equiv="Expires" content="0" />
   <meta name="google" content="notranslate">
   <script src="https://cdn.tailwindcss.com"></script>
-  <title>Buscador de Documentos</title>
-  <link href="css/main.css" rel="stylesheet">
-  <link href="css/modals.css" rel="stylesheet">
+  <title>Buscador de Documentos - Kino Company SAS</title>
+  <link href="css/main.css" rel="stylesheet" />
+  <link href="css/modals.css" rel="stylesheet" />
+  <style>
+    /* Estilos para el contenedor de sugerencias */
+    #suggestions {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background: white;
+      border: 1px solid #e5e7eb;
+      border-top: none;
+      border-radius: 0 0 .375rem .375rem;
+      max-height: 12rem;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      display: none;
+      z-index: 9999;
+    }
+    #suggestions div:hover {
+      background-color: #f3f4f6;
+      cursor: pointer;
+    }
+  </style>
 </head>
-<body class="bg-gray-100 min-h-screen flex items-start justify-center p-6">
-
-  <!-- Modal de acceso (comentado para desarrollo) -->
-  <!--
-  <div id="loginOverlay" class="overlay">
-    <div class="modal">
-      <h2 class="text-xl font-semibold">Acceso Restringido</h2>
-      <p class="mt-2 text-gray-700">Ingrese su número de acceso:</p>
-      <input id="accessInput" type="password" placeholder="Número de acceso" />
-      <button id="submitAccess" class="btn btn--primary btn--full">Enviar</button>
-      <p id="errorMsg" class="mt-2 text-red-500 hidden">Número incorrecto. Intente de nuevo.</p>
-    </div>
-  </div>
-  -->
-
-  <!-- Confirm Modal -->
-  <div id="confirmOverlay" class="overlay hidden">
-    <div id="confirmBox" class="modal confirm">
-      <p id="confirmMsg">¿Confirmar acción?</p>
-      <button id="confirmOk" class="btn btn--primary">Aceptar</button>
-      <button id="confirmCancel" class="btn btn--secondary">Cancelar</button>
-    </div>
-  </div>
-
-  <!-- Delete Key Modal -->
-  <div id="deleteOverlay" class="overlay hidden">
-    <div class="modal deleteKey">
-      <h2 class="text-xl font-semibold">Clave de Eliminación</h2>
-      <p class="mt-2 text-gray-700">Ingrese la clave para eliminar:</p>
-      <input id="deleteKeyInput" type="password" placeholder="Clave de borrado" class="mt-2 w-full border rounded px-3 py-2" />
-      <p id="deleteKeyError" class="mt-2 text-red-500 hidden">Clave incorrecta.</p>
-      <button id="deleteKeyOk" class="btn btn--primary btn--full">Enviar</button>
-      <button id="deleteKeyCancel" class="btn btn--secondary btn--full">Cancelar</button>
-    </div>
-  </div>
+<body class="bg-gray-100 min-h-screen flex flex-col items-center justify-start p-6">
 
   <!-- Toast container -->
   <div id="toast-container"></div>
 
-  <!-- Main Content -->
+  <!-- Modales Dinámicos -->
+  <div id="modals"></div>
+
+  <!-- Contenedor principal -->
   <div id="mainContent" class="w-full max-w-4xl bg-white rounded-2xl shadow-lg">
     <div class="bg-white border-b">
       <h1 class="text-2xl font-bold text-center py-4">KINO COMPANY SAS V1</h1>
     </div>
+
     <nav class="border-b bg-white shadow-sm">
       <ul id="tabs" class="flex">
         <li class="tab flex-1 text-center cursor-pointer px-6 py-4 active" data-tab="buscar">Buscar</li>
@@ -65,12 +57,36 @@
       </ul>
     </nav>
 
-    <!-- Aquí es clave: este div es el que usa tu main.js -->
     <div id="tab-content" class="p-6 transition-all"></div>
   </div>
 
-  <!-- Contenedor para insertar modales dinámicos -->
-  <div id="modals"></div>
+  <!-- Footer con aviso legal -->
+  <footer class="w-full max-w-4xl mt-6 text-center text-gray-600 text-sm">
+    <p class="mb-1">KINO COMPANY S.A.S importador directo de relojería y otros productos.</p>
+    <p class="mb-1">Estamos ubicados en Medellín – Bogotá – Panamá.</p>
+    <p class="mb-1">
+      Línea de Atención:
+      <a href="https://wa.me/573185640716" target="_blank" class="text-red-600 font-medium hover:underline">+57 318 5640716</a>
+    </p>
+    <p>
+      <a href="https://kinocompanysas.kyte.site/es" target="_blank" class="text-red-600 hover:underline">https://kinocompanysas.kyte.site/es</a>
+    </p>
+    <div class="mt-4">
+      <button onclick="toggleLegalModal()" class="text-red-600 hover:underline font-medium">Aviso Legal</button>
+    </div>
+  </footer>
+
+  <!-- Modal Aviso Legal -->
+  <div id="legalModal" class="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center hidden">
+    <div class="bg-white max-w-md w-full p-6 rounded-xl shadow-lg relative">
+      <button onclick="toggleLegalModal()" class="absolute top-2 right-3 text-gray-500 hover:text-red-600 text-xl">&times;</button>
+      <h2 class="text-lg font-bold text-gray-800 mb-3">Aviso Legal</h2>
+      <p class="text-sm text-gray-700 leading-relaxed">
+        Los documentos disponibles en esta plataforma son propiedad exclusiva de <strong>KINO COMPANY S.A.S</strong>. Están destinados únicamente al uso de sus clientes y de las autoridades competentes que los requieran.<br><br>
+        Cualquier uso indebido, reproducción no autorizada o distribución de este material será considerado una infracción legal y podrá ser sancionado conforme a la legislación vigente.
+      </p>
+    </div>
+  </div>
 
   <!-- Scripts JS -->
   <script src="js/main.js"></script>
@@ -81,5 +97,12 @@
   <script src="js/toasts.js"></script>
   <script src="js/consulta.js"></script>
   <script src="js/upload.js"></script>
+
+  <!-- Script inline para aviso legal -->
+  <script>
+    function toggleLegalModal() {
+      document.getElementById('legalModal').classList.toggle('hidden');
+    }
+  </script>
 </body>
 </html>
