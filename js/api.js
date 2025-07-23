@@ -1,52 +1,21 @@
-// Llamadas AJAX al backend
-const API_URL = 'https://gestor-doc-backend.up.railway.app/api.php';
 
-function buscarVoraz() {
-  const txt = document.getElementById('buscador-texto').value.trim();
-  fetch(API_URL + '?action=buscar', {
+const API_BASE = 'https://gestor-doc-backend-production.up.railway.app/api/documentos';
+
+export async function buscarPorCodigo(codigo) {
+  const res = await fetch(`${API_BASE}/search_by_code`, {
     method: 'POST',
-    headers: {'Content-Type':'application/json'},
-    body: JSON.stringify({texto: txt})
-  })
-  .then(r=>r.json())
-  .then(res=>{
-    let html = '';
-    if(res.data && res.data.length) {
-      html = '<ul>' + res.data.map(d => `<li><b>${d.nombre}</b> (${d.codigos})</li>`).join('') + '</ul>';
-    } else {
-      html = '<p>No se encontraron resultados.</p>';
-    }
-    document.getElementById('resultados').innerHTML = html;
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ codigo })
   });
+  return res.json();
 }
-function buscarCodigo() {
-  const codigo = document.getElementById('input-codigo').value.trim();
-  fetch(API_URL + '?action=codigos&codigo='+encodeURIComponent(codigo))
-    .then(r=>r.json())
-    .then(res=>{
-      let html = '';
-      if(res.data && res.data.length) {
-        html = '<ul>' + res.data.map(d => `<li><b>${d.nombre}</b> (${d.codigos})</li>`).join('') + '</ul>';
-      } else {
-        html = '<p>No se encontró el documento.</p>';
-      }
-      document.getElementById('resultado-codigo').innerHTML = html;
-    });
+
+export async function listarDocumentos() {
+  const res = await fetch(`${API_BASE}`, { method: 'GET' });
+  return res.json();
 }
-function cargarConsulta() {
-  fetch(API_URL + '?action=consulta')
-    .then(r=>r.json())
-    .then(res=>{
-      let html = '';
-      if(res.data && res.data.length) {
-        html = '<ul>' + res.data.map(d => 
-          `<li><b>${d.nombre}</b> (${d.codigos}) 
-          <button onclick="editarDoc(${d.id})">Editar</button> 
-          <button onclick="eliminarDoc(${d.id})">Eliminar</button></li>`
-        ).join('') + '</ul>';
-      } else {
-        html = '<p>No hay documentos.</p>';
-      }
-      document.getElementById('lista-consulta').innerHTML = html;
-    });
+
+export async function eliminarDocumento(id) {
+  const res = await fetch(`${API_BASE}?id=${id}`, { method: 'DELETE' });
+  return res.json();
 }

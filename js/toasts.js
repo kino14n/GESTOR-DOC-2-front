@@ -1,8 +1,9 @@
-// Notificaciones visuales azules
-function showToast(msg, ok=true) {
-  const el = document.createElement('div');
-  el.className = 'fixed top-8 left-1/2 -translate-x-1/2 px-6 py-2 rounded-xl shadow-lg z-50 ' + (ok ? 'bg-blue-500 text-white' : 'bg-red-500 text-white');
-  el.innerText = msg;
-  document.body.appendChild(el);
-  setTimeout(()=>el.remove(), 2500);
+
+export function showToast(message, success = true) {
+  const container = document.getElementById('toast-container');
+  const toast = document.createElement('div');
+  toast.className = `toast ${success ? 'bg-blue-600' : 'bg-red-600'}`;
+  toast.textContent = message;
+  container.appendChild(toast);
+  setTimeout(() => toast.remove(), 3000);
 }

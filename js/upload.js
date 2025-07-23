@@ -1,16 +1,28 @@
-// Lógica para subir PDF, asignar códigos y fecha
-function initSubirForm() {
-  const form = document.getElementById('form-subir');
+
+export function initUploadForm() {
+  const form = document.getElementById('form-upload');
   if(!form) return;
-  form.onsubmit = function(e) {
+
+  form.addEventListener('submit', async (e) => {
     e.preventDefault();
-    const fd = new FormData(form);
-    fetch(API_URL + '?action=upload', {
-      method: 'POST',
-      body: fd
-    }).then(r=>r.json())
-      .then(res=>{
-        document.getElementById('feedback-subir').innerHTML = res.ok ? '<p>Documento subido!</p>' : '<p>Error: '+res.error+'</p>';
+    const formData = new FormData(form);
+
+    try {
+      const res = await fetch('https://gestor-doc-backend-production.up.railway.app/api/documentos/upload', {
+        method: 'POST',
+        body: formData
       });
-  }
+      const data = await res.json();
+
+      if(data.ok){
+        showToast('Documento subido correctamente');
+        form.reset();
+      } else {
+        showToast('Error subiendo documento: ' + data.error, false);
+      }
+    } catch(e) {
+      showToast('Error en la subida', false);
+      console.error(e);
+    }
+  });
 }
