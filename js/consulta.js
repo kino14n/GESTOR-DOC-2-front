@@ -15,8 +15,9 @@ export async function cargarConsulta() {
 
     container.innerHTML = data.map(doc => `
       <div class="border rounded p-4 mb-2">
-        <h3 class="font-semibold">${doc.nombre}</h3>
-        <p>Códigos: ${doc.codigos}</p>
+        <h3 class="font-semibold">${doc.name}</h3>
+        <p>Códigos: ${doc.codigos_extraidos}</p>
+        <p>PDF: ${doc.path}</p>
         <button class="btn btn--primary mr-2" onclick="editarDoc(${doc.id})">Editar</button>
         <button class="btn btn--secondary" onclick="eliminarDoc(${doc.id})">Eliminar</button>
       </div>
