@@ -1,3 +1,6 @@
+import { cargarConsulta, clearConsultFilter, doConsultFilter, downloadCsv, downloadPdfs, editarDoc, eliminarDoc } from './consulta.js';
+import { initAutocompleteCodigo } from './autocomplete.js';
+import { showToast } from './toasts.js';
 
 const API_BASE = 'https://gestor-doc-backend-production.up.railway.app/api/documentos';
 
@@ -25,8 +28,8 @@ function renderTab(tabName) {
   if(tabName === 'tab-code') initAutocompleteCodigo();
 }
 
-// Búsqueda inteligente por texto completo
-async function doSearch() {
+// Búsqueda inteligente
+export async function doSearch() {
   const text = document.getElementById('searchInput').value.trim();
   const alertDiv = document.getElementById('search-alert');
   const resultsDiv = document.getElementById('results-search');
@@ -66,13 +69,12 @@ async function doSearch() {
   }
 }
 
-function clearSearch() {
+export function clearSearch() {
   document.getElementById('searchInput').value = '';
   document.getElementById('search-alert').textContent = '';
   document.getElementById('results-search').innerHTML = '';
 }
 
-// Manejo del formulario subir documento
 async function handleUpload(e) {
   e.preventDefault();
 
@@ -107,3 +109,15 @@ async function handleUpload(e) {
     console.error(e);
   }
 }
+
+// Hacer globales las funciones que usa el HTML inline
+window.doSearch = doSearch;
+window.clearSearch = clearSearch;
+window.cargarConsulta = cargarConsulta;
+window.clearConsultFilter = clearConsultFilter;
+window.doConsultFilter = doConsultFilter;
+window.downloadCsv = downloadCsv;
+window.downloadPdfs = downloadPdfs;
+window.editarDoc = editarDoc;
+window.eliminarDoc = eliminarDoc;
+window.initAutocompleteCodigo = initAutocompleteCodigo;
