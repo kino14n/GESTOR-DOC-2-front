@@ -12,7 +12,64 @@
   <link href="css/main.css" rel="stylesheet" />
   <link href="css/modals.css" rel="stylesheet" />
   <style>
-    /* Añadido para el contenedor de sugerencias de autocompletado */
+    .overlay { position: fixed; top:0; left:0; width:100vw; height:100vh; background: rgba(0,0,0,0.6); display:flex; align-items:center; justify-content:center; z-index:9999; }
+    .overlay.hidden { display:none; }
+    .modal { background:white; border-radius:0.5rem; max-width:320px; width:90%; padding:1.5rem; box-shadow:0 2px 10px rgba(0,0,0,0.3); text-align:center; }
+    .modal input, .modal button { font-size:1rem; }
+    .modal input { width:100%; padding:0.5rem; margin-top:0.5rem; border:1px solid #ccc; border-radius:0.25rem; }
+    .modal button { margin-top:1rem; }
+    #toast-container { position:fixed; top:1rem; left:50%; transform:translateX(-50%); display:flex; flex-direction:column; gap:0.5rem; z-index:10000; }
+    .toast { min-width:240px; max-width:480px; background-color:#2563EB; color:white; padding:1rem 1.5rem; border-radius:0.375rem; box-shadow:0 2px 6px rgba(0,0,0,0.2); display:flex; align-items:center; justify-content:space-between; font-size:1.125rem; }
+    .toast button { background:transparent; border:none; color:white; font-weight:bold; margin-left:1rem; cursor:pointer; font-size:1.125rem; }
+    #confirmOverlay, #deleteOverlay { position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.6); display:flex; align-items:center; justify-content:center; z-index:10001; }
+    #confirmOverlay.hidden, #deleteOverlay.hidden { display:none; }
+    .modal.confirm, .modal.deleteKey { background:white; border-radius:0.5rem; padding:1.5rem; max-width:320px; width:90%; box-shadow:0 2px 10px rgba(0,0,0,0.3); text-align:center; }
+    .modal.confirm p { margin-bottom:1rem; }
+    .modal.confirm button, .modal.deleteKey button { margin:0.5rem; padding:0.5rem 1rem; font-size:1rem; border-radius:0.25rem; }
+    .tab.active { border-bottom:2px solid #F87171; color:#F87171; }
+    .button-group { display: flex; flex-direction: column; align-items: stretch; gap: 5px; }
+    :root {
+      --btn-padding: 0.5rem 1rem;
+      --btn-radius: 0.375rem;
+      --btn-font-size: 1rem;
+      --btn-transition: background-color .2s;
+      --color-primary: #F87171;
+      --color-primary-hover: #DC2626;
+      --color-secondary: #D1D5DB;
+      --color-secondary-hover: #9CA3AF;
+      --color-dark: #374151;
+      --color-dark-hover: #1F2937;
+      --color-warning: #8B5E5E;
+      --color-warning-hover: #6B4542;
+      --color-on-light: #1F2937;
+      --color-on-dark: #FFFFFF;
+    }
+    .btn { padding: var(--btn-padding); border-radius: var(--btn-radius); font-size: var(--btn-font-size); transition: var(--btn-transition); border: none; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
+    .btn--primary { background: var(--color-primary); color: var(--color-on-dark); }
+    .btn--primary:hover { background: var(--color-primary-hover); }
+    .btn--secondary { background: var(--color-secondary); color: var(--color-on-light); }
+    .btn--secondary:hover { background: var(--color-secondary-hover); }
+    .btn--dark { background: var(--color-dark); color: var(--color-on-dark); }
+    .btn--dark:hover { background: var(--color-dark-hover); }
+    .btn--warning { background: var(--color-warning); color: var(--color-on-dark); }
+    .btn--warning:hover { background: var(--color-warning-hover); }
+    .btn--full { width: 100%; }
+    .btn--flex1 { flex: 1; }
+    @media (max-width: 1024px) {
+      .max-w-4xl { max-width: 90%; }
+    }
+    @media (max-width: 768px) {
+      #tabs { flex-direction: column; }
+      .flex.gap-4 { flex-direction: column; }
+      .p-6 { padding: 1rem; }
+    }
+    @media (max-width: 480px) {
+      h1.text-2xl { font-size: 1.5rem; }
+      .modal { max-width: 95%; padding: 1rem; }
+      .btn { padding: 0.5rem; font-size: 0.875rem; }
+      textarea, input { font-size: 0.875rem; }
+    }
+    /* Estilos para el contenedor de sugerencias */
     #suggestions {
       position: absolute;
       top: 100%;
@@ -177,42 +234,6 @@
 
   <!-- Contenedor modales dinámicos -->
   <div id="modals"></div>
-
-  <!-- Footer -->
-  <footer class="w-full max-w-4xl mt-6 text-center text-gray-600 text-sm">
-    <p class="mb-1">KINO COMPANY S.A.S importador directo de relojería y otros productos.</p>
-    <p class="mb-1">Estamos ubicados en Medellín – Bogotá – Panamá.</p>
-    <p class="mb-1">
-      Línea de Atención:
-      <a href="https://wa.me/573185640716" target="_blank" class="text-red-600 font-medium hover:underline">+57 318 5640716</a>
-    </p>
-    <p>
-      <a href="https://kinocompanysas.kyte.site/es" target="_blank" class="text-red-600 hover:underline">https://kinocompanysas.kyte.site/es</a>
-    </p>
-    <div class="mt-4">
-      <button onclick="toggleLegalModal()" class="text-red-600 hover:underline font-medium">Aviso Legal</button>
-    </div>
-  </footer>
-
-  <!-- Modal Aviso Legal -->
-  <div
-    id="legalModal"
-    class="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center hidden"
-  >
-    <div class="bg-white max-w-md w-full p-6 rounded-xl shadow-lg relative">
-      <button
-        onclick="toggleLegalModal()"
-        class="absolute top-2 right-3 text-gray-500 hover:text-red-600 text-xl"
-        >&times;</button
-      >
-      <h2 class="text-lg font-bold text-gray-800 mb-3">Aviso Legal</h2>
-      <p class="text-sm text-gray-700 leading-relaxed">
-        Los documentos disponibles en esta plataforma son propiedad exclusiva de
-        <strong>KINO COMPANY S.A.S</strong>. Están destinados únicamente al uso de sus clientes y de las autoridades competentes que los requieran.<br /><br />
-        Cualquier uso indebido, reproducción no autorizada o distribución de este material será considerado una infracción legal y podrá ser sancionado conforme a la legislación vigente.
-      </p>
-    </div>
-  </div>
 
   <!-- Scripts JS y funciones -->
   <script src="js/main.js"></script>
