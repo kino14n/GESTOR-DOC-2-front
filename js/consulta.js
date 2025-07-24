@@ -16,10 +16,16 @@ export async function cargarConsulta() {
     container.innerHTML = data.map(doc => `
       <div class="border rounded p-4 mb-2">
         <h3 class="font-semibold">${doc.name}</h3>
-        <p>Códigos: ${doc.codigos_extraidos}</p>
-        <p>PDF: ${doc.path}</p>
-        <button class="btn btn--primary mr-2" onclick="editarDoc(${doc.id})">Editar</button>
-        <button class="btn btn--secondary" onclick="eliminarDoc(${doc.id})">Eliminar</button>
+        <p><b>Fecha:</b> ${doc.date || ''}</p>
+        <p>PDF: ${doc.path ? `<a href="uploads/${doc.path}" target="_blank" class="text-blue-600 underline">${doc.path}</a>` : 'N/A'}</p>
+        <div class="mt-2">
+            <button class="btn btn--secondary btn--sm" onclick="toggleCodes(this)">Mostrar Códigos</button>
+            <p class="codes-container hidden mt-1 text-sm text-gray-700">${(doc.codigos_extraidos || '').split(',').join('<br>')}</p>
+        </div>
+        <div class="mt-4">
+            <button class="btn btn--primary mr-2" onclick="editarDoc(${doc.id})">Editar</button>
+            <button class="btn btn--secondary" onclick="eliminarDoc(${doc.id})">Eliminar</button>
+        </div>
       </div>
     `).join('');
 
@@ -76,4 +82,16 @@ export function downloadCsv() {
 
 export function downloadPdfs() {
   alert('Función para descargar PDFs pendiente');
+}
+
+// Nueva función para alternar la visibilidad de los códigos
+window.toggleCodes = function(button) {
+    const codesContainer = button.nextElementSibling; // El div de códigos es el siguiente hermano del botón
+    if (codesContainer.classList.contains('hidden')) {
+        codesContainer.classList.remove('hidden');
+        button.textContent = 'Ocultar Códigos';
+    } else {
+        codesContainer.classList.add('hidden');
+        button.textContent = 'Mostrar Códigos';
+    }
 }
