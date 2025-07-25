@@ -36,7 +36,7 @@ export function showModalLogin(onSuccess) {
       const clave = claveInput.value;
       
       // La clave de administrador está aquí. Cámbiala si es necesario.
-      if (clave === 'tuClaveAdmin') { // <-- ¡VERIFICA ESTA CLAVE!
+      if (clave === '111') { // <-- ¡VERIFICA ESTA CLAVE!
         console.log('showModalLogin: Clave correcta. Ocultando modal.'); // LOG
         modalsContainer.innerHTML = ''; // Limpia el HTML del modal para removerlo
         // loginOverlay.classList.add('hidden'); // Opcional, si el innerHTML no lo quita
