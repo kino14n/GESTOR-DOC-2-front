@@ -8,7 +8,8 @@ import { loadDocumentForEdit } from './upload.js';
 export async function editarDoc(id) { 
   await requireAuth(async () => {
     try {
-      const res = await fetch(`https://gestor-doc-backend-production.up.railway.app/api/documentos/${id}`, { method: 'GET' });
+      // Nota: Esta URL para obtener un solo documento podría necesitar un cambio si tu PHP no tiene acción 'get_single' o similar
+      const res = await fetch(`https://gestor-doc-backend-production.up.railway.app/api.php?action=get_documento&id=${id}`, { method: 'GET' });
       if (!res.ok) {
         const errorData = await res.json();
         showToast(`Error al cargar documento: ${errorData.error || res.statusText}`, false);
@@ -33,36 +34,35 @@ export async function editarDoc(id) {
 }
 
 export function eliminarDoc(id) {
-  console.log('eliminarDoc: Iniciando para ID:', id); // LOG 1: ¿Se ejecuta la función?
+  console.log('eliminarDoc: Iniciando para ID:', id); 
   requireAuth(() => {
-    console.log('eliminarDoc: requireAuth callback ejecutado.'); // LOG 2: ¿Se autentica y continúa?
+    console.log('eliminarDoc: requireAuth callback ejecutado.'); 
     showModalConfirm('¿Seguro que desea eliminar?', async () => {
-      console.log('eliminarDoc: Confirmación de modal aceptada. Procediendo a eliminar...'); // LOG 3: ¿Se acepta la confirmación?
+      console.log('eliminarDoc: Confirmación de modal aceptada. Procediendo a eliminar...'); 
       try {
-        console.log('eliminarDoc: Intentando fetch DELETE para ID:', id); // LOG 4: ¿Se llega a la línea del fetch?
-        const res = await fetch(`https://gestor-doc-backend-production.up.railway.app/api/documentos?id=${id}`, { method: 'DELETE' });
-        console.log('eliminarDoc: Fetch DELETE completado, respuesta:', res); // LOG 5: ¿El fetch tuvo éxito a nivel de red?
+        // *** CAMBIO CRÍTICO AQUÍ: Nueva URL para el backend PHP ***
+        const res = await fetch(`https://gestor-doc-backend-production.up.railway.app/api.php?action=delete&id=${id}`, { method: 'GET' }); // El PHP usa GET para delete
+        console.log('eliminarDoc: Fetch para DELETE completado, respuesta:', res); 
         
-        // Verifica si la respuesta es parseable como JSON antes de intentar
         const contentType = res.headers.get("content-type");
         if (contentType && contentType.indexOf("application/json") !== -1) {
             const data = await res.json();
-            console.log('eliminarDoc: Respuesta JSON del backend:', data); // LOG 6: ¿Qué devuelve el backend?
-            if(data.ok){
-              console.log('eliminarDoc: Documento eliminado con éxito (backend respondió OK).'); // LOG 7: ¿El backend confirmó OK?
+            console.log('eliminarDoc: Respuesta JSON del backend:', data); 
+            if(data.message && data.message === 'Documento eliminado'){ // PHP devuelve 'message', no 'ok'
+              console.log('eliminarDoc: Documento eliminado con éxito (backend respondió mensaje).'); 
               cargarConsulta(); 
               showToast('Documento eliminado correctamente', true); 
             } else {
-              console.error('eliminarDoc: El backend respondió con error:', data.error || 'Mensaje de error desconocido'); // LOG 8: ¿El backend informó un error?
-              showToast('Error eliminando documento: ' + (data.error || res.statusText || 'Error desconocido del servidor'), false);
+              console.error('eliminarDoc: El backend respondió con error o mensaje inesperado:', data.error || data.message || 'Mensaje de error desconocido'); 
+              showToast('Error eliminando documento: ' + (data.error || data.message || res.statusText || 'Error desconocido del servidor'), false);
             }
         } else {
             const textResponse = await res.text();
-            console.error('eliminarDoc: Respuesta no es JSON. Status:', res.status, 'Respuesta:', textResponse); // LOG 9: ¿Backend devuelve HTML/texto en lugar de JSON?
+            console.error('eliminarDoc: Respuesta no es JSON. Status:', res.status, 'Respuesta:', textResponse); 
             showToast('Error: El servidor no devolvió una respuesta JSON válida.', false);
         }
       } catch(e){
-        console.error('eliminarDoc: Error crítico en el bloque try-catch (problema de red o JS):', e); // LOG 10: ¿Error antes o durante el fetch?
+        console.error('eliminarDoc: Error crítico en el bloque try-catch (problema de red o JS):', e); 
         showToast('Error grave en la eliminación', false);
       }
     });
@@ -78,22 +78,23 @@ export async function cargarConsulta() {
   }
 
   try {
-    const res = await fetch('https://gestor-doc-backend-production.up.railway.app/api/documentos'); 
+    // *** CAMBIO CRÍTICO AQUÍ: Nueva URL para el backend PHP - Acción LIST ***
+    const res = await fetch('https://gestor-doc-backend-production.up.railway.app/api.php?action=list&per_page=0', { method: 'GET' }); // Usar per_page=0 para listar todos
     const data = await res.json();
+    console.log('cargarConsulta: Datos recibidos del PHP backend:', data); // Log para ver la estructura
 
-    if(data.length === 0){
+    if(!data.data || data.data.length === 0){ // PHP devuelve 'data' dentro del objeto principal
       container.innerHTML = '<p>No hay documentos.</p>';
       return;
     }
 
-    container.innerHTML = data.map(doc => `
-      <div class="border rounded p-4 mb-2">
+    container.innerHTML = data.data.map(doc => ` <div class="border rounded p-4 mb-2">
         <h3 class="font-semibold">${doc.name}</h3>
         <p><b>Fecha:</b> ${doc.date || ''}</p>
         <p>PDF: ${doc.path ? `<a href="uploads/${doc.path}" target="_blank" class="text-blue-600 underline">${doc.path}</a>` : 'N/A'}</p>
         <div class="mt-2">
             <button class="btn btn--secondary btn--sm" data-action="toggleCodes">Mostrar Códigos</button>
-            <p class="codes-container hidden mt-1 text-sm text-gray-700">${(doc.codigos_extraidos || '').split(',').join('<br>')}</p>
+            <p class="codes-container hidden mt-1 text-sm text-gray-700">${(Array.isArray(doc.codes) ? doc.codes.join('<br>') : doc.codes || '')}</p>
         </div>
         <div class="mt-4">
             <button class="btn btn--primary mr-2" data-action="edit" data-id="${doc.id}">Editar</button>
@@ -128,11 +129,10 @@ export async function cargarConsulta() {
 
   } catch(e){
     container.innerHTML = '<p>Error cargando documentos.</p>';
-    console.error(e);
+    console.error('Error al cargar consulta:', e); // Log más descriptivo
   }
 }
 
-// Las siguientes funciones se exportan para ser usadas por `main.js` u otros scripts.
 export function clearConsultFilter() {
   document.getElementById('consultFilterInput').value = '';
   cargarConsulta(); 
@@ -149,9 +149,11 @@ export function doConsultFilter() {
 }
 
 export function downloadCsv() {
-  window.open('https://gestor-doc-backend-production.up.railway.app/api/documentos?exportar=csv', '_blank');
+  // Ajustar si la descarga CSV también se maneja por action en api.php
+  window.open('https://gestor-doc-backend-production.up.railway.app/api.php?action=export_csv', '_blank'); // Suponiendo una acción 'export_csv'
 }
 
 export function downloadPdfs() {
-  alert('Función para descargar PDFs pendiente');
+  // Ajustar si la descarga de PDFs también se maneja por action en api.php
+  alert('Función para descargar PDFs pendiente en PHP backend. Usaría api.php?action=download_pdfs');
 }
