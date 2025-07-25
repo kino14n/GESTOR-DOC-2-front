@@ -109,7 +109,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const accessInput = document.getElementById('accessInput');
             const clave = accessInput ? accessInput.value : '';
             
-            if (clave === 'tuClaveAdmin') { 
+            if (clave === '111') { 
                 if (currentOnLoginSuccessCallback && typeof currentOnLoginSuccessCallback === 'function') {
                     currentOnLoginSuccessCallback();
                     console.log('Delegación: Callback onLoginSuccess ejecutado.');
