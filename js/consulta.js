@@ -8,10 +8,11 @@ import { loadDocumentForEdit } from './upload.js'; // Importar la nueva función
 // Estas funciones se exportan para ser usadas dentro de este módulo o por otros módulos que las importen.
 // No necesitan ser globales (window.xxx) porque se llamarán a través de event listeners.
 
-export async function editarDoc(id) { // Función ahora asíncrona
-  await requireAuth(async () => { // Esperamos a que la autenticación termine
+export async function editarDoc(id) { 
+  await requireAuth(async () => {
     try {
-      const res = await fetch(`https://gestor-doc-backend-production.up.railway.app/api/documentos/${id}`);
+      // AQUÍ SE CORRIGE LA SOLICITUD A MÉTODO GET PARA OBTENER UN DOCUMENTO
+      const res = await fetch(`https://gestor-doc-backend-production.up.railway.app/api/documentos/${id}`, { method: 'GET' });
       if (!res.ok) {
         const errorData = await res.json();
         showToast(`Error al cargar documento: ${errorData.error || res.statusText}`, false);
@@ -60,13 +61,14 @@ export function eliminarDoc(id) {
 export async function cargarConsulta() {
   const container = document.getElementById('results-list');
   // Eliminar el event listener antiguo antes de añadir uno nuevo para evitar duplicados
-  const oldListener = container.dataset.listener;
-  if (oldListener) {
-      container.removeEventListener('click', window[oldListener]);
+  const oldListenerId = container.dataset.listenerId;
+  if (oldListenerId && window[oldListenerId]) {
+      container.removeEventListener('click', window[oldListenerId]);
+      delete window[oldListenerId]; // Limpiar la referencia global
   }
 
   try {
-    const res = await fetch('https://gestor-doc-backend-production.up.railway.app/api/documentos');
+    const res = await fetch('https://gestor-doc-backend-production.up.railway.app/api/documentos'); // Esta es la llamada que daba 405/500
     const data = await res.json();
 
     if(data.length === 0){
@@ -75,7 +77,6 @@ export async function cargarConsulta() {
     }
 
     // Generar el HTML para cada documento
-    // Importante: Los botones ya NO tienen 'onclick="..."'
     container.innerHTML = data.map(doc => `
       <div class="border rounded p-4 mb-2">
         <h3 class="font-semibold">${doc.name}</h3>
@@ -94,7 +95,6 @@ export async function cargarConsulta() {
 
     // *** DELEGACIÓN DE EVENTOS ***
     // Adjunta un único event listener al contenedor principal (#results-list)
-    // Se asegura de que el listener sea único y no se duplique con cada llamada a cargarConsulta
     const newListenerId = `consultContainerListener-${Date.now()}`;
     window[newListenerId] = (event) => {
         const target = event.target; 
@@ -111,13 +111,13 @@ export async function cargarConsulta() {
                 if (typeof window.toggleCodes === 'function') {
                     window.toggleCodes(target); 
                 } else {
-                    console.warn('La función window.toggleCodes no está definida.');
+                    console.warn('La función window.toggleCodes no está definida. Asegúrate de que main.js la exponga globalmente.');
                 }
             }
         }
     };
     container.addEventListener('click', window[newListenerId]);
-    container.dataset.listener = newListenerId; // Guarda el ID del listener para removerlo después
+    container.dataset.listenerId = newListenerId; 
 
   } catch(e){
     container.innerHTML = '<p>Error cargando documentos.</p>';
@@ -126,7 +126,6 @@ export async function cargarConsulta() {
 }
 
 // Las siguientes funciones se exportan para ser usadas por `main.js` u otros scripts.
-// Sus `onclick` en index.html se gestionan directamente o a través de `main.js`.
 export function clearConsultFilter() {
   document.getElementById('consultFilterInput').value = '';
   cargarConsulta(); 
