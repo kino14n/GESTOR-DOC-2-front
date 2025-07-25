@@ -12,6 +12,7 @@
   <link href="css/main.css" rel="stylesheet" />
   <link href="css/modals.css" rel="stylesheet" />
   <style>
+    /* Estilos del modal que se habían movido a index.html o añadidos */
     .overlay { position: fixed; top:0; left:0; width:100vw; height:100vh; background: rgba(0,0,0,0.6); display:flex; align-items:center; justify-content:center; z-index:9999; }
     .overlay.hidden { display:none; }
     .modal { background:white; border-radius:0.5rem; max-width:320px; width:90%; padding:1.5rem; box-shadow:0 2px 10px rgba(0,0,0,0.3); text-align:center; }
@@ -92,20 +93,6 @@
 </head>
 <body class="bg-gray-100 min-h-screen flex items-start justify-center p-6">
 
-  <!-- Modal de acceso (comentado para pruebas, descomenta si lo usas) -->
-  <!--
-  <div id="loginOverlay" class="overlay">
-    <div class="modal">
-      <h2 class="text-xl font-semibold">Acceso Restringido</h2>
-      <p class="mt-2 text-gray-700">Ingrese su número de acceso:</p>
-      <input id="accessInput" type="password" placeholder="Número de acceso" />
-      <button id="submitAccess" class="btn btn--primary btn--full">Enviar</button>
-      <p id="errorMsg" class="mt-2 text-red-500 hidden">Número incorrecto. Intente de nuevo.</p>
-    </div>
-  </div>
-  -->
-
-  <!-- Confirm Modal -->
   <div id="confirmOverlay" class="overlay hidden">
     <div id="confirmBox" class="modal confirm">
       <p id="confirmMsg">¿Confirmar acción?</p>
@@ -114,7 +101,6 @@
     </div>
   </div>
 
-  <!-- Delete Key Modal -->
   <div id="deleteOverlay" class="overlay hidden">
     <div class="modal deleteKey">
       <h2 class="text-xl font-semibold">Clave de Eliminación</h2>
@@ -126,10 +112,8 @@
     </div>
   </div>
 
-  <!-- Toast container -->
   <div id="toast-container"></div>
 
-  <!-- Contenedor modales dinámicos -->
   <div id="modals"></div>
 
   <div id="mainContent" class="w-full max-w-4xl bg-white rounded-2xl shadow-lg">
@@ -147,19 +131,17 @@
     </nav>
 
     <div class="p-6 space-y-6">
-      <!-- TAB BUSQUEDA VORAZ -->
       <div id="tab-search" class="tab-content">
-        <h2 class="text-xl font-semibold mb-4">Búsqueda Voraz (Inteligente)</h2>
-        <textarea id="searchInput" rows="5" class="w-full border rounded px-3 py-2 text-lg mb-4" placeholder="Pega aquí uno o varios códigos, nombres o bloques de texto…"></textarea>
+        <h2 class="text-xl font-semibold mb-4">Búsqueda Óptima (Inteligente)</h2>
+        <textarea id="optimaSearchInput" rows="5" class="w-full border rounded px-3 py-2 text-lg mb-4" placeholder="Pega aquí uno o varios códigos, nombres o bloques de texto…"></textarea>
         <div class="flex gap-4 mb-4">
-          <button onclick="doVorazSearch()" class="btn btn--primary btn--flex1 text-lg">Buscar</button>
-          <button onclick="clearSearch()" class="btn btn--secondary btn--flex1 text-lg">Limpiar</button>
+          <button onclick="doOptimaSearch()" class="btn btn--primary btn--flex1 text-lg">Buscar</button>
+          <button onclick="clearOptimaSearch()" class="btn btn--secondary btn--flex1 text-lg">Limpiar</button>
         </div>
         <div id="search-alert" class="text-red-600 font-medium text-lg mb-4"></div>
-        <div id="results-search" class="space-y-4"></div>
+        <div id="results-optima-search" class="space-y-4"></div>
       </div>
 
-      <!-- TAB SUBIR -->
       <div id="tab-upload" class="tab-content hidden">
         <h2 class="text-xl font-semibold mb-4">Subir / Editar Documento</h2>
         <form id="form-upload" enctype="multipart/form-data" class="space-y-4">
@@ -187,7 +169,6 @@
         </form>
       </div>
 
-      <!-- TAB CONSULTAR -->
       <div id="tab-list" class="tab-content hidden">
         <h2 class="text-xl font-semibold mb-4">Consultar Documentos</h2>
         <div class="flex gap-4 mb-4">
@@ -204,7 +185,6 @@
         <div id="results-list" class="space-y-4"></div>
       </div>
 
-      <!-- TAB BUSCAR POR CÓDIGO -->
       <div id="tab-code" class="tab-content hidden">
         <h2 class="text-xl font-semibold mb-4">Buscar por Código</h2>
         <div class="relative mb-4">
@@ -226,7 +206,6 @@
     </div>
   </div>
 
-  <!-- Scripts -->
   <script src="js/main.js" type="module"></script>
   <script src="js/api.js" type="module"></script>
   <script src="js/auth.js" type="module"></script>
@@ -239,48 +218,79 @@
   <script type="module">
     import { cargarConsulta, clearConsultFilter, doConsultFilter, downloadCsv } from './js/consulta.js';
     import { initAutocompleteCodigo } from './js/autocomplete.js';
+    import { requireAuth } from './js/auth.js'; // Importar requireAuth aquí
 
     // Hacer globales las funciones para los onClick del HTML
-    window.doVorazSearch = async function () {
-      const text = document.getElementById('searchInput').value.trim();
+    // AHORA ESTA FUNCIÓN ES PARA LA BÚSQUEDA ÓPTIMA
+    window.doOptimaSearch = async function () {
+      const text = document.getElementById('optimaSearchInput').value.trim(); // ID cambiado
       const alertDiv = document.getElementById('search-alert');
-      const resultsDiv = document.getElementById('results-search');
+      const resultsDiv = document.getElementById('results-optima-search'); // ID cambiado
       alertDiv.textContent = '';
       resultsDiv.innerHTML = '';
       if(text.length < 1){
         alertDiv.textContent = 'Pega o escribe uno o varios códigos para buscar.';
         return;
       }
-      // Endpoint voraz
-      try {
-        const res = await fetch('https://gestor-doc-backend-production.up.railway.app/api/documentos/search', {
-          method: 'POST',
-          headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify({ texto: text })
-        });
-        const data = await res.json();
-        if(data.length === 0){
-          resultsDiv.innerHTML = '<p>No se encontraron resultados.</p>';
-          return;
+
+      requireAuth(async () => { // Proteger la búsqueda con autenticación
+        // Endpoint Óptimo
+        try {
+          const res = await fetch('https://gestor-doc-backend-production.up.railway.app/api/documentos/search_optima', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ codigos: text }) // Cambiado a 'codigos'
+          });
+          
+          if (!res.ok) {
+            const errorData = await res.json();
+            resultsDiv.innerHTML = `<p class="text-red-500">Error en la búsqueda: ${errorData.error || res.statusText}</p>`;
+            return;
+          }
+
+          const data = await res.json();
+
+          if (data.documentos && data.documentos.length > 0) {
+            let htmlContent = `<p class="font-bold mb-2">Se encontraron ${data.documentos.length} documentos para cubrir los códigos:</p>`;
+            htmlContent += data.documentos.map(item => `
+              <div class="border rounded p-4 mb-2 bg-white shadow-sm">
+                <h3 class="font-semibold">${item.documento.name}</h3>
+                <p><b>Fecha:</b> ${item.documento.date || ''}</p>
+                <p>PDF: ${item.documento.path ? `<a href="uploads/${item.documento.path}" target="_blank" class="text-blue-600 underline">${item.documento.path}</a>` : 'N/A'}</p>
+                <div class="mt-2">
+                    <button class="btn btn--secondary btn--sm" onclick="toggleCodes(this)">Mostrar Códigos</button>
+                    <p class="codes-container hidden mt-1 text-sm text-gray-700">${(item.documento.codigos_encontrados || '').split(',').join('<br>')}</p>
+                </div>
+                <p class="text-sm mt-2">Códigos cubiertos por este documento en la búsqueda: <span class="font-medium">${item.codigos_cubre.join(', ')}</span></p>
+              </div>
+            `).join('');
+
+            if (data.codigos_faltantes && data.codigos_faltantes.length > 0) {
+              htmlContent += `<p class="text-orange-600 mt-4">Atención: No se pudieron cubrir todos los códigos. Códigos faltantes: <span class="font-medium">${data.codigos_faltantes.join(', ')}</span></p>`;
+            }
+
+            resultsDiv.innerHTML = htmlContent;
+
+          } else if (data.codigos_faltantes && data.codigos_faltantes.length > 0) {
+            resultsDiv.innerHTML = `<p class="text-orange-600">No se encontraron documentos que contengan los códigos buscados. Códigos faltantes: ${data.codigos_faltantes.join(', ')}</p>`;
+          } else {
+            resultsDiv.innerHTML = '<p>No se encontraron documentos que cumplan con la búsqueda.</p>';
+          }
+        } catch(e) {
+          resultsDiv.innerHTML = 'Error al buscar. Intente de nuevo.';
+          console.error(e);
         }
-        resultsDiv.innerHTML = data.map(doc => `
-          <div class="border p-4 rounded shadow">
-            <h3 class="font-semibold">${doc.name}</h3>
-            <p><b>Fecha:</b> ${doc.date || ''}</p>
-            <p><b>Códigos:</b> ${doc.codigos_extraidos || ''}</p>
-            <p><b>PDF:</b> ${doc.path ? `<a href="uploads/${doc.path}" target="_blank" class="text-blue-600 underline">${doc.path}</a>` : ''}</p>
-          </div>
-        `).join('');
-      } catch(e) {
-        alertDiv.textContent = 'Error al buscar. Intente de nuevo.';
-      }
+      });
     }
 
-    window.clearSearch = function () {
-      document.getElementById('searchInput').value = '';
+    // AHORA ESTA FUNCIÓN ES PARA LIMPIAR LA BÚSQUEDA ÓPTIMA
+    window.clearOptimaSearch = function () {
+      document.getElementById('optimaSearchInput').value = ''; // ID cambiado
       document.getElementById('search-alert').textContent = '';
-      document.getElementById('results-search').innerHTML = '';
+      document.getElementById('results-optima-search').innerHTML = ''; // ID cambiado
     }
+    
+    // Funciones de otras pestañas (mantienen su lógica original)
     window.doConsultFilter = doConsultFilter;
     window.clearConsultFilter = clearConsultFilter;
     window.downloadCsv = downloadCsv;
@@ -315,6 +325,22 @@
       } catch(e) {
         resultsDiv.innerHTML = '<p>Error en la búsqueda por código.</p>';
       }
+    }
+
+    // Asegurarse de que toggleCodes esté disponible globalmente (importante para los resultados dinámicos)
+    // Se asume que toggleCodes está definido en consulta.js y expuesto globalmente (window.toggleCodes)
+    // Si no es el caso, esta parte necesita la definición de toggleCodes aquí o asegurar su importación.
+    if (typeof window.toggleCodes === 'undefined') {
+        window.toggleCodes = function(button) {
+            const codesContainer = button.nextElementSibling;
+            if (codesContainer.classList.contains('hidden')) {
+                codesContainer.classList.remove('hidden');
+                button.textContent = 'Ocultar Códigos';
+            } else {
+                codesContainer.classList.add('hidden');
+                button.textContent = 'Mostrar Códigos';
+            }
+        };
     }
 
     // Activa autocomplete en pestaña código y la consulta de documentos
