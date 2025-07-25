@@ -1,55 +1,56 @@
 import { cargarConsulta } from './consulta.js';
-import { handleUploadForm } from './upload.js';
+import { initUploadForm } from './upload.js'; // Importación corregida
 import { requireAuth } from './auth.js';
-import { initAutocompleteCodigo } from './autocomplete.js'; // Asegúrate de importar esto
+import { initAutocompleteCodigo } from './autocomplete.js'; 
 
-// Función para cambiar de pestaña
+// Función para cambiar de pestaña (global)
 window.showTab = function(tabId) {
-    const tabs = document.querySelectorAll('.tab-pane');
+    const tabs = document.querySelectorAll('.tab-content'); // Usar .tab-content para los paneles
     tabs.forEach(tab => {
         tab.classList.add('hidden');
-        tab.classList.remove('active');
     });
 
-    const activeTab = document.getElementById(tabId);
-    if (activeTab) {
-        activeTab.classList.remove('hidden');
-        activeTab.classList.add('active');
+    const activeTabContent = document.getElementById(tabId);
+    if (activeTabContent) {
+        activeTabContent.classList.remove('hidden');
     }
 
-    // Actualiza los botones de las pestañas
-    const tabButtons = document.querySelectorAll('.tab-button');
+    // Actualiza las clases 'active' de los botones de las pestañas
+    const tabButtons = document.querySelectorAll('.tab'); // Seleccionar los <li> con clase 'tab'
     tabButtons.forEach(button => {
-        // Usa data-tab para identificar el botón correcto
-        if (button.dataset.tab === tabId) {
+        if (button.dataset.tab === tabId) { // Compara con el data-tab del li
             button.classList.add('active');
         } else {
             button.classList.remove('active');
         }
     });
 
-    // Cargar documentos si la pestaña de consulta está activa
-    if (tabId === 'tab-list') { // Asegúrate de usar el ID correcto de la pestaña de consulta
+    // Lógica específica para cada pestaña al activarse
+    if (tabId === 'tab-list') { 
         cargarConsulta();
+    } else if (tabId === 'tab-code') {
+        initAutocompleteCodigo(); // Re-inicializar si la pestaña de código es activada
     }
+    // No es necesario llamar a initUploadForm aquí porque se maneja en DOMContentLoaded
 };
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Manejo del formulario de subida
-    handleUploadForm();
+    // Manejo del formulario de subida (se inicializa una vez al cargar el DOM)
+    initUploadForm(); 
 
     // Mostrar la pestaña "Buscar" (Óptima) al cargar la página por defecto
+    // Usar el ID de la pestaña 'data-tab'
     showTab('tab-search'); 
 
     // Inicializa el autocompletado para la pestaña de búsqueda por código
-    // Se ejecuta al cargar la página para que el listener esté listo
+    // Se ejecuta una vez al cargar la página para que el listener esté listo
     initAutocompleteCodigo(); 
     
     // Lógica para la Pestaña "Buscar" (Búsqueda Óptima)
     const doOptimaSearchButton = document.getElementById('doOptimaSearchButton');
     const clearOptimaSearchButton = document.getElementById('clearOptimaSearchButton');
     const optimaSearchInput = document.getElementById('optimaSearchInput');
-    const optimaResultsList = document.getElementById('results-optima-search'); // ID corregido
+    const optimaResultsList = document.getElementById('results-optima-search'); 
 
     if (doOptimaSearchButton) {
         doOptimaSearchButton.addEventListener('click', async () => {
@@ -120,6 +121,59 @@ document.addEventListener('DOMContentLoaded', () => {
             optimaResultsList.innerHTML = '';
         });
     }
+
+    // FUNCIONES DE LA PESTAÑA "BUSCAR POR CÓDIGO" (movidas aquí desde el script inline de index.html)
+    const doCodeSearchButton = document.querySelector('#tab-code button[onclick="doCodeSearch()"]');
+    const clearCodeSearchButton = document.querySelector('#tab-code button[onclick="clearCodeSearch()"]'); // Si tienes un botón limpiar para esta tab
+
+    if (doCodeSearchButton) {
+        doCodeSearchButton.addEventListener('click', async () => {
+            const input = document.getElementById('codeInput');
+            const code = input.value.trim();
+            const resultsDiv = document.getElementById('results-code');
+            resultsDiv.innerHTML = '';
+            if(code.length < 1){
+                resultsDiv.innerHTML = '<p>Escribe un código para buscar.</p>';
+                return;
+            }
+            requireAuth(async () => {
+                try {
+                    const res = await fetch('https://gestor-doc-backend-production.up.railway.app/api/documentos/search_by_code', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({ codigo: code })
+                    });
+                    const data = await res.json();
+                    if(data.length === 0){
+                        resultsDiv.innerHTML = '<p>No se encontró ningún documento con ese código.</p>';
+                        return;
+                    }
+                    resultsDiv.innerHTML = data.map(doc => `
+                        <div class="border p-4 rounded shadow">
+                            <h3 class="font-semibold">${doc.name}</h3>
+                            <p><b>Fecha:</b> ${doc.date || ''}</p>
+                            <p><b>Códigos:</b> ${doc.codigos_extraidos || ''}</p>
+                            <p><b>PDF:</b> ${doc.path ? `<a href="uploads/${doc.path}" target="_blank" class="text-blue-600 underline">${doc.path}</a>` : ''}</p>
+                        </div>
+                    `).join('');
+                } catch(e) {
+                    resultsDiv.innerHTML = '<p>Error en la búsqueda por código.</p>';
+                }
+            });
+        });
+    }
+
+    // Añadir listener para el botón de limpiar de "Buscar por Código" si existe
+    if (clearCodeSearchButton) {
+        clearCodeSearchButton.addEventListener('click', () => {
+            document.getElementById('codeInput').value = '';
+            document.getElementById('results-code').innerHTML = '';
+        });
+    }
+
+    // FUNCIONES DE LA PESTAÑA "CONSULTAR" (globales desde consulta.js)
+    // Estas funciones ya se hacen globales en consulta.js a través de window.doConsultFilter, etc.
+    // Solo necesitamos asegurarnos de que la carga inicial de consulta se hace al activar la tab
 });
 
 // Asegurarse de que toggleCodes esté disponible globalmente

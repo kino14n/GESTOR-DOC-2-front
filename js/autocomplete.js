@@ -15,7 +15,7 @@ export function initAutocompleteCodigo() {
 
     // Evento que se dispara cada vez que el usuario escribe en el input
     codeInput.addEventListener('input', () => {
-        clearTimeout(timeout); // Limpia cualquier temporizador anterior
+        clearTimeout(timeout); // Limpia cualquier temporador anterior
         const query = codeInput.value.trim(); 
 
         // Oculta las sugerencias si la consulta es muy corta o vacía
