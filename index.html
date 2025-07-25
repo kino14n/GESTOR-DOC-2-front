@@ -12,7 +12,7 @@
   <link href="css/main.css" rel="stylesheet" />
   <link href="css/modals.css" rel="stylesheet" />
   <style>
-    /* Estilos del modal que se habían movido a index.html o añadidos */
+    /* Estilos del modal y generales */
     .overlay { position: fixed; top:0; left:0; width:100vw; height:100vh; background: rgba(0,0,0,0.6); display:flex; align-items:center; justify-content:center; z-index:9999; }
     .overlay.hidden { display:none; }
     .modal { background:white; border-radius:0.5rem; max-width:320px; width:90%; padding:1.5rem; box-shadow:0 2px 10px rgba(0,0,0,0.3); text-align:center; }
@@ -70,6 +70,8 @@
       .btn { padding: 0.5rem; font-size: 0.875rem; }
       textarea, input { font-size: 0.875rem; }
     }
+
+    /* ESTILO CORREGIDO PARA LAS SUGERENCIAS - NO DEBE TENER 'display: none;' AQUÍ */
     #suggestions {
       position: absolute;
       top: 100%;
@@ -82,13 +84,17 @@
       max-height: 12rem;
       overflow-y: auto;
       -webkit-overflow-scrolling: touch;
-      /* ¡ELIMINA LA SIGUIENTE LÍNEA! */
-      /* display: none; */ 
+      /* ¡IMPORTANTE! Asegúrate de que esta línea NO exista aquí: display: none; */
       z-index: 9999;
     }
     #suggestions div:hover {
       background-color: #f3f4f6;
       cursor: pointer;
+    }
+
+    /* Clase 'hidden' para ocultar/mostrar elementos con JavaScript */
+    .hidden {
+      display: none !important; /* Usamos !important para asegurar que esta clase prevalezca */
     }
   </style>
 </head>
@@ -124,10 +130,10 @@
 
     <nav class="border-b bg-white shadow-sm">
       <ul id="tabs" class="flex">
-        <li class="tab flex-1 text-center cursor-pointer px-6 py-4 active" data-tab="tab-search">Buscar</li>
-        <li class="tab flex-1 text-center cursor-pointer px-6 py-4" data-tab="tab-upload">Subir</li>
-        <li class="tab flex-1 text-center cursor-pointer px-6 py-4" data-tab="tab-list">Consultar</li>
-        <li class="tab flex-1 text-center cursor-pointer px-6 py-4" data-tab="tab-code">Buscar por Código</li>
+        <li class="tab flex-1 text-center cursor-pointer px-6 py-4 active" data-tab="tab-search" onclick="showTab('tab-search')">Buscar</li>
+        <li class="tab flex-1 text-center cursor-pointer px-6 py-4" data-tab="tab-upload" onclick="showTab('tab-upload')">Subir</li>
+        <li class="tab flex-1 text-center cursor-pointer px-6 py-4" data-tab="tab-list" onclick="showTab('tab-list')">Consultar</li>
+        <li class="tab flex-1 text-center cursor-pointer px-6 py-4" data-tab="tab-code" onclick="showTab('tab-code')">Buscar por Código</li>
       </ul>
     </nav>
 
@@ -217,16 +223,17 @@
   <script src="js/upload.js" type="module"></script>
 
   <script type="module">
+    // Importaciones para hacer funciones globales disponibles
     import { cargarConsulta, clearConsultFilter, doConsultFilter, downloadCsv } from './js/consulta.js';
     import { initAutocompleteCodigo } from './js/autocomplete.js';
-    import { requireAuth } from './js/auth.js'; // Importar requireAuth aquí
+    import { requireAuth } from './js/auth.js'; 
 
     // Hacer globales las funciones para los onClick del HTML
-    // AHORA ESTA FUNCIÓN ES PARA LA BÚSQUEDA ÓPTIMA
+    // FUNCIONES DE LA PESTAÑA "BUSCAR" (BÚSQUEDA ÓPTIMA)
     window.doOptimaSearch = async function () {
-      const text = document.getElementById('optimaSearchInput').value.trim(); // ID cambiado
+      const text = document.getElementById('optimaSearchInput').value.trim();
       const alertDiv = document.getElementById('search-alert');
-      const resultsDiv = document.getElementById('results-optima-search'); // ID cambiado
+      const resultsDiv = document.getElementById('results-optima-search');
       alertDiv.textContent = '';
       resultsDiv.innerHTML = '';
       if(text.length < 1){
@@ -234,13 +241,13 @@
         return;
       }
 
-      requireAuth(async () => { // Proteger la búsqueda con autenticación
-        // Endpoint Óptimo
+      // Protección con autenticación
+      requireAuth(async () => {
         try {
           const res = await fetch('https://gestor-doc-backend-production.up.railway.app/api/documentos/search_optima', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ codigos: text }) // Cambiado a 'codigos'
+            body: JSON.stringify({ codigos: text })
           });
           
           if (!res.ok) {
@@ -284,17 +291,18 @@
       });
     }
 
-    // AHORA ESTA FUNCIÓN ES PARA LIMPIAR LA BÚSQUEDA ÓPTIMA
     window.clearOptimaSearch = function () {
-      document.getElementById('optimaSearchInput').value = ''; // ID cambiado
+      document.getElementById('optimaSearchInput').value = '';
       document.getElementById('search-alert').textContent = '';
-      document.getElementById('results-optima-search').innerHTML = ''; // ID cambiado
+      document.getElementById('results-optima-search').innerHTML = '';
     }
     
-    // Funciones de otras pestañas (mantienen su lógica original)
+    // FUNCIONES DE LA PESTAÑA "CONSULTAR"
     window.doConsultFilter = doConsultFilter;
     window.clearConsultFilter = clearConsultFilter;
     window.downloadCsv = downloadCsv;
+
+    // FUNCIONES DE LA PESTAÑA "BUSCAR POR CÓDIGO"
     window.doCodeSearch = async function () {
       const input = document.getElementById('codeInput');
       const code = input.value.trim();
@@ -304,28 +312,30 @@
         resultsDiv.innerHTML = '<p>Escribe un código para buscar.</p>';
         return;
       }
-      try {
-        const res = await fetch('https://gestor-doc-backend-production.up.railway.app/api/documentos/search_by_code', {
-          method: 'POST',
-          headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify({ codigo: code })
-        });
-        const data = await res.json();
-        if(data.length === 0){
-          resultsDiv.innerHTML = '<p>No se encontró ningún documento con ese código.</p>';
-          return;
+      requireAuth(async () => { // Proteger la búsqueda con autenticación
+        try {
+          const res = await fetch('https://gestor-doc-backend-production.up.railway.app/api/documentos/search_by_code', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ codigo: code })
+          });
+          const data = await res.json();
+          if(data.length === 0){
+            resultsDiv.innerHTML = '<p>No se encontró ningún documento con ese código.</p>';
+            return;
+          }
+          resultsDiv.innerHTML = data.map(doc => `
+            <div class="border p-4 rounded shadow">
+              <h3 class="font-semibold">${doc.name}</h3>
+              <p><b>Fecha:</b> ${doc.date || ''}</p>
+              <p><b>Códigos:</b> ${doc.codigos_extraidos || ''}</p>
+              <p><b>PDF:</b> ${doc.path ? `<a href="uploads/${doc.path}" target="_blank" class="text-blue-600 underline">${doc.path}</a>` : ''}</p>
+            </div>
+          `).join('');
+        } catch(e) {
+          resultsDiv.innerHTML = '<p>Error en la búsqueda por código.</p>';
         }
-        resultsDiv.innerHTML = data.map(doc => `
-          <div class="border p-4 rounded shadow">
-            <h3 class="font-semibold">${doc.name}</h3>
-            <p><b>Fecha:</b> ${doc.date || ''}</p>
-            <p><b>Códigos:</b> ${doc.codigos_extraidos || ''}</p>
-            <p><b>PDF:</b> ${doc.path ? `<a href="uploads/${doc.path}" target="_blank" class="text-blue-600 underline">${doc.path}</a>` : ''}</p>
-          </div>
-        `).join('');
-      } catch(e) {
-        resultsDiv.innerHTML = '<p>Error en la búsqueda por código.</p>';
-      }
+      });
     }
 
     // Asegurarse de que toggleCodes esté disponible globalmente (importante para los resultados dinámicos)
@@ -344,10 +354,12 @@
         };
     }
 
-    // Activa autocomplete en pestaña código y la consulta de documentos
+    // Inicialización al cargar la página
     window.onload = () => {
-      initAutocompleteCodigo();
-      cargarConsulta();
+      // Mostrar la pestaña "Buscar" (Óptima) al cargar la página
+      showTab('tab-search'); 
+      initAutocompleteCodigo(); // Inicializa el autocompletado para la pestaña de búsqueda por código
+      cargarConsulta(); // Carga los documentos en la pestaña de consulta
     };
   </script>
 </body>
