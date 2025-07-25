@@ -3,15 +3,11 @@
 import { requireAuth } from './auth.js';
 import { showModalConfirm } from './modals.js';
 import { showToast } from './toasts.js';
-import { loadDocumentForEdit } from './upload.js'; // Importar la nueva función de upload.js
-
-// Estas funciones se exportan para ser usadas dentro de este módulo o por otros módulos que las importen.
-// No necesitan ser globales (window.xxx) porque se llamarán a través de event listeners.
+import { loadDocumentForEdit } from './upload.js'; 
 
 export async function editarDoc(id) { 
   await requireAuth(async () => {
     try {
-      // AQUÍ SE CORRIGE LA SOLICITUD A MÉTODO GET PARA OBTENER UN DOCUMENTO
       const res = await fetch(`https://gestor-doc-backend-production.up.railway.app/api/documentos/${id}`, { method: 'GET' });
       if (!res.ok) {
         const errorData = await res.json();
@@ -20,10 +16,9 @@ export async function editarDoc(id) {
       }
       const docData = await res.json();
 
-      // Asegúrate de que showTab sea global o esté importada de main.js
       if (typeof window.showTab === 'function') {
-        window.showTab('tab-upload'); // Cambiar a la pestaña de subir/editar
-        loadDocumentForEdit(docData); // Cargar los datos en el formulario de edición
+        window.showTab('tab-upload'); 
+        loadDocumentForEdit(docData); 
         showToast('Documento listo para editar', true);
       } else {
         console.error('window.showTab no está definida. No se puede cambiar de pestaña.');
@@ -38,37 +33,52 @@ export async function editarDoc(id) {
 }
 
 export function eliminarDoc(id) {
+  console.log('eliminarDoc: Iniciando para ID:', id); // LOG 1: ¿Se ejecuta la función?
   requireAuth(() => {
+    console.log('eliminarDoc: requireAuth callback ejecutado.'); // LOG 2: ¿Se autentica y continúa?
     showModalConfirm('¿Seguro que desea eliminar?', async () => {
+      console.log('eliminarDoc: Confirmación de modal aceptada. Procediendo a eliminar...'); // LOG 3: ¿Se acepta la confirmación?
       try {
+        console.log('eliminarDoc: Intentando fetch DELETE para ID:', id); // LOG 4: ¿Se llega a la línea del fetch?
         const res = await fetch(`https://gestor-doc-backend-production.up.railway.app/api/documentos?id=${id}`, { method: 'DELETE' });
-        const data = await res.json();
-        if(data.ok){
-          cargarConsulta(); // Recargar la lista de documentos después de eliminar
-          showToast('Documento eliminado correctamente', true); 
+        console.log('eliminarDoc: Fetch DELETE completado, respuesta:', res); // LOG 5: ¿El fetch tuvo éxito a nivel de red?
+        
+        // Verifica si la respuesta es parseable como JSON antes de intentar
+        const contentType = res.headers.get("content-type");
+        if (contentType && contentType.indexOf("application/json") !== -1) {
+            const data = await res.json();
+            console.log('eliminarDoc: Respuesta JSON del backend:', data); // LOG 6: ¿Qué devuelve el backend?
+            if(data.ok){
+              console.log('eliminarDoc: Documento eliminado con éxito (backend respondió OK).'); // LOG 7: ¿El backend confirmó OK?
+              cargarConsulta(); 
+              showToast('Documento eliminado correctamente', true); 
+            } else {
+              console.error('eliminarDoc: El backend respondió con error:', data.error || 'Mensaje de error desconocido'); // LOG 8: ¿El backend informó un error?
+              showToast('Error eliminando documento: ' + (data.error || res.statusText || 'Error desconocido del servidor'), false);
+            }
         } else {
-          showToast('Error eliminando documento: ' + (data.error || res.statusText), false);
+            const textResponse = await res.text();
+            console.error('eliminarDoc: Respuesta no es JSON. Status:', res.status, 'Respuesta:', textResponse); // LOG 9: ¿Backend devuelve HTML/texto en lugar de JSON?
+            showToast('Error: El servidor no devolvió una respuesta JSON válida.', false);
         }
       } catch(e){
-        showToast('Error en la eliminación', false);
-        console.error(e);
+        console.error('eliminarDoc: Error crítico en el bloque try-catch (problema de red o JS):', e); // LOG 10: ¿Error antes o durante el fetch?
+        showToast('Error grave en la eliminación', false);
       }
     });
   });
 }
 
-// Función principal para cargar y mostrar los documentos
 export async function cargarConsulta() {
   const container = document.getElementById('results-list');
-  // Eliminar el event listener antiguo antes de añadir uno nuevo para evitar duplicados
   const oldListenerId = container.dataset.listenerId;
   if (oldListenerId && window[oldListenerId]) {
       container.removeEventListener('click', window[oldListenerId]);
-      delete window[oldListenerId]; // Limpiar la referencia global
+      delete window[oldListenerId]; 
   }
 
   try {
-    const res = await fetch('https://gestor-doc-backend-production.up.railway.app/api/documentos'); // Esta es la llamada que daba 405/500
+    const res = await fetch('https://gestor-doc-backend-production.up.railway.app/api/documentos'); 
     const data = await res.json();
 
     if(data.length === 0){
@@ -76,7 +86,6 @@ export async function cargarConsulta() {
       return;
     }
 
-    // Generar el HTML para cada documento
     container.innerHTML = data.map(doc => `
       <div class="border rounded p-4 mb-2">
         <h3 class="font-semibold">${doc.name}</h3>
@@ -93,8 +102,6 @@ export async function cargarConsulta() {
       </div>
     `).join('');
 
-    // *** DELEGACIÓN DE EVENTOS ***
-    // Adjunta un único event listener al contenedor principal (#results-list)
     const newListenerId = `consultContainerListener-${Date.now()}`;
     window[newListenerId] = (event) => {
         const target = event.target; 
