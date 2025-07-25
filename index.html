@@ -142,8 +142,8 @@
         <h2 class="text-xl font-semibold mb-4">Búsqueda Óptima (Inteligente)</h2>
         <textarea id="optimaSearchInput" rows="5" class="w-full border rounded px-3 py-2 text-lg mb-4" placeholder="Pega aquí uno o varios códigos, nombres o bloques de texto…"></textarea>
         <div class="flex gap-4 mb-4">
-          <button onclick="doOptimaSearch()" class="btn btn--primary btn--flex1 text-lg">Buscar</button>
-          <button onclick="clearOptimaSearch()" class="btn btn--secondary btn--flex1 text-lg">Limpiar</button>
+          <button id="doOptimaSearchButton" class="btn btn--primary btn--flex1 text-lg">Buscar</button>
+          <button id="clearOptimaSearchButton" class="btn btn--secondary btn--flex1 text-lg">Limpiar</button>
         </div>
         <div id="search-alert" class="text-red-600 font-medium text-lg mb-4"></div>
         <div id="results-optima-search" class="space-y-4"></div>
@@ -207,7 +207,7 @@
             class="absolute top-full left-0 right-0 bg-white border rounded-b px-2 shadow max-h-48 overflow-auto hidden z-20"
           ></div>
         </div>
-        <button onclick="doCodeSearch()" class="btn btn--primary btn--full mb-4 text-lg">Buscar por Código</button>
+        <button id="doCodeSearchButton" class="btn btn--primary btn--full mb-4 text-lg">Buscar por Código</button>
         <div id="results-code" class="space-y-4"></div>
       </div>
     </div>

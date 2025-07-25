@@ -1,5 +1,5 @@
 import { cargarConsulta } from './consulta.js';
-import { initUploadForm } from './upload.js'; // Importación corregida
+import { initUploadForm } from './upload.js'; 
 import { requireAuth } from './auth.js';
 import { initAutocompleteCodigo } from './autocomplete.js'; 
 
@@ -29,9 +29,7 @@ window.showTab = function(tabId) {
     if (tabId === 'tab-list') { 
         cargarConsulta();
     } else if (tabId === 'tab-code') {
-        // No re-inicializar initAutocompleteCodigo aquí si ya se hace en DOMContentLoaded
-        // Solo asegurar que el input esté enfocado si es deseado
-        // initAutocompleteCodigo(); 
+        // initAutocompleteCodigo() ya se llama en DOMContentLoaded, no es necesario re-llamar aquí
     }
 };
 
@@ -48,11 +46,9 @@ document.addEventListener('DOMContentLoaded', () => {
     initUploadForm(); 
 
     // Mostrar la pestaña "Buscar" (Óptima) al cargar la página por defecto
-    // Usar el ID de la pestaña 'data-tab'
     showTab('tab-search'); 
 
     // Inicializa el autocompletado para la pestaña de búsqueda por código
-    // Se ejecuta una vez al cargar la página para que el listener esté listo
     initAutocompleteCodigo(); 
     
     // Lógica para la Pestaña "Buscar" (Búsqueda Óptima)
@@ -131,10 +127,9 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // FUNCIONES DE LA PESTAÑA "BUSCAR POR CÓDIGO" (movidas aquí)
-    // Línea 130 del error anterior: esta línea no usa 'class'
-    const doCodeSearchButton = document.querySelector('#tab-code button[onclick="doCodeSearch()"]'); 
-    const clearCodeSearchButton = document.querySelector('#tab-code button[onclick="clearSearchByCode()"]'); 
+    // Lógica para la Pestaña "BUSCAR POR CÓDIGO"
+    const doCodeSearchButton = document.getElementById('doCodeSearchButton');
+    const clearCodeSearchButton = document.getElementById('clearCodeSearchButton'); 
 
     if (doCodeSearchButton) {
         doCodeSearchButton.addEventListener('click', async () => {
