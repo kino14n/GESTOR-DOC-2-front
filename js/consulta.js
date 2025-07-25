@@ -3,14 +3,11 @@
 import { requireAuth } from './auth.js';
 import { showModalConfirm } from './modals.js';
 import { showToast } from './toasts.js';
-// Corrección aquí: loadDocumentForEdit debe importarse, no estar en window
 import { loadDocumentForEdit } from './upload.js'; 
 
-// Funciones de acción para los botones de la lista (Editar, Eliminar)
 export async function editarDoc(id) { 
   await requireAuth(async () => {
     try {
-      // *** VUELTA A FLASK: Endpoint GET para obtener un solo documento ***
       const res = await fetch(`https://gestor-doc-backend-production.up.railway.app/api/documentos/${id}`, { method: 'GET' });
       if (!res.ok) {
         const errorData = await res.json();
@@ -21,7 +18,7 @@ export async function editarDoc(id) {
 
       if (typeof window.showTab === 'function') {
         window.showTab('tab-upload'); 
-        loadDocumentForEdit(docData); // Flask devuelve codigos_extraidos
+        loadDocumentForEdit(docData); 
         showToast('Documento listo para editar', true);
       } else {
         console.error('window.showTab no está definida. No se puede cambiar de pestaña.');
@@ -42,8 +39,8 @@ export function eliminarDoc(id) {
     showModalConfirm('¿Seguro que desea eliminar?', async () => {
       console.log('eliminarDoc: Confirmación de modal aceptada. Procediendo a eliminar...'); 
       try {
-        // *** VUELTA A FLASK: Endpoint DELETE con ID por query param ***
-        const res = await fetch(`https://gestor-doc-backend-production.up.railway.app/api/documentos?id=${id}`, { method: 'DELETE' });
+        // *** CAMBIO CRÍTICO: La URL ahora usa el ID en el path para el DELETE ***
+        const res = await fetch(`https://gestor-doc-backend-production.up.railway.app/api/documentos/${id}`, { method: 'DELETE' });
         console.log('eliminarDoc: Fetch DELETE completado, respuesta:', res); 
         
         const contentType = res.headers.get("content-type");
@@ -82,7 +79,6 @@ export async function cargarConsulta() {
   }
 
   try {
-    // *** VUELTA A FLASK: Endpoint GET para listar todos los documentos ***
     const res = await fetch('https://gestor-doc-backend-production.up.railway.app/api/documentos', { method: 'GET' }); 
     const data = await res.json(); 
     console.log('cargarConsulta: Datos recibidos del Flask backend:', data); 
@@ -155,11 +151,9 @@ export function doConsultFilter() {
 }
 
 export function downloadCsv() {
-  // *** VUELTA A FLASK: Endpoint con query param para CSV ***
   window.open('https://gestor-doc-backend-production.up.railway.app/api/documentos?exportar=csv', '_blank'); 
 }
 
 export function downloadPdfs() {
-  // *** VUELTA A FLASK: Sin endpoint específico para PDF, solo el alert ***
   alert('Función para descargar PDFs pendiente en Flask backend.');
 }
