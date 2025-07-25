@@ -30,8 +30,6 @@ export function initAutocompleteCodigo() {
             console.log('Realizando fetch para sugerencias con query (autocomplete):', query); 
             await requireAuth(async () => {
                 try {
-                    // *** VUELTA A FLASK: Endpoint search_by_code, método POST, cuerpo JSON ***
-                    // Flask `search_by_code` devuelve documentos, no solo una lista de códigos
                     const res = await fetch('https://gestor-doc-backend-production.up.railway.app/api/documentos/search_by_code', {
                         method: 'POST',
                         headers: {
@@ -47,17 +45,17 @@ export function initAutocompleteCodigo() {
                         return;
                     }
 
-                    const data = await res.json(); // Flask devuelve un array de documentos
+                    const data = await res.json(); 
                     console.log('Respuesta backend (sugerencias):', data); 
 
                     const uniqueCodes = new Set(); 
 
-                    // *** VUELTA A FLASK: Iterar sobre documentos y extraer `codigos_extraidos` ***
                     data.forEach(doc => {
                         if (doc.codigos_extraidos) {
                             doc.codigos_extraidos.split(',').forEach(code => {
                                 const trimmedCode = code.trim().toUpperCase(); 
-                                if (trimmedCode.includes(query.toUpperCase()) && trimmedCode.length > query.length) { 
+                                // *** CAMBIO CLAVE AQUÍ: Eliminamos la condición de longitud ***
+                                if (trimmedCode.includes(query.toUpperCase())) { // Ahora solo si lo CONTIENE
                                     uniqueCodes.add(trimmedCode);
                                 }
                             });
