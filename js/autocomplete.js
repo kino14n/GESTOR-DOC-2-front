@@ -3,7 +3,7 @@
 import { requireAuth } from './auth.js'; 
 
 export function initAutocompleteCodigo() {
-    console.log('initAutocompleteCodigo: Función inicializada.'); // LOG 1
+    console.log('initAutocompleteCodigo: Función inicializada.'); 
     const codeInput = document.getElementById('codeInput');
     const suggestionsDiv = document.getElementById('suggestions');
 
@@ -14,25 +14,24 @@ export function initAutocompleteCodigo() {
 
     let timeout = null; 
 
-    // Evento que se dispara cada vez que el usuario escribe en el input
     codeInput.addEventListener('input', () => {
         clearTimeout(timeout); 
         const query = codeInput.value.trim(); 
-        console.log('Input digitado:', query); // LOG 2
+        console.log('Input digitado (autocomplete):', query); 
 
-        // Oculta las sugerencias si la consulta es muy corta o vacía
         if (query.length < 1) { 
             suggestionsDiv.innerHTML = '';
             suggestionsDiv.classList.add('hidden'); 
-            console.log('Consulta muy corta, sugerencias ocultas.'); // LOG 3
+            console.log('Consulta muy corta (autocomplete), sugerencias ocultas.'); 
             return;
         }
 
-        // Establece un retardo antes de hacer la búsqueda
         timeout = setTimeout(async () => {
-            console.log('Realizando fetch para sugerencias con query:', query); // LOG 4
+            console.log('Realizando fetch para sugerencias con query (autocomplete):', query); 
             await requireAuth(async () => {
                 try {
+                    // *** VUELTA A FLASK: Endpoint search_by_code, método POST, cuerpo JSON ***
+                    // Flask `search_by_code` devuelve documentos, no solo una lista de códigos
                     const res = await fetch('https://gestor-doc-backend-production.up.railway.app/api/documentos/search_by_code', {
                         method: 'POST',
                         headers: {
@@ -42,22 +41,22 @@ export function initAutocompleteCodigo() {
                     });
 
                     if (!res.ok) {
-                        console.error('Error al obtener sugerencias:', res.statusText);
-                        suggestionsDiv.innerHTML = '<p class="text-red-500 p-2">Error al cargar sugerencias.</p>';
+                        console.error('Error al obtener sugerencias (autocomplete):', res.statusText);
+                        suggestionsDiv.innerHTML = `<p class="text-red-500 p-2">Error al cargar sugerencias.</p>`;
                         suggestionsDiv.classList.remove('hidden'); 
                         return;
                     }
 
-                    const data = await res.json(); 
-                    console.log('Respuesta backend (data):', data); // LOG 5
+                    const data = await res.json(); // Flask devuelve un array de documentos
+                    console.log('Respuesta backend (sugerencias):', data); 
 
                     const uniqueCodes = new Set(); 
 
+                    // *** VUELTA A FLASK: Iterar sobre documentos y extraer `codigos_extraidos` ***
                     data.forEach(doc => {
                         if (doc.codigos_extraidos) {
                             doc.codigos_extraidos.split(',').forEach(code => {
                                 const trimmedCode = code.trim().toUpperCase(); 
-                                // Solo añade sugerencias que *contengan* la consulta y sean más largas que la consulta
                                 if (trimmedCode.includes(query.toUpperCase()) && trimmedCode.length > query.length) { 
                                     uniqueCodes.add(trimmedCode);
                                 }
@@ -65,12 +64,12 @@ export function initAutocompleteCodigo() {
                         }
                     });
 
-                    console.log('Códigos únicos encontrados para sugerir:', Array.from(uniqueCodes)); // LOG 6
+                    console.log('Códigos únicos encontrados para sugerir (autocomplete):', Array.from(uniqueCodes)); 
                     displaySuggestions(Array.from(uniqueCodes)); 
 
                 } catch (error) {
                     console.error('Error fetching autocomplete suggestions:', error);
-                    suggestionsDiv.innerHTML = '<p class="text-red-500 p-2">Error en la red.</p>';
+                    suggestionsDiv.innerHTML = `<p class="text-red-500 p-2">Error en la red.</p>`;
                     suggestionsDiv.classList.remove('hidden');
                 }
             });
@@ -78,11 +77,11 @@ export function initAutocompleteCodigo() {
     });
 
     function displaySuggestions(suggestions) {
-        console.log('displaySuggestions: Mostrando sugerencias:', suggestions); // LOG 7
+        console.log('displaySuggestions: Mostrando sugerencias (autocomplete):', suggestions); 
         suggestionsDiv.innerHTML = ''; 
         if (suggestions.length === 0) {
             suggestionsDiv.classList.add('hidden'); 
-            console.log('No hay sugerencias, div oculto.'); // LOG 8
+            console.log('No hay sugerencias (autocomplete), div oculto.'); 
             return;
         }
 
@@ -100,8 +99,8 @@ export function initAutocompleteCodigo() {
             });
             suggestionsDiv.appendChild(suggestionItem); 
         });
-        suggestionsDiv.classList.remove('hidden'); // Muestra el contenedor
-        console.log('Sugerencias mostradas, div visible.'); // LOG 9
+        suggestionsDiv.classList.remove('hidden'); 
+        console.log('Sugerencias mostradas (autocomplete), div visible.'); 
     }
 
     document.addEventListener('click', (event) => {

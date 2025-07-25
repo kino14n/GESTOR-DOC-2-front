@@ -3,23 +3,25 @@
 import { requireAuth } from './auth.js';
 import { showModalConfirm } from './modals.js';
 import { showToast } from './toasts.js';
+// Corrección aquí: loadDocumentForEdit debe importarse, no estar en window
 import { loadDocumentForEdit } from './upload.js'; 
 
+// Funciones de acción para los botones de la lista (Editar, Eliminar)
 export async function editarDoc(id) { 
   await requireAuth(async () => {
     try {
-      // Nota: Esta URL para obtener un solo documento podría necesitar un cambio si tu PHP no tiene acción 'get_single' o similar
-      const res = await fetch(`https://gestor-doc-backend-production.up.railway.app/api.php?action=get_documento&id=${id}`, { method: 'GET' });
+      // *** VUELTA A FLASK: Endpoint GET para obtener un solo documento ***
+      const res = await fetch(`https://gestor-doc-backend-production.up.railway.app/api/documentos/${id}`, { method: 'GET' });
       if (!res.ok) {
         const errorData = await res.json();
         showToast(`Error al cargar documento: ${errorData.error || res.statusText}`, false);
         return;
       }
-      const docData = await res.json();
+      const docData = await res.json(); 
 
       if (typeof window.showTab === 'function') {
         window.showTab('tab-upload'); 
-        loadDocumentForEdit(docData); 
+        loadDocumentForEdit(docData); // Flask devuelve codigos_extraidos
         showToast('Documento listo para editar', true);
       } else {
         console.error('window.showTab no está definida. No se puede cambiar de pestaña.');
@@ -40,21 +42,22 @@ export function eliminarDoc(id) {
     showModalConfirm('¿Seguro que desea eliminar?', async () => {
       console.log('eliminarDoc: Confirmación de modal aceptada. Procediendo a eliminar...'); 
       try {
-        // *** CAMBIO CRÍTICO AQUÍ: Nueva URL para el backend PHP ***
-        const res = await fetch(`https://gestor-doc-backend-production.up.railway.app/api.php?action=delete&id=${id}`, { method: 'GET' }); // El PHP usa GET para delete
-        console.log('eliminarDoc: Fetch para DELETE completado, respuesta:', res); 
+        // *** VUELTA A FLASK: Endpoint DELETE con ID por query param ***
+        const res = await fetch(`https://gestor-doc-backend-production.up.railway.app/api/documentos?id=${id}`, { method: 'DELETE' });
+        console.log('eliminarDoc: Fetch DELETE completado, respuesta:', res); 
         
         const contentType = res.headers.get("content-type");
         if (contentType && contentType.indexOf("application/json") !== -1) {
             const data = await res.json();
             console.log('eliminarDoc: Respuesta JSON del backend:', data); 
-            if(data.message && data.message === 'Documento eliminado'){ // PHP devuelve 'message', no 'ok'
-              console.log('eliminarDoc: Documento eliminado con éxito (backend respondió mensaje).'); 
+            // Flask devuelve {ok: true}
+            if(data.ok){ 
+              console.log('eliminarDoc: Documento eliminado con éxito (backend respondió OK).'); 
               cargarConsulta(); 
               showToast('Documento eliminado correctamente', true); 
             } else {
-              console.error('eliminarDoc: El backend respondió con error o mensaje inesperado:', data.error || data.message || 'Mensaje de error desconocido'); 
-              showToast('Error eliminando documento: ' + (data.error || data.message || res.statusText || 'Error desconocido del servidor'), false);
+              console.error('eliminarDoc: El backend respondió con error:', data.error || 'Mensaje de error desconocido'); 
+              showToast('Error eliminando documento: ' + (data.error || res.statusText || 'Error desconocido del servidor'), false);
             }
         } else {
             const textResponse = await res.text();
@@ -69,6 +72,7 @@ export function eliminarDoc(id) {
   });
 }
 
+// Función principal para cargar y mostrar los documentos en la pestaña 'Consultar'
 export async function cargarConsulta() {
   const container = document.getElementById('results-list');
   const oldListenerId = container.dataset.listenerId;
@@ -78,23 +82,24 @@ export async function cargarConsulta() {
   }
 
   try {
-    // *** CAMBIO CRÍTICO AQUÍ: Nueva URL para el backend PHP - Acción LIST ***
-    const res = await fetch('https://gestor-doc-backend-production.up.railway.app/api.php?action=list&per_page=0', { method: 'GET' }); // Usar per_page=0 para listar todos
-    const data = await res.json();
-    console.log('cargarConsulta: Datos recibidos del PHP backend:', data); // Log para ver la estructura
+    // *** VUELTA A FLASK: Endpoint GET para listar todos los documentos ***
+    const res = await fetch('https://gestor-doc-backend-production.up.railway.app/api/documentos', { method: 'GET' }); 
+    const data = await res.json(); 
+    console.log('cargarConsulta: Datos recibidos del Flask backend:', data); 
 
-    if(!data.data || data.data.length === 0){ // PHP devuelve 'data' dentro del objeto principal
+    if(!data || data.length === 0){ 
       container.innerHTML = '<p>No hay documentos.</p>';
       return;
     }
 
-    container.innerHTML = data.data.map(doc => ` <div class="border rounded p-4 mb-2">
+    container.innerHTML = data.map(doc => ` 
+      <div class="border rounded p-4 mb-2">
         <h3 class="font-semibold">${doc.name}</h3>
         <p><b>Fecha:</b> ${doc.date || ''}</p>
         <p>PDF: ${doc.path ? `<a href="uploads/${doc.path}" target="_blank" class="text-blue-600 underline">${doc.path}</a>` : 'N/A'}</p>
         <div class="mt-2">
             <button class="btn btn--secondary btn--sm" data-action="toggleCodes">Mostrar Códigos</button>
-            <p class="codes-container hidden mt-1 text-sm text-gray-700">${(Array.isArray(doc.codes) ? doc.codes.join('<br>') : doc.codes || '')}</p>
+            <p class="codes-container hidden mt-1 text-sm text-gray-700">${(doc.codigos_extraidos || '').split(',').join('<br>')}</p>
         </div>
         <div class="mt-4">
             <button class="btn btn--primary mr-2" data-action="edit" data-id="${doc.id}">Editar</button>
@@ -119,7 +124,7 @@ export async function cargarConsulta() {
                 if (typeof window.toggleCodes === 'function') {
                     window.toggleCodes(target); 
                 } else {
-                    console.warn('La función window.toggleCodes no está definida. Asegúrate de que main.js la exponga globalmente.');
+                    console.warn('La función window.toggleCodes no está definida.');
                 }
             }
         }
@@ -129,10 +134,11 @@ export async function cargarConsulta() {
 
   } catch(e){
     container.innerHTML = '<p>Error cargando documentos.</p>';
-    console.error('Error al cargar consulta:', e); // Log más descriptivo
+    console.error('Error al cargar consulta:', e); 
   }
 }
 
+// Funciones para filtrar y descargar
 export function clearConsultFilter() {
   document.getElementById('consultFilterInput').value = '';
   cargarConsulta(); 
@@ -149,11 +155,11 @@ export function doConsultFilter() {
 }
 
 export function downloadCsv() {
-  // Ajustar si la descarga CSV también se maneja por action en api.php
-  window.open('https://gestor-doc-backend-production.up.railway.app/api.php?action=export_csv', '_blank'); // Suponiendo una acción 'export_csv'
+  // *** VUELTA A FLASK: Endpoint con query param para CSV ***
+  window.open('https://gestor-doc-backend-production.up.railway.app/api/documentos?exportar=csv', '_blank'); 
 }
 
 export function downloadPdfs() {
-  // Ajustar si la descarga de PDFs también se maneja por action en api.php
-  alert('Función para descargar PDFs pendiente en PHP backend. Usaría api.php?action=download_pdfs');
+  // *** VUELTA A FLASK: Sin endpoint específico para PDF, solo el alert ***
+  alert('Función para descargar PDFs pendiente en Flask backend.');
 }

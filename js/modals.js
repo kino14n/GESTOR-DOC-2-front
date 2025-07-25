@@ -6,11 +6,11 @@ export function showModalLogin(onSuccess) {
       console.error('Contenedor #modals no encontrado para showModalLogin.');
       return;
   }
-  modalsContainer.innerHTML = ''; // Limpiar cualquier modal anterior
+  modalsContainer.innerHTML = ''; 
 
   const overlay = document.createElement('div');
   overlay.id = 'loginOverlay';
-  overlay.className = 'overlay'; // Asumiendo que 'overlay' tiene display:flex por defecto en CSS
+  overlay.className = 'overlay'; 
   
   const modalDiv = document.createElement('div');
   modalDiv.className = 'modal';
@@ -31,12 +31,14 @@ export function showModalLogin(onSuccess) {
       submitAccessButton.addEventListener('click', () => {
           const clave = accessInput.value;
           if(clave === 'tuClaveAdmin'){ // <<-- CAMBIA 'tuClaveAdmin' POR TU CLAVE REAL
-              modalsContainer.innerHTML = ''; // Limpiar el modal
+              modalsContainer.innerHTML = ''; 
+              overlay.classList.add('hidden'); 
               if(typeof onSuccess === 'function') onSuccess();
           } else {
               alert('Clave incorrecta'); 
           }
       });
+      overlay.classList.remove('hidden');
   } else {
       console.error('showModalLogin: Elementos del modal de login no encontrados o incompletos.');
   }
@@ -48,13 +50,13 @@ export function showModalConfirm(message, onConfirm) {
       console.error('Contenedor #modals no encontrado para showModalConfirm.');
       return;
   }
-  modalsContainer.innerHTML = ''; // ¡MUY IMPORTANTE! Limpiar cualquier modal o overlay anterior
+  modalsContainer.innerHTML = ''; 
 
-  console.log('showModalConfirm: Preparando para crear modal de confirmación.'); // LOG INICIO
+  console.log('showModalConfirm: Preparando para crear modal de confirmación.'); 
 
   const overlay = document.createElement('div');
   overlay.id = 'confirmOverlay';
-  overlay.className = 'overlay'; // Asegura que el overlay es visible por CSS
+  overlay.className = 'overlay'; 
 
   const modalDiv = document.createElement('div');
   modalDiv.className = 'modal';
@@ -71,14 +73,16 @@ export function showModalConfirm(message, onConfirm) {
   const confirmOkButton = document.getElementById('confirmOk');
   const confirmCancelButton = document.getElementById('confirmCancel');
 
-  console.log('showModalConfirm: Modal de confirmación agregado al DOM.'); // LOG 1
-  console.log('showModalConfirm: Botón Aceptar obtenido:', confirmOkButton); // LOG 2
-  console.log('showModalConfirm: Botón Cancelar obtenido:', confirmCancelButton); // LOG 3
+  console.log('showModalConfirm: Modal de confirmación agregado al DOM.'); 
+  console.log('showModalConfirm: Botón Aceptar obtenido:', confirmOkButton); 
+  console.log('showModalConfirm: Botón Cancelar obtenido:', confirmCancelButton); 
 
   if (confirmOkButton) {
     confirmOkButton.addEventListener('click', () => {
-      console.log('showModalConfirm: ¡Clic en Aceptar detectado!'); // LOG CLAVE: Si este no aparece, el clic no llega
-      modalsContainer.innerHTML = ''; // Limpiar el modal del DOM
+      console.log('showModalConfirm: ¡Clic en Aceptar detectado!'); 
+      modalsContainer.innerHTML = ''; 
+      overlay.classList.add('hidden'); 
+
       if (typeof onConfirm === 'function') {
         onConfirm(); 
         console.log('showModalConfirm: Callback onConfirm ejecutado.'); 
@@ -94,8 +98,10 @@ export function showModalConfirm(message, onConfirm) {
     confirmCancelButton.addEventListener('click', () => {
       console.log('showModalConfirm: Clic en Cancelar detectado.'); 
       modalsContainer.innerHTML = ''; 
+      overlay.classList.add('hidden'); 
     });
   } else {
     console.error('showModalConfirm: Botón "Cancelar" no encontrado DESPUÉS de crearlo.');
   }
+  overlay.classList.remove('hidden');
 }

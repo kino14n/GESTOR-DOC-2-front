@@ -2,7 +2,7 @@
 
 import { showToast } from './toasts.js'; 
 
-// Esta función se EXPORTA ahora
+// Esta función ahora se EXPORTA para ser importada por otros módulos
 export function loadDocumentForEdit(docData) {
     const form = document.getElementById('form-upload');
     const docIdInput = document.getElementById('docId');
@@ -11,7 +11,7 @@ export function loadDocumentForEdit(docData) {
     const codesTextarea = document.getElementById('codes');
     const fileInput = document.getElementById('file');
     const uploadWarning = document.getElementById('uploadWarning');
-    const currentPdfInfo = document.getElementById('currentPdfInfo'); // Asumiendo que existe
+    const currentPdfInfo = document.getElementById('currentPdfInfo'); 
 
     if (!form || !docIdInput || !nameInput || !dateInput || !codesTextarea || !fileInput || !uploadWarning) {
         console.error('Elementos del formulario de carga/edición no encontrados.');
@@ -26,10 +26,10 @@ export function loadDocumentForEdit(docData) {
     // Rellenar los campos del formulario con los datos del documento
     docIdInput.value = docData.id || '';
     nameInput.value = docData.name || '';
-    dateInput.value = docData.date ? new Date(docData.date).toISOString().split('T')[0] : ''; // Formato YYYY-MM-DD
-    codesTextarea.value = docData.codigos_extraidos || '';
+    dateInput.value = docData.date ? new Date(docData.date).toISOString().split('T')[0] : ''; 
+    // *** Flask devuelve 'codigos_extraidos' como string, no 'codes' como array ***
+    codesTextarea.value = docData.codigos_extraidos || ''; 
     
-    // Mostrar un mensaje o el nombre del PDF actual si existe
     if (currentPdfInfo) {
       if (docData.path) {
         currentPdfInfo.innerHTML = `PDF actual: <a href="uploads/${docData.path}" target="_blank">${docData.path}</a> (sube uno nuevo para reemplazar)`;
@@ -38,10 +38,8 @@ export function loadDocumentForEdit(docData) {
       }
     }
     
-    // Asegurarse de que el input de archivo esté vacío al editar para no re-subir el mismo archivo
     fileInput.value = '';
 }
-
 
 export function initUploadForm() {
   const form = document.getElementById('form-upload');
@@ -51,30 +49,25 @@ export function initUploadForm() {
 
   if(!form) return;
 
-  // Función para resetear el formulario, incluyendo el ID oculto
   function resetUploadForm() {
     form.reset();
-    docIdInput.value = ''; // Limpiar el ID del documento para asegurar que es una nueva subida
-    uploadWarning.classList.add('hidden'); // Ocultar cualquier advertencia de subida
-    if (fileInput) fileInput.value = ''; // Limpiar el input de tipo file
+    docIdInput.value = ''; 
+    uploadWarning.classList.add('hidden'); 
+    if (fileInput) fileInput.value = ''; 
   }
 
-  // Listener para el envío del formulario
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
-    const formData = new FormData(form);
-    
+    const formData = new FormData(form); 
+
     const documentId = docIdInput.value; 
-    let url = 'https://gestor-doc-backend-production.up.railway.app/api/documentos/upload';
+    // *** VUELTA A FLASK: URLs y métodos adecuados ***
+    let url = 'https://gestor-doc-backend-production.up.railway.app/api/documentos/upload'; // Para subir
     let method = 'POST';
 
     if (documentId) {
-      url = `https://gestor-doc-backend-production.up.railway.app/api/documentos/${documentId}`;
-      method = 'PUT'; 
-      // Eliminar el archivo del formData si no se ha seleccionado uno nuevo (solo si es edición)
-      if (fileInput.files.length === 0) {
-        formData.delete('file'); 
-      }
+      url = `https://gestor-doc-backend-production.up.railway.app/api/documentos/${documentId}`; // Para editar
+      method = 'PUT'; // Flask espera PUT para edición
     }
 
     // Validar tamaño archivo solo si se sube/cambia un archivo
@@ -88,11 +81,12 @@ export function initUploadForm() {
 
     try {
       const res = await fetch(url, {
-        method: method,
-        body: formData 
+        method: method, 
+        body: formData // FormData se usa para POST/PUT con archivos, Flask lo parsea
       });
-      const data = await res.json();
+      const data = await res.json(); 
 
+      // *** VUELTA A FLASK: Flask devuelve {ok: true} ***
       if(data.ok){
         showToast(`Documento ${documentId ? 'actualizado' : 'subido'} correctamente`, true); 
         resetUploadForm(); 
@@ -105,8 +99,6 @@ export function initUploadForm() {
     }
   });
 
-  // Asegurar que el formulario se resetee al cargar la página si no hay ID de documento
-  // Esto es para el caso de nuevas subidas. Si es edición, loadDocumentForEdit lo llenará.
   if (!docIdInput.value) {
     resetUploadForm(); 
   }
