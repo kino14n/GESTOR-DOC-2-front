@@ -3,7 +3,6 @@
 import { requireAuth } from './auth.js'; 
 
 export function initAutocompleteCodigo() {
-    console.log('initAutocompleteCodigo: Función inicializada.'); 
     const codeInput = document.getElementById('codeInput');
     const suggestionsDiv = document.getElementById('suggestions');
 
@@ -17,17 +16,14 @@ export function initAutocompleteCodigo() {
     codeInput.addEventListener('input', () => {
         clearTimeout(timeout); 
         const query = codeInput.value.trim(); 
-        console.log('Input digitado (autocomplete):', query); 
 
         if (query.length < 1) { 
             suggestionsDiv.innerHTML = '';
             suggestionsDiv.classList.add('hidden'); 
-            console.log('Consulta muy corta (autocomplete), sugerencias ocultas.'); 
             return;
         }
 
         timeout = setTimeout(async () => {
-            console.log('Realizando fetch para sugerencias con query (autocomplete):', query); 
             await requireAuth(async () => {
                 try {
                     const res = await fetch('https://gestor-doc-backend-production.up.railway.app/api/documentos/search_by_code', {
@@ -41,60 +37,37 @@ export function initAutocompleteCodigo() {
                     if (!res.ok) {
                         console.error('Error al obtener sugerencias (autocomplete):', res.statusText);
                         suggestionsDiv.innerHTML = `<p class="text-red-500 p-2">Error al cargar sugerencias.</p>`;
-                        suggestionsDiv.classList.remove('hidden'); 
+                        suggestionsDiv.classList.add('hidden'); 
                         return;
                     }
 
-                    const data = await res.json(); 
-                    console.log('Respuesta backend (sugerencias):', data); 
-
-                    const allRelevantCodes = [];
-                    data.forEach(doc => { 
-                        console.log('DEBUG DOCUMENTO:', doc); // Muestra el objeto documento completo
-                        if (doc.codigos_extraidos) { 
-                            console.log('DEBUG codigos_extraidos original:', doc.codigos_extraidos); // Muestra la cadena original
-                            doc.codigos_extraidos.split(',').forEach(code => {
-                                const trimmedCode = code.trim().toUpperCase(); 
-                                const queryUpper = query.toUpperCase(); // La consulta en mayúsculas
-                                
-                                console.log(`DEBUG CODE: '${code}' -> Trimmed: '${trimmedCode}' | Query: '${queryUpper}'`); // LOG clave
-                                
-                                if (trimmedCode.includes(queryUpper)) { 
-                                    allRelevantCodes.push(trimmedCode);
-                                    console.log('DEBUG: AÑADIDO:', trimmedCode); // Muestra si se añadió
-                                } else {
-                                    console.log('DEBUG: NO AÑADIDO (no incluye query)');
-                                }
-                            });
-                        } else {
-                            console.log('DEBUG: Documento sin codigos_extraidos o null/undefined.');
-                        }
-                    });
-
-                    const uniqueSortedSuggestions = Array.from(new Set(allRelevantCodes)).sort();
+                    const data = await res.json(); // 'data' es directamente el array de códigos
                     
-                    console.log('Códigos filtrados y únicos para sugerir (autocomplete):', uniqueSortedSuggestions); 
+                    const uniqueSortedSuggestions = Array.from(new Set(data)).filter(code => {
+                        // *** CAMBIO CLAVE AQUÍ: Usar startsWith() para que comiencen con la consulta ***
+                        // y solo sugerir códigos que sean diferentes a la consulta si la consulta es corta
+                        return code.toUpperCase().startsWith(query.toUpperCase());
+                    }).sort();
+                    
                     displaySuggestions(uniqueSortedSuggestions); 
 
                 } catch (error) {
                     console.error('Error fetching autocomplete suggestions:', error);
                     suggestionsDiv.innerHTML = `<p class="text-red-500 p-2">Error en la red.</p>`;
-                    suggestionsDiv.classList.remove('hidden');
+                    suggestionsDiv.classList.add('hidden');
                 }
             });
         }, 200); 
     });
 
     function displaySuggestions(suggestions) {
-        console.log('displaySuggestions: Mostrando sugerencias (autocomplete):', suggestions); 
         suggestionsDiv.innerHTML = ''; 
         if (suggestions.length === 0) {
             suggestionsDiv.classList.add('hidden'); 
-            console.log('No hay sugerencias (autocomplete), div oculto.'); 
             return;
         }
 
-        suggestions.forEach(suggestion => { // Ya vienen ordenadas
+        suggestions.forEach(suggestion => { 
             const suggestionItem = document.createElement('div');
             suggestionItem.classList.add('p-2', 'cursor-pointer', 'hover:bg-gray-200'); 
             suggestionItem.textContent = suggestion; 
@@ -107,7 +80,6 @@ export function initAutocompleteCodigo() {
             suggestionsDiv.appendChild(suggestionItem); 
         });
         suggestionsDiv.classList.remove('hidden'); 
-        console.log('Sugerencias mostradas (autocomplete), div visible.'); 
     }
 
     document.addEventListener('click', (event) => {
