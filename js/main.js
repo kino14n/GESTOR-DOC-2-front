@@ -5,7 +5,7 @@ import { initAutocompleteCodigo } from './autocomplete.js';
 
 // Función para cambiar de pestaña (global)
 window.showTab = function(tabId) {
-    const tabs = document.querySelectorAll('.tab-content'); // Usar .tab-content para los paneles
+    const tabs = document.querySelectorAll('.tab-content'); 
     tabs.forEach(tab => {
         tab.classList.add('hidden');
     });
@@ -15,10 +15,9 @@ window.showTab = function(tabId) {
         activeTabContent.classList.remove('hidden');
     }
 
-    // Actualiza las clases 'active' de los botones de las pestañas
-    const tabButtons = document.querySelectorAll('.tab'); // Seleccionar los <li> con clase 'tab'
+    const tabButtons = document.querySelectorAll('.tab'); 
     tabButtons.forEach(button => {
-        if (button.dataset.tab === tabId) { // Compara con el data-tab del li
+        if (button.dataset.tab === tabId) { 
             button.classList.add('active');
         } else {
             button.classList.remove('active');
@@ -29,7 +28,7 @@ window.showTab = function(tabId) {
     if (tabId === 'tab-list') { 
         cargarConsulta();
     } else if (tabId === 'tab-code') {
-        // initAutocompleteCodigo() ya se llama en DOMContentLoaded, no es necesario re-llamar aquí
+        // initAutocompleteCodigo() ya se llama en DOMContentLoaded
     }
 };
 
@@ -59,7 +58,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (doOptimaSearchButton) {
         doOptimaSearchButton.addEventListener('click', async () => {
-            requireAuth(async () => { // Proteger la búsqueda con autenticación
+            requireAuth(async () => { 
                 const codigos = optimaSearchInput.value.trim();
                 if (!codigos) {
                     optimaResultsList.innerHTML = '<p class="text-red-500">Por favor, ingrese al menos un código para la búsqueda.</p>';
@@ -69,12 +68,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 optimaResultsList.innerHTML = '<p>Buscando documentos óptimos...</p>';
 
                 try {
+                    // *** VUELTA A FLASK: Endpoint search_optima, método POST, cuerpo JSON ***
                     const res = await fetch('https://gestor-doc-backend-production.up.railway.app/api/documentos/search_optima', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json'
                         },
-                        body: JSON.stringify({ codigos: codigos })
+                        body: JSON.stringify({ codigos: codigos }) 
                     });
 
                     if (!res.ok) {
@@ -83,9 +83,10 @@ document.addEventListener('DOMContentLoaded', () => {
                         return;
                     }
 
-                    const data = await res.json();
+                    const data = await res.json(); 
 
-                    if (data.documentos && data.documentos.length > 0) {
+                    // El backend Flask `search_optima` devuelve {documentos:[], codigos_faltantes:[]}
+                    if (data.documentos && data.documentos.length > 0) { 
                         let htmlContent = `<p class="font-bold mb-2">Se encontraron ${data.documentos.length} documentos para cubrir los códigos:</p>`;
                         htmlContent += data.documentos.map(item => `
                             <div class="border rounded p-4 mb-2 bg-white shadow-sm">
@@ -141,8 +142,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 resultsDiv.innerHTML = '<p>Escribe un código para buscar.</p>';
                 return;
             }
-            requireAuth(async () => { // Proteger la búsqueda con autenticación
+            requireAuth(async () => {
                 try {
+                    // *** VUELTA A FLASK: Endpoint search_by_code, método POST, cuerpo JSON ***
                     const res = await fetch('https://gestor-doc-backend-production.up.railway.app/api/documentos/search_by_code', {
                         method: 'POST',
                         headers: {'Content-Type': 'application/json'},
@@ -162,6 +164,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         </div>
                     `).join('');
                 } catch(e) {
+                    console.error('Error en la búsqueda por código:', e); 
                     resultsDiv.innerHTML = '<p>Error en la búsqueda por código.</p>';
                 }
             });
