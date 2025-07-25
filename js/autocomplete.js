@@ -48,21 +48,29 @@ export function initAutocompleteCodigo() {
                     const data = await res.json(); 
                     console.log('Respuesta backend (sugerencias):', data); 
 
-                    // --- CAMBIO CLAVE AQUÍ: Lógica de extracción de códigos más simple ---
                     const allRelevantCodes = [];
                     data.forEach(doc => { 
+                        console.log('DEBUG DOCUMENTO:', doc); // Muestra el objeto documento completo
                         if (doc.codigos_extraidos) { 
+                            console.log('DEBUG codigos_extraidos original:', doc.codigos_extraidos); // Muestra la cadena original
                             doc.codigos_extraidos.split(',').forEach(code => {
                                 const trimmedCode = code.trim().toUpperCase(); 
-                                // Solamente verifica si el código CONTIENE la consulta (más simple y efectivo)
-                                if (trimmedCode.includes(query.toUpperCase())) { 
+                                const queryUpper = query.toUpperCase(); // La consulta en mayúsculas
+                                
+                                console.log(`DEBUG CODE: '${code}' -> Trimmed: '${trimmedCode}' | Query: '${queryUpper}'`); // LOG clave
+                                
+                                if (trimmedCode.includes(queryUpper)) { 
                                     allRelevantCodes.push(trimmedCode);
+                                    console.log('DEBUG: AÑADIDO:', trimmedCode); // Muestra si se añadió
+                                } else {
+                                    console.log('DEBUG: NO AÑADIDO (no incluye query)');
                                 }
                             });
+                        } else {
+                            console.log('DEBUG: Documento sin codigos_extraidos o null/undefined.');
                         }
                     });
 
-                    // Eliminar duplicados y ordenar
                     const uniqueSortedSuggestions = Array.from(new Set(allRelevantCodes)).sort();
                     
                     console.log('Códigos filtrados y únicos para sugerir (autocomplete):', uniqueSortedSuggestions); 
