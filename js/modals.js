@@ -25,15 +25,14 @@ export function showModalLogin(onSuccess) {
   `;
   modalsContainer.innerHTML = html; // Insertar el HTML del modal
 
-  // Asegurarse de que el overlay sea visible (la clase 'overlay' en CSS debe tener display:flex)
+  // Asegurarse de que el overlay sea visible
   const loginOverlay = document.getElementById('loginOverlay');
   if (loginOverlay) {
-      loginOverlay.classList.remove('hidden');
+      loginOverlay.classList.remove('hidden'); // Asegurarse de que sea visible al mostrarlo
       console.log('showModalLogin: Modal de login mostrado y visible.');
   } else {
       console.error('showModalLogin: Overlay de login no encontrado después de inyectar HTML.');
   }
-  // Los listeners para 'submitAccess' se adjuntarán via delegación en DOMContentLoaded
 }
 
 // Función para mostrar el modal de confirmación
@@ -62,18 +61,14 @@ export function showModalConfirm(message, onConfirm) {
   // Asegurarse de que el overlay sea visible
   const confirmOverlay = document.getElementById('confirmOverlay');
   if (confirmOverlay) {
-      confirmOverlay.classList.remove('hidden');
+      confirmOverlay.classList.remove('hidden'); // Asegurarse de que sea visible al mostrarlo
       console.log('showModalConfirm: Modal de confirmación agregado al DOM y visible.');
   } else {
       console.error('showModalConfirm: Overlay de confirmación no encontrado después de inyectar HTML.');
   }
-  // Los listeners para 'confirmOk' y 'confirmCancel' se adjuntarán via delegación en DOMContentLoaded
 }
 
 // *** DELEGACIÓN DE EVENTOS EN EL CONTENEDOR PRINCIPAL (#modals) ***
-// Este listener se adjunta una única vez al cargar el DOM y permanece activo.
-// Captura clics en cualquier parte del contenedor #modals y luego decide qué hacer
-// basándose en el ID del elemento donde se originó el clic.
 document.addEventListener('DOMContentLoaded', () => {
     const modalsContainer = document.getElementById('modals');
     if (!modalsContainer) {
@@ -85,37 +80,47 @@ document.addEventListener('DOMContentLoaded', () => {
         const target = event.target; // El elemento específico en el que se hizo clic
 
         // Manejar botones del modal de Confirmación
-        if (target.id === 'confirmOk') {
-            console.log('Delegación: ¡Clic en Aceptar del modal de confirmación detectado!');
-            modalsContainer.innerHTML = ''; // Limpiar el modal del DOM al hacer clic
-            if (currentOnConfirmCallback && typeof currentOnConfirmCallback === 'function') {
-                currentOnConfirmCallback(); // Ejecutar el callback almacenado
-                console.log('Delegación: Callback onConfirm ejecutado.');
+        if (target.id === 'confirmOk' || target.id === 'confirmCancel') {
+            const confirmOverlay = document.getElementById('confirmOverlay');
+            if (confirmOverlay) {
+                confirmOverlay.classList.add('hidden'); // <--- CAMBIO: Ocultar explícitamente el overlay
+            }
+            modalsContainer.innerHTML = ''; // Limpiar el contenido del modal del DOM
+
+            if (target.id === 'confirmOk') {
+                console.log('Delegación: ¡Clic en Aceptar del modal de confirmación detectado!');
+                if (currentOnConfirmCallback && typeof currentOnConfirmCallback === 'function') {
+                    currentOnConfirmCallback(); // Ejecutar el callback almacenado
+                    console.log('Delegación: Callback onConfirm ejecutado.');
+                }
+            } else { // target.id === 'confirmCancel'
+                console.log('Delegación: Clic en Cancelar del modal de confirmación detectado.');
             }
             currentOnConfirmCallback = null; // Limpiar la referencia al callback
-        } else if (target.id === 'confirmCancel') {
-            console.log('Delegación: Clic en Cancelar del modal de confirmación detectado.');
-            modalsContainer.innerHTML = ''; // Limpiar el modal del DOM al hacer clic
-            currentOnConfirmCallback = null; // Limpiar la referencia al callback
-        } 
+        }
         
         // Manejar botones del modal de Login
         else if (target.id === 'submitAccess') {
+            const loginOverlay = document.getElementById('loginOverlay');
+            if (loginOverlay) {
+                loginOverlay.classList.add('hidden'); // <--- CAMBIO: Ocultar explícitamente el overlay
+            }
+            modalsContainer.innerHTML = ''; // Limpiar el contenido del modal del DOM
+
             console.log('Delegación: Clic en Entrar del modal de login detectado!');
-            const accessInput = document.getElementById('accessInput'); // El input de clave dentro del modal de login
+            const accessInput = document.getElementById('accessInput');
             const clave = accessInput ? accessInput.value : '';
             
             if (clave === 'tuClaveAdmin') { // Validar la clave (cambia 'tuClaveAdmin' en modals.js)
-                modalsContainer.innerHTML = ''; // Limpiar el modal del DOM
                 if (currentOnLoginSuccessCallback && typeof currentOnLoginSuccessCallback === 'function') {
                     currentOnLoginSuccessCallback();
                     console.log('Delegación: Callback onLoginSuccess ejecutado.');
                 }
-                currentOnLoginSuccessCallback = null;
             } else {
                 alert('Clave incorrecta'); 
             }
+            currentOnLoginSuccessCallback = null;
         }
     });
-    console.log('DOMContentLoaded: Listener de delegación de modales adjuntado a #modals.'); // LOG FINAL
+    console.log('DOMContentLoaded: Listener de delegación de modales adjuntado a #modals.');
 });
