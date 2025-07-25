@@ -13,8 +13,9 @@ export function initAutocompleteCodigo() {
 
     let timeout = null; 
 
+    // Evento que se dispara cada vez que el usuario escribe en el input
     codeInput.addEventListener('input', () => {
-        clearTimeout(timeout); 
+        clearTimeout(timeout); // Limpia cualquier temporizador anterior
         const query = codeInput.value.trim(); 
 
         // Oculta las sugerencias si la consulta es muy corta o vacía
@@ -24,6 +25,7 @@ export function initAutocompleteCodigo() {
             return;
         }
 
+        // Establece un retardo antes de hacer la búsqueda
         timeout = setTimeout(async () => {
             await requireAuth(async () => {
                 try {
@@ -49,7 +51,7 @@ export function initAutocompleteCodigo() {
                         if (doc.codigos_extraidos) {
                             doc.codigos_extraidos.split(',').forEach(code => {
                                 const trimmedCode = code.trim().toUpperCase(); 
-                                // Solo añade sugerencias que *contengan* la consulta (más flexible)
+                                // Solo añade sugerencias que *contengan* la consulta y sean más largas que la consulta
                                 if (trimmedCode.includes(query.toUpperCase()) && trimmedCode.length > query.length) { 
                                     uniqueCodes.add(trimmedCode);
                                 }
@@ -65,9 +67,10 @@ export function initAutocompleteCodigo() {
                     suggestionsDiv.classList.remove('hidden');
                 }
             });
-        }, 200); // Retardo de 200 milisegundos para mejorar la experiencia
+        }, 200); // Retardo de 200 milisegundos
     });
 
+    // Función para mostrar las sugerencias en el DOM
     function displaySuggestions(suggestions) {
         suggestionsDiv.innerHTML = ''; 
         if (suggestions.length === 0) {
@@ -75,7 +78,7 @@ export function initAutocompleteCodigo() {
             return;
         }
 
-        suggestions.sort(); // Ordenar alfabéticamente
+        suggestions.sort(); // Opcional: ordenar alfabéticamente
 
         suggestions.forEach(suggestion => {
             const suggestionItem = document.createElement('div');
@@ -86,12 +89,15 @@ export function initAutocompleteCodigo() {
                 codeInput.value = suggestion;
                 suggestionsDiv.innerHTML = '';
                 suggestionsDiv.classList.add('hidden');
+                // Puedes disparar la búsqueda principal aquí si quieres que al seleccionar se busque automáticamente
+                // window.doCodeSearch(); 
             });
             suggestionsDiv.appendChild(suggestionItem); 
         });
         suggestionsDiv.classList.remove('hidden'); // Muestra el contenedor
     }
 
+    // Ocultar sugerencias cuando se hace clic fuera del input o las sugerencias
     document.addEventListener('click', (event) => {
         if (event.target !== codeInput && !suggestionsDiv.contains(event.target)) {
             suggestionsDiv.classList.add('hidden');

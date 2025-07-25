@@ -1,123 +1,138 @@
-import { cargarConsulta, clearConsultFilter, doConsultFilter, downloadCsv, downloadPdfs, editarDoc, eliminarDoc } from './consulta.js';
-import { initAutocompleteCodigo } from './autocomplete.js';
-import { showToast } from './toasts.js';
+import { cargarConsulta } from './consulta.js';
+import { handleUploadForm } from './upload.js';
+import { requireAuth } from './auth.js';
+import { initAutocompleteCodigo } from './autocomplete.js'; // Asegúrate de importar esto
 
-const API_BASE = 'https://gestor-doc-backend-production.up.railway.app/api/documentos';
+// Función para cambiar de pestaña
+window.showTab = function(tabId) {
+    const tabs = document.querySelectorAll('.tab-pane');
+    tabs.forEach(tab => {
+        tab.classList.add('hidden');
+        tab.classList.remove('active');
+    });
+
+    const activeTab = document.getElementById(tabId);
+    if (activeTab) {
+        activeTab.classList.remove('hidden');
+        activeTab.classList.add('active');
+    }
+
+    // Actualiza los botones de las pestañas
+    const tabButtons = document.querySelectorAll('.tab-button');
+    tabButtons.forEach(button => {
+        // Usa data-tab para identificar el botón correcto
+        if (button.dataset.tab === tabId) {
+            button.classList.add('active');
+        } else {
+            button.classList.remove('active');
+        }
+    });
+
+    // Cargar documentos si la pestaña de consulta está activa
+    if (tabId === 'tab-list') { // Asegúrate de usar el ID correcto de la pestaña de consulta
+        cargarConsulta();
+    }
+};
 
 document.addEventListener('DOMContentLoaded', () => {
-  const tabs = document.querySelectorAll('.tab');
-  tabs.forEach(tab => {
-    tab.addEventListener('click', () => {
-      tabs.forEach(t => t.classList.remove('active'));
-      tab.classList.add('active');
-      renderTab(tab.dataset.tab);
-    });
-  });
-  renderTab('tab-search'); // Activar la primera pestaña por defecto
+    // Manejo del formulario de subida
+    handleUploadForm();
 
-  document.getElementById('form-upload')?.addEventListener('submit', handleUpload);
+    // Mostrar la pestaña "Buscar" (Óptima) al cargar la página por defecto
+    showTab('tab-search'); 
+
+    // Inicializa el autocompletado para la pestaña de búsqueda por código
+    // Se ejecuta al cargar la página para que el listener esté listo
+    initAutocompleteCodigo(); 
+    
+    // Lógica para la Pestaña "Buscar" (Búsqueda Óptima)
+    const doOptimaSearchButton = document.getElementById('doOptimaSearchButton');
+    const clearOptimaSearchButton = document.getElementById('clearOptimaSearchButton');
+    const optimaSearchInput = document.getElementById('optimaSearchInput');
+    const optimaResultsList = document.getElementById('results-optima-search'); // ID corregido
+
+    if (doOptimaSearchButton) {
+        doOptimaSearchButton.addEventListener('click', async () => {
+            requireAuth(async () => { // Proteger la búsqueda con autenticación
+                const codigos = optimaSearchInput.value.trim();
+                if (!codigos) {
+                    optimaResultsList.innerHTML = '<p class="text-red-500">Por favor, ingrese al menos un código para la búsqueda.</p>';
+                    return;
+                }
+
+                optimaResultsList.innerHTML = '<p>Buscando documentos óptimos...</p>';
+
+                try {
+                    const res = await fetch('https://gestor-doc-backend-production.up.railway.app/api/documentos/search_optima', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ codigos: codigos })
+                    });
+
+                    if (!res.ok) {
+                        const errorData = await res.json();
+                        optimaResultsList.innerHTML = `<p class="text-red-500">Error en la búsqueda: ${errorData.error || res.statusText}</p>`;
+                        return;
+                    }
+
+                    const data = await res.json();
+
+                    if (data.documentos && data.documentos.length > 0) {
+                        let htmlContent = `<p class="font-bold mb-2">Se encontraron ${data.documentos.length} documentos para cubrir los códigos:</p>`;
+                        htmlContent += data.documentos.map(item => `
+                            <div class="border rounded p-4 mb-2 bg-white shadow-sm">
+                                <h3 class="font-semibold">${item.documento.name}</h3>
+                                <p><b>Fecha:</b> ${item.documento.date || ''}</p>
+                                <p>PDF: ${item.documento.path ? `<a href="uploads/${item.documento.path}" target="_blank" class="text-blue-600 underline">${item.documento.path}</a>` : 'N/A'}</p>
+                                <div class="mt-2">
+                                    <button class="btn btn--secondary btn--sm" onclick="toggleCodes(this)">Mostrar Códigos</button>
+                                    <p class="codes-container hidden mt-1 text-sm text-gray-700">${(item.documento.codigos_encontrados || '').split(',').join('<br>')}</p>
+                                </div>
+                                <p class="text-sm mt-2">Códigos cubiertos por este documento en la búsqueda: <span class="font-medium">${item.codigos_cubre.join(', ')}</span></p>
+                            </div>
+                        `).join('');
+
+                        if (data.codigos_faltantes && data.codigos_faltantes.length > 0) {
+                            htmlContent += `<p class="text-orange-600 mt-4">Atención: No se pudieron cubrir todos los códigos. Códigos faltantes: <span class="font-medium">${data.codigos_faltantes.join(', ')}</span></p>`;
+                        }
+
+                        optimaResultsList.innerHTML = htmlContent;
+
+                    } else if (data.codigos_faltantes && data.codigos_faltantes.length > 0) {
+                        optimaResultsList.innerHTML = `<p class="text-orange-600">No se encontraron documentos que contengan los códigos buscados. Códigos faltantes: ${data.codigos_faltantes.join(', ')}</p>`;
+                    } else {
+                        optimaResultsList.innerHTML = '<p>No se encontraron documentos que cumplan con la búsqueda.</p>';
+                    }
+
+                } catch (error) {
+                    console.error('Error en la búsqueda óptima:', error);
+                    optimaResultsList.innerHTML = `<p class="text-red-500">Ocurrió un error al intentar la búsqueda óptima.</p>`;
+                }
+            });
+        });
+    }
+
+    if (clearOptimaSearchButton) {
+        clearOptimaSearchButton.addEventListener('click', () => {
+            optimaSearchInput.value = '';
+            optimaResultsList.innerHTML = '';
+        });
+    }
 });
 
-function renderTab(tabName) {
-  const contents = document.querySelectorAll('.tab-content');
-  contents.forEach(c => c.classList.add('hidden'));
-  const current = document.getElementById(tabName);
-  if(current) current.classList.remove('hidden');
-
-  if(tabName === 'tab-list') cargarConsulta();
-  if(tabName === 'tab-code') initAutocompleteCodigo();
+// Asegurarse de que toggleCodes esté disponible globalmente
+// Se define aquí si no está en consulta.js o si consulta.js no se carga antes
+if (typeof window.toggleCodes === 'undefined') {
+    window.toggleCodes = function(button) {
+        const codesContainer = button.nextElementSibling;
+        if (codesContainer.classList.contains('hidden')) {
+            codesContainer.classList.remove('hidden');
+            button.textContent = 'Ocultar Códigos';
+        } else {
+            codesContainer.classList.add('hidden');
+            button.textContent = 'Mostrar Códigos';
+        }
+    };
 }
-
-// Búsqueda inteligente
-export async function doSearch() {
-  const text = document.getElementById('searchInput').value.trim();
-  const alertDiv = document.getElementById('search-alert');
-  const resultsDiv = document.getElementById('results-search');
-  alertDiv.textContent = '';
-  resultsDiv.innerHTML = '';
-
-  if(text.length < 3){
-    alertDiv.textContent = 'Ingrese al menos 3 caracteres para buscar.';
-    return;
-  }
-
-  try {
-    const res = await fetch(`${API_BASE}/search`, {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({ texto: text })
-    });
-    const data = await res.json();
-
-    if(data.length === 0){
-      resultsDiv.innerHTML = '<p>No se encontraron resultados.</p>';
-      return;
-    }
-
-    resultsDiv.innerHTML = data.map(doc => `
-      <div class="border p-4 rounded shadow">
-        <h3 class="font-semibold">${doc.nombre}</h3>
-        <p>Fecha: ${doc.fecha}</p>
-        <p>Códigos: ${doc.codigos}</p>
-        <a href="${doc.pdf_url}" target="_blank" class="text-blue-600 hover:underline">Ver PDF</a>
-      </div>
-    `).join('');
-
-  } catch(e) {
-    alertDiv.textContent = 'Error al buscar. Intente de nuevo.';
-    console.error(e);
-  }
-}
-
-export function clearSearch() {
-  document.getElementById('searchInput').value = '';
-  document.getElementById('search-alert').textContent = '';
-  document.getElementById('results-search').innerHTML = '';
-}
-
-async function handleUpload(e) {
-  e.preventDefault();
-
-  const form = e.target;
-  const formData = new FormData(form);
-  const alertWarning = document.getElementById('uploadWarning');
-
-  // Validar tamaño archivo
-  const fileInput = document.getElementById('file');
-  if(fileInput.files.length > 0 && fileInput.files[0].size > 10 * 1024 * 1024){
-    alertWarning.classList.remove('hidden');
-    return;
-  } else {
-    alertWarning.classList.add('hidden');
-  }
-
-  try {
-    const res = await fetch(`${API_BASE}/upload`, {
-      method: 'POST',
-      body: formData
-    });
-    const data = await res.json();
-
-    if(data.ok){
-      showToast('Documento subido correctamente', true);
-      form.reset();
-    } else {
-      showToast('Error: ' + data.error, false);
-    }
-  } catch(e){
-    showToast('Error en la subida', false);
-    console.error(e);
-  }
-}
-
-// Exponer funciones globales para el HTML inline
-window.doSearch = doSearch;
-window.clearSearch = clearSearch;
-window.cargarConsulta = cargarConsulta;
-window.clearConsultFilter = clearConsultFilter;
-window.doConsultFilter = doConsultFilter;
-window.downloadCsv = downloadCsv;
-window.downloadPdfs = downloadPdfs;
-window.editarDoc = editarDoc;
-window.eliminarDoc = eliminarDoc;
-window.initAutocompleteCodigo = initAutocompleteCodigo;

@@ -1,3 +1,5 @@
+// GESTOR-DOC/frontend/js/modals.js
+
 export function showModalLogin(onSuccess) {
   const html = `
     <div class="modal" id="modal-login">
@@ -10,7 +12,8 @@ export function showModalLogin(onSuccess) {
 
   document.getElementById('loginBtn').onclick = () => {
     const clave = document.getElementById('clave-admin').value;
-    if(clave === '111'){
+    // ¡AQUÍ ESTÁ LA CLAVE DE ADMINISTRADOR! Cámbiála por la que quieras.
+    if(clave === 'tuClaveAdmin'){ // <<-- CAMBIA 'tuClaveAdmin' POR TU CLAVE REAL
       document.getElementById('modals').innerHTML = '';
       if(typeof onSuccess === 'function') onSuccess();
     } else {

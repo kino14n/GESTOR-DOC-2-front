@@ -9,6 +9,7 @@ export function requireAuth(callback) {
   if(isAuthenticated){
     callback();
   } else {
+    // Si no está autenticado, muestra el modal de login
     showModalLogin(() => {
       isAuthenticated = true;
       localStorage.setItem('isAuthenticated', 'true'); // Guardar estado en localStorage
