@@ -1,14 +1,14 @@
-import { cargarConsulta, clearConsultFilter, doConsultFilter, downloadCsv, downloadPdfs } from './consulta.js'; // Importar todas las funciones necesarias
-import { initUploadForm } from './upload.js';
+import { cargarConsulta, clearConsultFilter, doConsultFilter, downloadCsv, downloadPdfs, editarDoc, eliminarDoc } from './consulta.js';
+import { initUploadForm } from './upload.js'; 
 import { requireAuth } from './auth.js';
 import { initAutocompleteCodigo } from './autocomplete.js';
-import { showToast } from './toasts.js'; // Asegurarse de que showToast esté importado
+import { showToast } from './toasts.js'; 
 
 const API_BASE = 'https://gestor-doc-backend-production.up.railway.app/api/documentos';
 
 // Función global para cambiar de pestaña
 window.showTab = function(tabId) {
-    const tabsContent = document.querySelectorAll('.tab-content');
+    const tabsContent = document.querySelectorAll('.tab-content'); 
     tabsContent.forEach(tab => {
         tab.classList.add('hidden');
     });
@@ -18,9 +18,9 @@ window.showTab = function(tabId) {
         activeTabContent.classList.remove('hidden');
     }
 
-    const tabButtons = document.querySelectorAll('.tab');
+    const tabButtons = document.querySelectorAll('.tab'); 
     tabButtons.forEach(button => {
-        if (button.dataset.tab === tabId) {
+        if (button.dataset.tab === tabId) { 
             button.classList.add('active');
         } else {
             button.classList.remove('active');
@@ -28,10 +28,11 @@ window.showTab = function(tabId) {
     });
 
     // Lógica específica para cada pestaña al activarse
-    if (tabId === 'tab-list') {
+    if (tabId === 'tab-list') { 
         cargarConsulta();
+    } else if (tabId === 'tab-code') {
+        // initAutocompleteCodigo() ya se llama en DOMContentLoaded
     }
-    // initAutocompleteCodigo se llama en DOMContentLoaded, no es necesario aquí.
 };
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -39,28 +40,28 @@ document.addEventListener('DOMContentLoaded', () => {
     const tabButtons = document.querySelectorAll('.tab');
     tabButtons.forEach(button => {
         button.addEventListener('click', () => {
-            window.showTab(button.dataset.tab); // Usar window.showTab para llamarla
+            window.showTab(button.dataset.tab); 
         });
     });
 
-    // Inicializar el formulario de subida
-    initUploadForm();
+    // Manejo del formulario de subida (se inicializa una vez al cargar el DOM)
+    initUploadForm(); 
 
     // Mostrar el modal de login si no está autenticado
     requireAuth(() => {
         // Callback después de una autenticación exitosa
-        document.getElementById('loginOverlay').classList.add('hidden'); // Ocultar overlay de login
-        document.getElementById('mainContent').classList.remove('hidden'); // Mostrar contenido principal
+        document.getElementById('loginOverlay').classList.add('hidden'); 
+        document.getElementById('mainContent').classList.remove('hidden'); 
         window.showTab('tab-search'); // Activar la primera pestaña por defecto
-        initAutocompleteCodigo(); // Inicializar autocompletado (solo si es necesario después del login)
-        cargarConsulta(); // Cargar la consulta inicial (si es necesario después del login)
+        initAutocompleteCodigo(); 
+        cargarConsulta(); 
     });
 
     // Lógica para la Pestaña "Buscar" (Búsqueda Óptima)
     const doOptimaSearchButton = document.getElementById('doOptimaSearchButton');
     const clearOptimaSearchButton = document.getElementById('clearOptimaSearchButton');
     const optimaSearchInput = document.getElementById('optimaSearchInput');
-    const optimaResultsList = document.getElementById('results-optima-search');
+    const optimaResultsList = document.getElementById('results-optima-search'); 
 
     if (doOptimaSearchButton) {
         doOptimaSearchButton.addEventListener('click', async () => {
@@ -76,7 +77,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const res = await fetch(`${API_BASE}/search_optima`, {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ codigos: codigos })
+                    body: JSON.stringify({ codigos: codigos }) 
                 });
 
                 if (!res.ok) {
@@ -85,9 +86,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     return;
                 }
 
-                const data = await res.json();
+                const data = await res.json(); 
 
-                if (data.documentos && data.documentos.length > 0) {
+                if (data.documentos && data.documentos.length > 0) { 
                     let htmlContent = `<p class="font-bold mb-2">Se encontraron ${data.documentos.length} documentos para cubrir los códigos:</p>`;
                     htmlContent += data.documentos.map(item => `
                         <div class="border rounded p-4 mb-2 bg-white shadow-sm">
@@ -95,7 +96,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             <p><b>Fecha:</b> ${item.documento.date || ''}</p>
                             <p>PDF: ${item.documento.path ? `<a href="uploads/${item.documento.path}" target="_blank" class="text-blue-600 underline">${item.documento.path}</a>` : 'N/A'}</p>
                             <div class="mt-2">
-                                <button class="btn btn--secondary btn--sm" data-action="toggleCodes">Mostrar Códigos</button>
+                                <button class="btn btn--secondary btn--sm" onclick="toggleCodes(this)">Mostrar Códigos</button>
                                 <p class="codes-container hidden mt-1 text-sm text-gray-700">${(item.documento.codigos_encontrados || '').split(',').join('<br>')}</p>
                             </div>
                             <p class="text-sm mt-2">Códigos cubiertos por este documento en la búsqueda: <span class="font-medium">${item.codigos_cubre.join(', ')}</span></p>
@@ -130,7 +131,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Lógica para la Pestaña "BUSCAR POR CÓDIGO"
     const doCodeSearchButton = document.getElementById('doCodeSearchButton');
-    const clearCodeSearchButton = document.getElementById('clearCodeSearchButton');
+    const clearCodeSearchButton = document.getElementById('clearCodeSearchButton'); 
 
     if (doCodeSearchButton) {
         doCodeSearchButton.addEventListener('click', async () => {
@@ -143,7 +144,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
             try {
-                const res = await fetch(`${API_BASE}/search_by_code`, { // Asegúrate de que esta URL sea correcta para Flask
+                const res = await fetch(`${API_BASE}/search_by_code`, {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({ codigo: code })
@@ -162,7 +163,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                 `).join('');
             } catch(e) {
-                console.error('Error en la búsqueda por código:', e);
+                console.error('Error en la búsqueda por código:', e); 
                 resultsDiv.innerHTML = '<p>Error en la búsqueda por código.</p>';
             }
         });

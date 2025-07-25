@@ -1,6 +1,6 @@
 // GESTOR-DOC/frontend/js/auth.js
 
-import { showModalLogin } from './modals.js'; // Importación directa
+import { showModalLogin } from './modals.js'; 
 
 let isAuthenticated = false; // Estado de autenticación inicial
 

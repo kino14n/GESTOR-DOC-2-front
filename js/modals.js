@@ -6,6 +6,8 @@ export function showModalLogin(onSuccess) {
     console.error('showModalLogin: Contenedor #modals no encontrado.');
     return;
   }
+  modalsContainer.innerHTML = ''; // Limpia el contenedor de modales para remover cualquier modal anterior
+
   // Inyecta el HTML del modal de login directamente en el contenedor #modals
   modalsContainer.innerHTML = `
     <div class="overlay" id="loginOverlay">
@@ -29,14 +31,14 @@ export function showModalLogin(onSuccess) {
     loginOverlay.classList.remove('hidden'); // Hace visible el overlay
   }
 
-  // Adjunta el evento onclick al botón de login
+  // Adjunta el evento onclick al botón de login (patrón que el usuario dijo que funcionó)
   if (loginButton && claveInput && errorMsgDiv) {
     loginButton.onclick = () => {
       console.log('showModalLogin: Clic en Entrar detectado.'); // LOG
       const clave = claveInput.value;
       
       // La clave de administrador está aquí. Cámbiala si es necesario.
-      if (clave === '111') { // <-- ¡VERIFICA ESTA CLAVE!
+      if (clave === 'tuClaveAdmin') { // <-- ¡VERIFICA ESTA CLAVE!
         console.log('showModalLogin: Clave correcta. Ocultando modal.'); // LOG
         modalsContainer.innerHTML = ''; // Limpia el HTML del modal para removerlo
         // loginOverlay.classList.add('hidden'); // Opcional, si el innerHTML no lo quita
@@ -90,7 +92,7 @@ export function showModalConfirm(message, onConfirm) {
     confirmOverlay.classList.remove('hidden');
   }
 
-  // Adjunta eventos onclick a los botones
+  // Adjunta eventos onclick a los botones (patrón que el usuario dijo que funcionó)
   if (confirmOkButton && confirmCancelButton) {
     confirmOkButton.onclick = () => {
       console.log('showModalConfirm: Clic en Aceptar detectado.'); // LOG

@@ -1,3 +1,4 @@
+// GESTOR-DOC/frontend/js/toasts.js
 
 export function showToast(message, success = true) {
   const container = document.getElementById('toast-container');
