@@ -111,7 +111,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         optimaResultsList.innerHTML = htmlContent;
 
                     } else if (data.codigos_faltantes && data.codigos_faltantes.length > 0) {
-                        optimaResultsList.innerHTML = `<p class="text-orange-600">No se encontraron documentos que contengan los códigos buscados. Códigos faltantes: ${data.codigos_faltantes.join(', ')}</p संवेदनशील} else {
+                        optimaResultsList.innerHTML = `<p class="text-orange-600">No se encontraron documentos que contengan los códigos buscados. Códigos faltantes: ${data.codigos_faltantes.join(', ')}</p>`;
+                    } else {
                         optimaResultsList.innerHTML = '<p>No se encontraron documentos que cumplan con la búsqueda.</p>';
                     }
 
@@ -130,9 +131,10 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Lógica para la Pestaña "BUSCAR POR CÓDIGO" (movida aquí)
-    const doCodeSearchButton = document.querySelector('#tab-code button[onclick="doCodeSearch()"]');
-    const clearCodeSearchButton = document.querySelector('#tab-code button[onclick="clearSearchByCode()"]'); // Corregido ID del botón
+    // FUNCIONES DE LA PESTAÑA "BUSCAR POR CÓDIGO" (movidas aquí)
+    // Línea 130 del error anterior: esta línea no usa 'class'
+    const doCodeSearchButton = document.querySelector('#tab-code button[onclick="doCodeSearch()"]'); 
+    const clearCodeSearchButton = document.querySelector('#tab-code button[onclick="clearSearchByCode()"]'); 
 
     if (doCodeSearchButton) {
         doCodeSearchButton.addEventListener('click', async () => {
@@ -144,7 +146,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 resultsDiv.innerHTML = '<p>Escribe un código para buscar.</p>';
                 return;
             }
-            requireAuth(async () => {
+            requireAuth(async () => { // Proteger la búsqueda con autenticación
                 try {
                     const res = await fetch('https://gestor-doc-backend-production.up.railway.app/api/documentos/search_by_code', {
                         method: 'POST',
