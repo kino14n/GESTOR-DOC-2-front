@@ -108,7 +108,7 @@ document.addEventListener('DOMContentLoaded', () => {
             console.log('Delegación: Clave ingresada:', clave); // LOG DE CLAVE INGRESADA
             
             // ¡REVISA Y CAMBIA ESTA CLAVE SEGÚN SEA NECESARIO!
-            if(clave === 'tuClaveAdmin') { 
+            if(clave === '111') { 
                 console.log('Delegación: Clave correcta. Ocultando modal de login.'); // LOG DE CLAVE CORRECTA
                 const loginOverlay = document.getElementById('loginOverlay');
                 if (loginOverlay) {
