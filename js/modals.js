@@ -109,7 +109,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const accessInput = document.getElementById('accessInput');
             const clave = accessInput ? accessInput.value : '';
             
-            if (clave === '111') { 
+            // Revisa y modifica esta línea con tu clave de administrador
+            if(clave === '111') { // <-- ¡REVISA Y CAMBIA ESTO!
                 if (currentOnLoginSuccessCallback && typeof currentOnLoginSuccessCallback === 'function') {
                     currentOnLoginSuccessCallback();
                     console.log('Delegación: Callback onLoginSuccess ejecutado.');
