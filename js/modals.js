@@ -12,8 +12,7 @@ export function showModalLogin(onSuccess) {
 
   document.getElementById('loginBtn').onclick = () => {
     const clave = document.getElementById('clave-admin').value;
-    // ¡AQUÍ ESTÁ LA CLAVE DE ADMINISTRADOR! Cámbiála por la que quieras.
-    if(clave === '111'){ // <<-- CAMBIA 'tuClaveAdmin' POR TU CLAVE REAL
+    if(clave === 'tuClaveAdmin'){ // <<-- CAMBIA 'tuClaveAdmin' POR TU CLAVE REAL
       document.getElementById('modals').innerHTML = '';
       if(typeof onSuccess === 'function') onSuccess();
     } else {
@@ -32,12 +31,32 @@ export function showModalConfirm(message, onConfirm) {
   `;
   document.getElementById('modals').innerHTML = html;
 
-  document.getElementById('confirmOk').onclick = () => {
-    document.getElementById('modals').innerHTML = '';
-    if (typeof onConfirm === 'function') onConfirm();
-  };
+  const confirmOkButton = document.getElementById('confirmOk');
+  const confirmCancelButton = document.getElementById('confirmCancel');
 
-  document.getElementById('confirmCancel').onclick = () => {
-    document.getElementById('modals').innerHTML = '';
-  };
+  console.log('showModalConfirm: Modal de confirmación mostrado.'); // LOG 1
+  console.log('showModalConfirm: Botón Aceptar encontrado:', confirmOkButton); // LOG 2
+
+  // Usar addEventListener en lugar de onclick directamente para más robustez
+  if (confirmOkButton) {
+    confirmOkButton.addEventListener('click', () => {
+      console.log('showModalConfirm: Botón Aceptar clicado.'); // LOG 3
+      document.getElementById('modals').innerHTML = ''; // Ocultar modal
+      if (typeof onConfirm === 'function') {
+        onConfirm(); // Ejecutar el callback de confirmación (la lógica de eliminación)
+        console.log('showModalConfirm: Callback onConfirm ejecutado.'); // LOG 4
+      } else {
+        console.warn('showModalConfirm: onConfirm no es una función.');
+      }
+    });
+  } else {
+    console.error('showModalConfirm: Botón "Aceptar" no encontrado en el DOM.');
+  }
+
+  if (confirmCancelButton) {
+    confirmCancelButton.addEventListener('click', () => {
+      console.log('showModalConfirm: Botón Cancelar clicado.'); // LOG 5
+      document.getElementById('modals').innerHTML = ''; // Ocultar modal
+    });
+  }
 }
