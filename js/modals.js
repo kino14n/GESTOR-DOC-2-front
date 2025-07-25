@@ -26,7 +26,7 @@ export function showModalLogin(onSuccess) {
   if (submitAccessButton && accessInput && loginOverlay) {
       submitAccessButton.addEventListener('click', () => {
           const clave = accessInput.value;
-          if(clave === 'tuClaveAdmin'){ // <<-- CAMBIA 'tuClaveAdmin' POR TU CLAVE REAL
+          if(clave === '111'){ // <<-- CAMBIA 'tuClaveAdmin' POR TU CLAVE REAL
               modalsContainer.innerHTML = ''; // Limpiar el modal
               loginOverlay.classList.add('hidden'); // Ocultar overlay
               if(typeof onSuccess === 'function') onSuccess();
