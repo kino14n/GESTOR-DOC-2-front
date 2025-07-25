@@ -13,7 +13,7 @@ export function showModalLogin(onSuccess) {
   document.getElementById('loginBtn').onclick = () => {
     const clave = document.getElementById('clave-admin').value;
     // ¡AQUÍ ESTÁ LA CLAVE DE ADMINISTRADOR! Cámbiála por la que quieras.
-    if(clave === 'tuClaveAdmin'){ // <<-- CAMBIA 'tuClaveAdmin' POR TU CLAVE REAL
+    if(clave === '111'){ // <<-- CAMBIA 'tuClaveAdmin' POR TU CLAVE REAL
       document.getElementById('modals').innerHTML = '';
       if(typeof onSuccess === 'function') onSuccess();
     } else {
