@@ -3,6 +3,7 @@
 import { requireAuth } from './auth.js'; 
 
 export function initAutocompleteCodigo() {
+    console.log('initAutocompleteCodigo: Función inicializada.'); // LOG 1
     const codeInput = document.getElementById('codeInput');
     const suggestionsDiv = document.getElementById('suggestions');
 
@@ -15,18 +16,21 @@ export function initAutocompleteCodigo() {
 
     // Evento que se dispara cada vez que el usuario escribe en el input
     codeInput.addEventListener('input', () => {
-        clearTimeout(timeout); // Limpia cualquier temporador anterior
+        clearTimeout(timeout); 
         const query = codeInput.value.trim(); 
+        console.log('Input digitado:', query); // LOG 2
 
         // Oculta las sugerencias si la consulta es muy corta o vacía
-        if (query.length < 1) { // Buscar a partir de 1 carácter
+        if (query.length < 1) { 
             suggestionsDiv.innerHTML = '';
-            suggestionsDiv.classList.add('hidden'); // Asegurarse de que se oculte
+            suggestionsDiv.classList.add('hidden'); 
+            console.log('Consulta muy corta, sugerencias ocultas.'); // LOG 3
             return;
         }
 
         // Establece un retardo antes de hacer la búsqueda
         timeout = setTimeout(async () => {
+            console.log('Realizando fetch para sugerencias con query:', query); // LOG 4
             await requireAuth(async () => {
                 try {
                     const res = await fetch('https://gestor-doc-backend-production.up.railway.app/api/documentos/search_by_code', {
@@ -45,6 +49,8 @@ export function initAutocompleteCodigo() {
                     }
 
                     const data = await res.json(); 
+                    console.log('Respuesta backend (data):', data); // LOG 5
+
                     const uniqueCodes = new Set(); 
 
                     data.forEach(doc => {
@@ -59,6 +65,7 @@ export function initAutocompleteCodigo() {
                         }
                     });
 
+                    console.log('Códigos únicos encontrados para sugerir:', Array.from(uniqueCodes)); // LOG 6
                     displaySuggestions(Array.from(uniqueCodes)); 
 
                 } catch (error) {
@@ -67,18 +74,19 @@ export function initAutocompleteCodigo() {
                     suggestionsDiv.classList.remove('hidden');
                 }
             });
-        }, 200); // Retardo de 200 milisegundos
+        }, 200); 
     });
 
-    // Función para mostrar las sugerencias en el DOM
     function displaySuggestions(suggestions) {
+        console.log('displaySuggestions: Mostrando sugerencias:', suggestions); // LOG 7
         suggestionsDiv.innerHTML = ''; 
         if (suggestions.length === 0) {
             suggestionsDiv.classList.add('hidden'); 
+            console.log('No hay sugerencias, div oculto.'); // LOG 8
             return;
         }
 
-        suggestions.sort(); // Opcional: ordenar alfabéticamente
+        suggestions.sort(); 
 
         suggestions.forEach(suggestion => {
             const suggestionItem = document.createElement('div');
@@ -89,15 +97,13 @@ export function initAutocompleteCodigo() {
                 codeInput.value = suggestion;
                 suggestionsDiv.innerHTML = '';
                 suggestionsDiv.classList.add('hidden');
-                // Puedes disparar la búsqueda principal aquí si quieres que al seleccionar se busque automáticamente
-                // window.doCodeSearch(); 
             });
             suggestionsDiv.appendChild(suggestionItem); 
         });
         suggestionsDiv.classList.remove('hidden'); // Muestra el contenedor
+        console.log('Sugerencias mostradas, div visible.'); // LOG 9
     }
 
-    // Ocultar sugerencias cuando se hace clic fuera del input o las sugerencias
     document.addEventListener('click', (event) => {
         if (event.target !== codeInput && !suggestionsDiv.contains(event.target)) {
             suggestionsDiv.classList.add('hidden');
