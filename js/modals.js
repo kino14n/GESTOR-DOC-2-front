@@ -10,7 +10,7 @@ export function showModalLogin(onSuccess) {
 
   document.getElementById('loginBtn').onclick = () => {
     const clave = document.getElementById('clave-admin').value;
-    if(clave === 'tuClaveAdmin'){
+    if(clave === '1234'){
       document.getElementById('modals').innerHTML = '';
       if(typeof onSuccess === 'function') onSuccess();
     } else {
