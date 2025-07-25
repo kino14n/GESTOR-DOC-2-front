@@ -8,33 +8,35 @@ export function showModalLogin(onSuccess) {
   }
   modalsContainer.innerHTML = ''; // Limpiar cualquier modal anterior
 
-  const html = `
-    <div class="overlay" id="loginOverlay">
-        <div class="modal">
-        <h3>Ingrese clave de administrador</h3>
-        <input type="password" id="accessInput" class="w-full border p-2 mb-2" />
-        <button id="submitAccess" class="btn btn--primary w-full">Entrar</button>
-        </div>
-    </div>
+  const overlay = document.createElement('div');
+  overlay.id = 'loginOverlay';
+  overlay.className = 'overlay'; // Asumiendo que 'overlay' tiene display:flex por defecto en CSS
+  
+  const modalDiv = document.createElement('div');
+  modalDiv.className = 'modal';
+
+  modalDiv.innerHTML = `
+    <h3>Ingrese clave de administrador</h3>
+    <input type="password" id="accessInput" class="w-full border p-2 mb-2" />
+    <button id="submitAccess" class="btn btn--primary w-full">Entrar</button>
   `;
-  modalsContainer.innerHTML = html;
+  
+  overlay.appendChild(modalDiv);
+  modalsContainer.appendChild(overlay);
 
   const accessInput = document.getElementById('accessInput');
   const submitAccessButton = document.getElementById('submitAccess');
-  const loginOverlay = document.getElementById('loginOverlay');
 
-  if (submitAccessButton && accessInput && loginOverlay) {
+  if (submitAccessButton && accessInput) {
       submitAccessButton.addEventListener('click', () => {
           const clave = accessInput.value;
-          if(clave === '111'){ // <<-- CAMBIA 'tuClaveAdmin' POR TU CLAVE REAL
+          if(clave === 'tuClaveAdmin'){ // <<-- CAMBIA 'tuClaveAdmin' POR TU CLAVE REAL
               modalsContainer.innerHTML = ''; // Limpiar el modal
-              loginOverlay.classList.add('hidden'); // Ocultar overlay
               if(typeof onSuccess === 'function') onSuccess();
           } else {
               alert('Clave incorrecta'); 
           }
       });
-      loginOverlay.classList.remove('hidden'); // Asegurarse de que el overlay sea visible
   } else {
       console.error('showModalLogin: Elementos del modal de login no encontrados o incompletos.');
   }
@@ -48,52 +50,52 @@ export function showModalConfirm(message, onConfirm) {
   }
   modalsContainer.innerHTML = ''; // ¡MUY IMPORTANTE! Limpiar cualquier modal o overlay anterior
 
-  const html = `
-    <div class="overlay" id="confirmOverlay">
-        <div class="modal"> <p>${message}</p>
-        <button id="confirmOk" class="btn btn--primary mr-2">Aceptar</button>
-        <button id="confirmCancel" class="btn btn--secondary">Cancelar</button>
-        </div>
-    </div>
+  console.log('showModalConfirm: Preparando para crear modal de confirmación.'); // LOG INICIO
+
+  const overlay = document.createElement('div');
+  overlay.id = 'confirmOverlay';
+  overlay.className = 'overlay'; // Asegura que el overlay es visible por CSS
+
+  const modalDiv = document.createElement('div');
+  modalDiv.className = 'modal';
+
+  modalDiv.innerHTML = `
+    <p>${message}</p>
+    <button id="confirmOk" class="btn btn--primary mr-2">Aceptar</button>
+    <button id="confirmCancel" class="btn btn--secondary">Cancelar</button>
   `;
-  modalsContainer.innerHTML = html;
+  
+  overlay.appendChild(modalDiv);
+  modalsContainer.appendChild(overlay);
 
   const confirmOkButton = document.getElementById('confirmOk');
   const confirmCancelButton = document.getElementById('confirmCancel');
-  const confirmOverlay = document.getElementById('confirmOverlay');
 
-  console.log('showModalConfirm: Modal de confirmación mostrado.'); // LOG: Modal visible
-  console.log('showModalConfirm: Botón Aceptar encontrado:', confirmOkButton); // LOG: Se encontró el botón "Aceptar"
-  console.log('showModalConfirm: Botón Cancelar encontrado:', confirmCancelButton); // LOG: Se encontró el botón "Cancelar"
+  console.log('showModalConfirm: Modal de confirmación agregado al DOM.'); // LOG 1
+  console.log('showModalConfirm: Botón Aceptar obtenido:', confirmOkButton); // LOG 2
+  console.log('showModalConfirm: Botón Cancelar obtenido:', confirmCancelButton); // LOG 3
 
-  if (confirmOkButton && confirmOverlay) {
+  if (confirmOkButton) {
     confirmOkButton.addEventListener('click', () => {
       console.log('showModalConfirm: ¡Clic en Aceptar detectado!'); // LOG CLAVE: Si este no aparece, el clic no llega
-      // Ocultar el modal inmediatamente al hacer clic
-      modalsContainer.innerHTML = ''; 
-      confirmOverlay.classList.add('hidden'); 
-
+      modalsContainer.innerHTML = ''; // Limpiar el modal del DOM
       if (typeof onConfirm === 'function') {
         onConfirm(); 
-        console.log('showModalConfirm: Callback onConfirm ejecutado (procediendo con eliminación).'); // LOG: Callback ejecutado
+        console.log('showModalConfirm: Callback onConfirm ejecutado.'); 
       } else {
-        console.warn('showModalConfirm: onConfirm no es una función, no se puede ejecutar callback.');
+        console.warn('showModalConfirm: onConfirm no es una función.');
       }
     });
   } else {
-    console.error('showModalConfirm: Elementos del botón "Aceptar" o overlay no encontrados en el DOM.');
+    console.error('showModalConfirm: Botón "Aceptar" no encontrado DESPUÉS de crearlo.');
   }
 
-  if (confirmCancelButton && confirmOverlay) {
+  if (confirmCancelButton) {
     confirmCancelButton.addEventListener('click', () => {
-      console.log('showModalConfirm: Clic en Cancelar detectado.'); // LOG: Clic en Cancelar
+      console.log('showModalConfirm: Clic en Cancelar detectado.'); 
       modalsContainer.innerHTML = ''; 
-      confirmOverlay.classList.add('hidden'); 
     });
   } else {
-    console.error('showModalConfirm: Elementos del botón "Cancelar" o overlay no encontrados en el DOM.');
+    console.error('showModalConfirm: Botón "Cancelar" no encontrado DESPUÉS de crearlo.');
   }
-  
-  // Asegurarse de que el overlay sea visible
-  confirmOverlay.classList.remove('hidden');
 }
