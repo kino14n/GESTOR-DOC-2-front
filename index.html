@@ -82,7 +82,6 @@
       max-height: 12rem;
       overflow-y: auto;
       -webkit-overflow-scrolling: touch;
-      /* ¡IMPORTANTE! Asegúrate de que esta línea NO exista aquí: display: none; */
       z-index: 9999;
     }
     #suggestions div:hover {
@@ -173,7 +172,7 @@
             <p id="uploadWarning" class="mt-1 text-red-600 text-sm hidden">
               El archivo excede los 10 MB. Por favor, sube uno menor.
             </p>
-          </div>
+            <p id="currentPdfInfo" class="mt-1 text-gray-600 text-sm"></p> </div>
           <div>
             <label class="block mb-1 text-lg">Códigos</label>
             <textarea id="codes" name="codigos" rows="4" class="w-full border rounded px-3 py-2 text-lg"></textarea>

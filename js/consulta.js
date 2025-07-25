@@ -34,125 +34,44 @@ export async function editarDoc(id) {
 }
 
 export function eliminarDoc(id) {
-  console.log('eliminarDoc: Iniciando para ID:', id); 
   requireAuth(() => {
-    console.log('eliminarDoc: requireAuth callback ejecutado.'); 
     showModalConfirm('¿Seguro que desea eliminar?', async () => {
-      console.log('eliminarDoc: Confirmación de modal aceptada. Procediendo a eliminar...'); 
       try {
         const res = await fetch(`https://gestor-doc-backend-production.up.railway.app/api/documentos/${id}`, { method: 'DELETE' });
-        console.log('eliminarDoc: Fetch DELETE completado, respuesta:', res); 
-        
-        const contentType = res.headers.get("content-type");
-        if (contentType && contentType.indexOf("application/json") !== -1) {
-            const data = await res.json();
-            console.log('eliminarDoc: Respuesta JSON del backend:', data); 
-            if(data.ok){ 
-              console.log('eliminarDoc: Documento eliminado con éxito (backend respondió OK).'); 
-              cargarConsulta(); 
-              showToast('Documento eliminado correctamente', true); 
-            } else {
-              console.error('eliminarDoc: El backend respondió con error:', data.error || 'Mensaje de error desconocido'); 
-              showToast('Error eliminando documento: ' + (data.error || res.statusText || 'Error desconocido del servidor'), false);
-            }
+        const data = await res.json();
+        if(data.ok){
+          cargarConsulta();
+          showToast('Documento eliminado');
         } else {
-            const textResponse = await res.text();
-            console.error('eliminarDoc: Respuesta no es JSON. Status:', res.status, 'Respuesta:', textResponse); 
-            showToast('Error: El servidor no devolvió una respuesta JSON válida.', false);
+          showToast('Error eliminando documento', false);
         }
       } catch(e){
-        console.error('eliminarDoc: Error crítico en el bloque try-catch (problema de red o JS):', e); 
-        showToast('Error grave en la eliminación', false);
+        showToast('Error eliminando documento', false);
+        console.error(e);
       }
     });
   });
 }
 
-// Función principal para cargar y mostrar los documentos en la pestaña 'Consultar'
-export async function cargarConsulta() {
-  const container = document.getElementById('results-list');
-  const oldListenerId = container.dataset.listenerId;
-  if (oldListenerId && window[oldListenerId]) {
-      container.removeEventListener('click', window[oldListenerId]);
-      delete window[oldListenerId]; 
-  }
-
-  try {
-    const res = await fetch('https://gestor-doc-backend-production.up.railway.app/api/documentos', { method: 'GET' }); 
-    const data = await res.json(); 
-    console.log('cargarConsulta: Datos recibidos del Flask backend:', data); 
-
-    if(!data || data.length === 0){ 
-      container.innerHTML = '<p>No hay documentos.</p>';
-      return;
-    }
-
-    container.innerHTML = data.map(doc => ` 
-      <div class="border rounded p-4 mb-2">
-        <h3 class="font-semibold">${doc.name}</h3>
-        <p><b>Fecha:</b> ${doc.date || ''}</p>
-        <p>PDF: ${doc.path ? `<a href="uploads/${doc.path}" target="_blank" class="text-blue-600 underline">${doc.path}</a>` : 'N/A'}</p>
-        <div class="mt-2">
-            <button class="btn btn--secondary btn--sm" data-action="toggleCodes">Mostrar Códigos</button>
-            <p class="codes-container hidden mt-1 text-sm text-gray-700">${(doc.codigos_extraidos || '').split(',').join('<br>')}</p>
-        </div>
-        <div class="mt-4">
-            <button class="btn btn--primary mr-2" data-action="edit" data-id="${doc.id}">Editar</button>
-            <button class="btn btn--secondary" data-action="delete" data-id="${doc.id}">Eliminar</button>
-        </div>
-      </div>
-    `).join('');
-
-    const newListenerId = `consultContainerListener-${Date.now()}`;
-    window[newListenerId] = (event) => {
-        const target = event.target; 
-
-        if (target.tagName === 'BUTTON' && target.dataset.action) {
-            const action = target.dataset.action; 
-            const docId = target.dataset.id;     
-
-            if (action === 'edit') {
-                editarDoc(docId); 
-            } else if (action === 'delete') {
-                eliminarDoc(docId); 
-            } else if (action === 'toggleCodes') {
-                if (typeof window.toggleCodes === 'function') {
-                    window.toggleCodes(target); 
-                } else {
-                    console.warn('La función window.toggleCodes no está definida.');
-                }
-            }
-        }
-    };
-    container.addEventListener('click', window[newListenerId]);
-    container.dataset.listenerId = newListenerId; 
-
-  } catch(e){
-    container.innerHTML = '<p>Error cargando documentos.</p>';
-    console.error('Error al cargar consulta:', e); 
-  }
-}
-
-// Funciones para filtrar y descargar
 export function clearConsultFilter() {
   document.getElementById('consultFilterInput').value = '';
-  cargarConsulta(); 
+  cargarConsulta();
 }
 
 export function doConsultFilter() {
   const filter = document.getElementById('consultFilterInput').value.toLowerCase();
   const container = document.getElementById('results-list');
-  const items = container.querySelectorAll('div.border'); 
+  const items = container.querySelectorAll('div.border');
   items.forEach(item => {
-    const text = item.textContent.toLowerCase(); 
-    item.style.display = text.includes(filter) ? '' : 'none'; 
+    const text = item.textContent.toLowerCase();
+    item.style.display = text.includes(filter) ? '' : 'none';
   });
 }
 
 export function downloadCsv() {
-  window.open('https://gestor-doc-backend-production.up.railway.app/api/documentos?exportar=csv', '_blank'); 
+  window.open('https://gestor-doc-backend-production.up.railway.app/api/documentos?exportar=csv', '_blank');
 }
 
 export function downloadPdfs() {
-  alert('Función para descargar PDFs pendiente en Flask backend.');
+  alert('Función para descargar PDFs pendiente');
 }

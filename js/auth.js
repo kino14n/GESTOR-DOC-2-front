@@ -1,27 +1,20 @@
 // GESTOR-DOC/frontend/js/auth.js
 
-import { showModalLogin } from './modals.js'; 
+import { showModalLogin } from './modals.js'; // Importación directa
 
-// Leer el estado de autenticación desde localStorage al inicio
-let isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
+let isAuthenticated = false; // Estado de autenticación inicial
 
 export function requireAuth(callback) {
   if(isAuthenticated){
-    callback();
+    callback(); // Si ya está autenticado, ejecuta el callback inmediatamente
   } else {
-    // Si no está autenticado, muestra el modal de login
+    // Si no está autenticado, muestra el modal de login y le pasa el callback
     showModalLogin(() => {
-      isAuthenticated = true;
-      localStorage.setItem('isAuthenticated', 'true'); // Guardar estado en localStorage
-      callback();
+      isAuthenticated = true; // Marca como autenticado después del éxito del login
+      callback(); // Ejecuta el callback original (ej. mostrar contenido principal)
     });
   }
 }
 
-// Opcional: Función para cerrar sesión y limpiar el estado
-export function logout() {
-  isAuthenticated = false;
-  localStorage.removeItem('isAuthenticated');
-  // Podrías recargar la página o redirigir al usuario aquí
-  // window.location.reload(); 
-}
+// Nota: La persistencia de isAuthenticated con localStorage se manejará en main.js o en el callback.
+// Si quieres persistencia, el callback de showModalLogin en main.js deberá llamar a localStorage.setItem.

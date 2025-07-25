@@ -1,3 +1,4 @@
+// GESTOR-DOC/frontend/js/api.js
 
 const API_BASE = 'https://gestor-doc-backend-production.up.railway.app/api/documentos';
 
