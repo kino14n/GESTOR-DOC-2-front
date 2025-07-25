@@ -1,17 +1,26 @@
 // GESTOR-DOC/frontend/js/auth.js
 
-import { showModalLogin } from './modals.js'; // ¡Esta línea es la nueva importación necesaria!
+import { showModalLogin } from './modals.js'; 
 
-let isAuthenticated = false;
+// Leer el estado de autenticación desde localStorage al inicio
+let isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
 
 export function requireAuth(callback) {
   if(isAuthenticated){
     callback();
   } else {
-    // Ahora showModalLogin estará definida aquí
     showModalLogin(() => {
       isAuthenticated = true;
+      localStorage.setItem('isAuthenticated', 'true'); // Guardar estado en localStorage
       callback();
     });
   }
+}
+
+// Opcional: Función para cerrar sesión y limpiar el estado
+export function logout() {
+  isAuthenticated = false;
+  localStorage.removeItem('isAuthenticated');
+  // Podrías recargar la página o redirigir al usuario aquí
+  // window.location.reload(); 
 }
