@@ -48,22 +48,25 @@ export function initAutocompleteCodigo() {
                     const data = await res.json(); 
                     console.log('Respuesta backend (sugerencias):', data); 
 
-                    const uniqueCodes = new Set(); 
-
-                    data.forEach(doc => {
-                        if (doc.codigos_extraidos) {
+                    // --- CAMBIO CLAVE AQUÍ: Lógica de extracción de códigos más simple ---
+                    const allRelevantCodes = [];
+                    data.forEach(doc => { 
+                        if (doc.codigos_extraidos) { 
                             doc.codigos_extraidos.split(',').forEach(code => {
                                 const trimmedCode = code.trim().toUpperCase(); 
-                                // *** CAMBIO CLAVE AQUÍ: Eliminamos la condición de longitud ***
-                                if (trimmedCode.includes(query.toUpperCase())) { // Ahora solo si lo CONTIENE
-                                    uniqueCodes.add(trimmedCode);
+                                // Solamente verifica si el código CONTIENE la consulta (más simple y efectivo)
+                                if (trimmedCode.includes(query.toUpperCase())) { 
+                                    allRelevantCodes.push(trimmedCode);
                                 }
                             });
                         }
                     });
 
-                    console.log('Códigos únicos encontrados para sugerir (autocomplete):', Array.from(uniqueCodes)); 
-                    displaySuggestions(Array.from(uniqueCodes)); 
+                    // Eliminar duplicados y ordenar
+                    const uniqueSortedSuggestions = Array.from(new Set(allRelevantCodes)).sort();
+                    
+                    console.log('Códigos filtrados y únicos para sugerir (autocomplete):', uniqueSortedSuggestions); 
+                    displaySuggestions(uniqueSortedSuggestions); 
 
                 } catch (error) {
                     console.error('Error fetching autocomplete suggestions:', error);
@@ -83,9 +86,7 @@ export function initAutocompleteCodigo() {
             return;
         }
 
-        suggestions.sort(); 
-
-        suggestions.forEach(suggestion => {
+        suggestions.forEach(suggestion => { // Ya vienen ordenadas
             const suggestionItem = document.createElement('div');
             suggestionItem.classList.add('p-2', 'cursor-pointer', 'hover:bg-gray-200'); 
             suggestionItem.textContent = suggestion; 
