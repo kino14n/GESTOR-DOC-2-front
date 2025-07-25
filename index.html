@@ -70,8 +70,6 @@
       .btn { padding: 0.5rem; font-size: 0.875rem; }
       textarea, input { font-size: 0.875rem; }
     }
-
-    /* ESTILO CORREGIDO PARA LAS SUGERENCIAS - NO DEBE TENER 'display: none;' AQUÍ */
     #suggestions {
       position: absolute;
       top: 100%;
@@ -91,19 +89,27 @@
       background-color: #f3f4f6;
       cursor: pointer;
     }
-
-    /* Clase 'hidden' para ocultar/mostrar elementos con JavaScript */
     .hidden {
-      display: none !important; /* Usamos !important para asegurar que esta clase prevalezca */
+      display: none !important;
     }
   </style>
 </head>
 <body class="bg-gray-100 min-h-screen flex items-start justify-center p-6">
 
+  <div id="loginOverlay" class="overlay">
+    <div class="modal">
+      <h2 class="text-xl font-semibold">Acceso Restringido</h2>
+      <p class="mt-2 text-gray-700">Ingrese su número de acceso:</p>
+      <input id="accessInput" type="password" placeholder="Número de acceso" />
+      <button id="submitAccess" class="btn btn--primary btn--full">Enviar</button>
+      <p id="errorMsg" class="mt-2 text-red-500 hidden">Número incorrecto. Intente de nuevo.</p>
+    </div>
+  </div>
+
   <div id="confirmOverlay" class="overlay hidden">
     <div id="confirmBox" class="modal confirm">
       <p id="confirmMsg">¿Confirmar acción?</p>
-      <button id="confirmOk" class="btn btn--primary mr-2">Aceptar</button>
+      <button id="confirmOk" class="btn btn--primary">Aceptar</button>
       <button id="confirmCancel" class="btn btn--secondary">Cancelar</button>
     </div>
   </div>
@@ -123,7 +129,7 @@
 
   <div id="modals"></div>
 
-  <div id="mainContent" class="w-full max-w-4xl bg-white rounded-2xl shadow-lg">
+  <div id="mainContent" class="w-full max-w-4xl bg-white rounded-2xl shadow-lg hidden">
     <div class="bg-white border-b">
       <h1 class="text-2xl font-bold text-center py-4">Gestor de Documentos V1</h1>
     </div>

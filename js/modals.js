@@ -11,8 +11,8 @@ export function showModalLogin(onSuccess) {
       console.error('Contenedor #modals no encontrado para showModalLogin. (Importante para eventos)');
       return;
   }
-  modalsContainer.innerHTML = ''; // Limpiar cualquier modal/contenido anterior
-  currentOnLoginSuccessCallback = onSuccess; // Almacenar el callback de éxito
+  modalsContainer.innerHTML = ''; 
+  currentOnLoginSuccessCallback = onSuccess; 
 
   const html = `
     <div class="overlay" id="loginOverlay">
@@ -23,12 +23,11 @@ export function showModalLogin(onSuccess) {
         </div>
     </div>
   `;
-  modalsContainer.innerHTML = html; // Insertar el HTML del modal
+  modalsContainer.innerHTML = html; 
 
-  // Asegurarse de que el overlay sea visible
   const loginOverlay = document.getElementById('loginOverlay');
   if (loginOverlay) {
-      loginOverlay.classList.remove('hidden'); // Asegurarse de que sea visible al mostrarlo
+      loginOverlay.classList.remove('hidden'); 
       console.log('showModalLogin: Modal de login mostrado y visible.');
   } else {
       console.error('showModalLogin: Overlay de login no encontrado después de inyectar HTML.');
@@ -42,8 +41,8 @@ export function showModalConfirm(message, onConfirm) {
       console.error('Contenedor #modals no encontrado para showModalConfirm. (Importante para eventos)');
       return;
   }
-  modalsContainer.innerHTML = ''; // Limpiar cualquier modal/contenido anterior
-  currentOnConfirmCallback = onConfirm; // Almacenar el callback de confirmación
+  modalsContainer.innerHTML = ''; 
+  currentOnConfirmCallback = onConfirm; 
 
   console.log('showModalConfirm: Preparando para crear modal de confirmación.');
 
@@ -56,12 +55,11 @@ export function showModalConfirm(message, onConfirm) {
         </div>
     </div>
   `;
-  modalsContainer.innerHTML = html; // Insertar el HTML del modal
+  modalsContainer.innerHTML = html; 
 
-  // Asegurarse de que el overlay sea visible
   const confirmOverlay = document.getElementById('confirmOverlay');
   if (confirmOverlay) {
-      confirmOverlay.classList.remove('hidden'); // Asegurarse de que sea visible al mostrarlo
+      confirmOverlay.classList.remove('hidden'); 
       console.log('showModalConfirm: Modal de confirmación agregado al DOM y visible.');
   } else {
       console.error('showModalConfirm: Overlay de confirmación no encontrado después de inyectar HTML.');
@@ -77,41 +75,41 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     modalsContainer.addEventListener('click', (event) => {
-        const target = event.target; // El elemento específico en el que se hizo clic
+        const target = event.target; 
 
         // Manejar botones del modal de Confirmación
         if (target.id === 'confirmOk' || target.id === 'confirmCancel') {
             const confirmOverlay = document.getElementById('confirmOverlay');
             if (confirmOverlay) {
-                confirmOverlay.classList.add('hidden'); // <--- CAMBIO: Ocultar explícitamente el overlay
+                confirmOverlay.classList.add('hidden'); 
             }
-            modalsContainer.innerHTML = ''; // Limpiar el contenido del modal del DOM
+            modalsContainer.innerHTML = ''; 
 
             if (target.id === 'confirmOk') {
                 console.log('Delegación: ¡Clic en Aceptar del modal de confirmación detectado!');
                 if (currentOnConfirmCallback && typeof currentOnConfirmCallback === 'function') {
-                    currentOnConfirmCallback(); // Ejecutar el callback almacenado
+                    currentOnConfirmCallback(); 
                     console.log('Delegación: Callback onConfirm ejecutado.');
                 }
-            } else { // target.id === 'confirmCancel'
+            } else { 
                 console.log('Delegación: Clic en Cancelar del modal de confirmación detectado.');
             }
-            currentOnConfirmCallback = null; // Limpiar la referencia al callback
+            currentOnConfirmCallback = null; 
         }
         
         // Manejar botones del modal de Login
         else if (target.id === 'submitAccess') {
             const loginOverlay = document.getElementById('loginOverlay');
             if (loginOverlay) {
-                loginOverlay.classList.add('hidden'); // <--- CAMBIO: Ocultar explícitamente el overlay
+                loginOverlay.classList.add('hidden'); 
             }
-            modalsContainer.innerHTML = ''; // Limpiar el contenido del modal del DOM
+            modalsContainer.innerHTML = ''; 
 
             console.log('Delegación: Clic en Entrar del modal de login detectado!');
             const accessInput = document.getElementById('accessInput');
             const clave = accessInput ? accessInput.value : '';
             
-            if (clave === 'tuClaveAdmin') { // Validar la clave (cambia 'tuClaveAdmin' en modals.js)
+            if (clave === 'tuClaveAdmin') { 
                 if (currentOnLoginSuccessCallback && typeof currentOnLoginSuccessCallback === 'function') {
                     currentOnLoginSuccessCallback();
                     console.log('Delegación: Callback onLoginSuccess ejecutado.');

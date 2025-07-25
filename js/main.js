@@ -68,7 +68,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 optimaResultsList.innerHTML = '<p>Buscando documentos óptimos...</p>';
 
                 try {
-                    // *** VUELTA A FLASK: Endpoint search_optima, método POST, cuerpo JSON ***
                     const res = await fetch('https://gestor-doc-backend-production.up.railway.app/api/documentos/search_optima', {
                         method: 'POST',
                         headers: {
@@ -85,7 +84,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     const data = await res.json(); 
 
-                    // El backend Flask `search_optima` devuelve {documentos:[], codigos_faltantes:[]}
                     if (data.documentos && data.documentos.length > 0) { 
                         let htmlContent = `<p class="font-bold mb-2">Se encontraron ${data.documentos.length} documentos para cubrir los códigos:</p>`;
                         htmlContent += data.documentos.map(item => `
@@ -144,7 +142,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             requireAuth(async () => {
                 try {
-                    // *** VUELTA A FLASK: Endpoint search_by_code, método POST, cuerpo JSON ***
                     const res = await fetch('https://gestor-doc-backend-production.up.railway.app/api/documentos/search_by_code', {
                         method: 'POST',
                         headers: {'Content-Type': 'application/json'},

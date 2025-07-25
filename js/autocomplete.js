@@ -17,7 +17,8 @@ export function initAutocompleteCodigo() {
         clearTimeout(timeout); 
         const query = codeInput.value.trim(); 
 
-        if (query.length < 1) { 
+        // Las sugerencias se activan a partir del segundo dígito
+        if (query.length < 2) { 
             suggestionsDiv.innerHTML = '';
             suggestionsDiv.classList.add('hidden'); 
             return;
@@ -26,6 +27,7 @@ export function initAutocompleteCodigo() {
         timeout = setTimeout(async () => {
             await requireAuth(async () => {
                 try {
+                    // Endpoint Flask para buscar por código
                     const res = await fetch('https://gestor-doc-backend-production.up.railway.app/api/documentos/search_by_code', {
                         method: 'POST',
                         headers: {
@@ -41,11 +43,10 @@ export function initAutocompleteCodigo() {
                         return;
                     }
 
-                    const data = await res.json(); // 'data' es directamente el array de códigos
+                    const data = await res.json(); // Data es directamente el array de códigos (ej. ["CODE1", "CODE2"])
                     
+                    // Filtrar por códigos que empiecen con la consulta y eliminar duplicados.
                     const uniqueSortedSuggestions = Array.from(new Set(data)).filter(code => {
-                        // *** CAMBIO CLAVE AQUÍ: Usar startsWith() para que comiencen con la consulta ***
-                        // y solo sugerir códigos que sean diferentes a la consulta si la consulta es corta
                         return code.toUpperCase().startsWith(query.toUpperCase());
                     }).sort();
                     

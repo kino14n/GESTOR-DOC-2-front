@@ -5,6 +5,7 @@ import { showModalConfirm } from './modals.js';
 import { showToast } from './toasts.js';
 import { loadDocumentForEdit } from './upload.js'; 
 
+// Funciones de acción para los botones de la lista (Editar, Eliminar)
 export async function editarDoc(id) { 
   await requireAuth(async () => {
     try {
@@ -39,7 +40,6 @@ export function eliminarDoc(id) {
     showModalConfirm('¿Seguro que desea eliminar?', async () => {
       console.log('eliminarDoc: Confirmación de modal aceptada. Procediendo a eliminar...'); 
       try {
-        // *** CAMBIO CRÍTICO: La URL ahora usa el ID en el path para el DELETE ***
         const res = await fetch(`https://gestor-doc-backend-production.up.railway.app/api/documentos/${id}`, { method: 'DELETE' });
         console.log('eliminarDoc: Fetch DELETE completado, respuesta:', res); 
         
@@ -47,7 +47,6 @@ export function eliminarDoc(id) {
         if (contentType && contentType.indexOf("application/json") !== -1) {
             const data = await res.json();
             console.log('eliminarDoc: Respuesta JSON del backend:', data); 
-            // Flask devuelve {ok: true}
             if(data.ok){ 
               console.log('eliminarDoc: Documento eliminado con éxito (backend respondió OK).'); 
               cargarConsulta(); 

@@ -27,7 +27,6 @@ export function loadDocumentForEdit(docData) {
     docIdInput.value = docData.id || '';
     nameInput.value = docData.name || '';
     dateInput.value = docData.date ? new Date(docData.date).toISOString().split('T')[0] : ''; 
-    // *** Flask devuelve 'codigos_extraidos' como string, no 'codes' como array ***
     codesTextarea.value = docData.codigos_extraidos || ''; 
     
     if (currentPdfInfo) {
@@ -61,13 +60,12 @@ export function initUploadForm() {
     const formData = new FormData(form); 
 
     const documentId = docIdInput.value; 
-    // *** VUELTA A FLASK: URLs y métodos adecuados ***
-    let url = 'https://gestor-doc-backend-production.up.railway.app/api/documentos/upload'; // Para subir
+    let url = 'https://gestor-doc-backend-production.up.railway.app/api/documentos/upload'; 
     let method = 'POST';
 
     if (documentId) {
-      url = `https://gestor-doc-backend-production.up.railway.app/api/documentos/${documentId}`; // Para editar
-      method = 'PUT'; // Flask espera PUT para edición
+      url = `https://gestor-doc-backend-production.up.railway.app/api/documentos/${documentId}`; 
+      method = 'PUT'; 
     }
 
     // Validar tamaño archivo solo si se sube/cambia un archivo
@@ -82,11 +80,10 @@ export function initUploadForm() {
     try {
       const res = await fetch(url, {
         method: method, 
-        body: formData // FormData se usa para POST/PUT con archivos, Flask lo parsea
+        body: formData 
       });
       const data = await res.json(); 
 
-      // *** VUELTA A FLASK: Flask devuelve {ok: true} ***
       if(data.ok){
         showToast(`Documento ${documentId ? 'actualizado' : 'subido'} correctamente`, true); 
         resetUploadForm(); 
