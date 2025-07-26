@@ -3,7 +3,8 @@
 import { requireAuth } from './auth.js';
 import { showModalConfirm } from './modals.js';
 import { showToast } from './toasts.js';
-import { loadDocumentForEdit } from './upload.js'; 
+import { loadDocumentForEdit } from './upload.js'; // <-- Esta importación es la que debe funcionar ahora.
+
 
 // Funciones de acción para los botones de la lista (Editar, Eliminar)
 export async function editarDoc(id) { 

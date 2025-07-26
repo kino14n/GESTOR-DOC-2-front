@@ -1,4 +1,4 @@
-import { cargarConsulta, clearConsultFilter, doConsultFilter, downloadCsv, downloadPdfs, editarDoc, eliminarDoc } from './consulta.js'; // Importar todas las funciones necesarias
+import { cargarConsulta, clearConsultFilter, doConsultFilter, downloadCsv, downloadPdfs, editarDoc, eliminarDoc } from './consulta.js'; 
 import { initUploadForm } from './upload.js'; 
 import { requireAuth } from './auth.js';
 import { initAutocompleteCodigo } from './autocomplete.js';
@@ -31,7 +31,7 @@ window.showTab = function(tabId) {
     if (tabId === 'tab-list') { 
         cargarConsulta();
     } else if (tabId === 'tab-code') {
-        // initAutocompleteCodigo() ya se llama en DOMContentLoaded, así que no es necesario aquí.
+        // initAutocompleteCodigo() ya se llama en DOMContentLoaded
     }
 };
 
@@ -48,7 +48,6 @@ document.addEventListener('DOMContentLoaded', () => {
     initUploadForm(); 
 
     // Mostrar el modal de login si no está autenticado
-    // Se asegura de que el contenido principal (#mainContent) esté oculto hasta el login
     const mainContent = document.getElementById('mainContent');
     if (mainContent) {
         mainContent.classList.add('hidden');
