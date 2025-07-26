@@ -1,49 +1,47 @@
-// main.js corregido: evita redeclarar cargarConsulta
-import {
-  cargarConsulta,
-  clearConsultFilter,
-  doConsultFilter,
-  downloadCsv,
-  downloadPdfs,
-  editarDoc,
-  eliminarDoc
-} from './consulta.js';
-import { initUploadForm } from './upload.js';
-import { requireAuth } from './auth.js';
-import { initAutocompleteCodigo } from './autocomplete.js';
+// auth.js corregido con selectores genéricos y validación de clave
 import { showToast } from './toasts.js';
 
-const API_BASE = 'https://gestor-doc-backend-production.up.railway.app/api/documentos';
+/**
+ * Muestra el modal de acceso y ejecuta el callback tras autenticación.
+ * @param {Function} onSuccess - Función a ejecutar cuando el usuario ingresa clave correcta.
+ */
+export function requireAuth(onSuccess) {
+  // Seleccionar el modal (fallback a clase .modal si no hay id)
+  const loginModal = document.getElementById('loginModal') || document.querySelector('.modal');
+  if (!loginModal) {
+    console.error('Modal de login no encontrado.');
+    return;
+  }
 
-// Cambiar pestañas
-window.showTab = function(tabId) {
-  document.querySelectorAll('.tab-content').forEach(tc => tc.classList.add('hidden'));
-  const content = document.getElementById(tabId);
-  if (content) content.classList.remove('hidden');
-  document.querySelectorAll('.tab').forEach(btn => btn.classList.remove('active'));
-  const activeBtn = document.querySelector(`.tab[data-target="${tabId}"]`);
-  if (activeBtn) activeBtn.classList.add('active');
-};
+  // Mostrar modal
+  loginModal.classList.remove('hidden');
 
-// Inicialización tras autenticación
-document.addEventListener('DOMContentLoaded', () => {
-  requireAuth(initApp);
-});
+  // Seleccionar input y botón (basado en placeholder y texto)
+  const accessInput = loginModal.querySelector('input') || loginModal.querySelector('input[placeholder]');
+  const loginButton = loginModal.querySelector('button') || document.querySelector('button[type="submit"]');
 
-// Función que arranca la app
-function initApp() {
-  initUploadForm();
-  initAutocompleteCodigo();
-  cargarConsulta();
+  if (!accessInput || !loginButton) {
+    console.error('Input o botón de acceso no encontrados.');
+    return;
+  }
 
-  const filterInput = document.getElementById('consultFilterInput');
-  if (filterInput) filterInput.addEventListener('input', doConsultFilter);
+  // Handler de login
+  const handleLogin = () => {
+    const value = accessInput.value.trim();
+    // Validación simple: reemplaza 'TU_CLAVE' por la valor real o consulta a backend
+    if (value === 'TU_CLAVE') {
+      loginModal.classList.add('hidden');
+      cleanup();
+      if (typeof onSuccess === 'function') onSuccess();
+    } else {
+      showToast('Clave incorrecta', 'error');
+    }
+  };
 
-  const btnClear = document.getElementById('btnClearFilter');
-  if (btnClear) btnClear.addEventListener('click', clearConsultFilter);
+  // Limpiar listeners
+  function cleanup() {
+    loginButton.removeEventListener('click', handleLogin);
+  }
 
-  const btnCsv = document.getElementById('btnDownloadCsv');
-  if (btnCsv) btnCsv.addEventListener('click', downloadCsv);
-
-  // downloadPdfs, editarDoc y eliminarDoc están manejados en consulta.js
+  loginButton.addEventListener('click', handleLogin);
 }
