@@ -5,6 +5,7 @@ import { showModalConfirm } from './modals.js';
 import { showToast } from './toasts.js';
 import { loadDocumentForEdit } from './upload.js';
 
+// Carga y muestra la lista de documentos en la pestaña "Consultar"
 export async function cargarConsulta() {
   try {
     const res = await fetch('https://gestor-doc-backend-production.up.railway.app/api/documentos');
@@ -14,21 +15,20 @@ export async function cargarConsulta() {
     resultsList.innerHTML = '';
 
     data.forEach(doc => {
-      const item = document.createElement('div');
-      item.className = 'border rounded p-4 mb-2 bg-white shadow-sm';
-
       const fecha = new Date(doc.date);
       const fechaLocal = fecha.toLocaleDateString('es-ES', {
         weekday: 'short', year: 'numeric', month: 'long', day: 'numeric'
       });
 
+      const item = document.createElement('div');
+      item.className = 'border rounded p-4 mb-2 bg-white shadow-sm';
       item.innerHTML = `
         <h3 class="font-semibold">${doc.name}</h3>
         <p><b>Fecha:</b> ${fechaLocal}</p>
         <p><b>PDF:</b> ${doc.path ? `<a href="uploads/${doc.path}" target="_blank" class="text-blue-600 underline">${doc.path}</a>` : ''}</p>
         <div class="mt-2">
           <button class="btn btn--secondary btn--sm" onclick="toggleCodes(this)">Mostrar Códigos</button>
-          <p class="codes-container hidden mt-1 text-sm text-gray-700">${(doc.codigos_extraidos || '').split(',').join('<br>')}</p>
+          <p class="codes-container hidden mt-1 text-sm text-gray-700">${(doc.codigos_extraidos||'').split(',').join('<br>')}</p>
         </div>
         <div class="mt-2">
           <button class="btn btn--secondary btn--sm" onclick="editarDoc('${doc.id}')">Editar</button>
@@ -37,49 +37,39 @@ export async function cargarConsulta() {
       `;
       resultsList.appendChild(item);
     });
-
   } catch (e) {
     console.error('Error al cargar documentos:', e);
     showToast('Error al cargar la lista de documentos', false);
   }
 }
 
+// Mostrar u ocultar códigos en cada tarjeta
 window.toggleCodes = function(button) {
   const container = button.nextElementSibling;
-  if (container) {
-    const isVisible = !container.classList.contains('hidden');
-    container.classList.toggle('hidden');
-    button.textContent = isVisible ? 'Mostrar Códigos' : 'Ocultar Códigos';
-  }
+  if (!container) return;
+  const isVisible = !container.classList.contains('hidden');
+  container.classList.toggle('hidden');
+  button.textContent = isVisible ? 'Mostrar Códigos' : 'Ocultar Códigos';
 };
 
+// Editar documento: abrir formulario de subir en modo edición
 export async function editarDoc(id) {
   await requireAuth(async () => {
     try {
-      const res = await fetch(`https://gestor-doc-backend-production.up.railway.app/api/documentos/${id}`, { method: 'GET' });
-      if (!res.ok) {
-        const errorData = await res.json();
-        showToast(`Error al cargar documento: ${errorData.error || res.statusText}`, false);
-        return;
-      }
+      const res = await fetch(`https://gestor-doc-backend-production.up.railway.app/api/documentos/${id}`);
+      if (!res.ok) throw new Error('Error al obtener documento');
       const docData = await res.json();
-
-      if (typeof window.showTab === 'function') {
-        window.showTab('tab-upload');
-        loadDocumentForEdit(docData);
-        showToast('Documento listo para editar', true);
-      } else {
-        console.error('window.showTab no está definida. No se puede cambiar de pestaña.');
-        showToast('Error interno al preparar edición.', false);
-      }
-
+      window.showTab('tab-upload');
+      loadDocumentForEdit(docData);
+      showToast('Documento listo para editar', true);
     } catch (e) {
-      showToast('Error de red al cargar documento para editar', false);
       console.error(e);
+      showToast('Error al preparar edición', false);
     }
   });
 }
 
+// Eliminar documento con confirmación
 export function eliminarDoc(id) {
   requireAuth(() => {
     showModalConfirm('¿Seguro que desea eliminar?', async () => {
@@ -88,41 +78,52 @@ export function eliminarDoc(id) {
         const data = await res.json();
         if (data.ok) {
           cargarConsulta();
-          showToast('Documento eliminado');
+          showToast('Documento eliminado', true);
         } else {
           showToast('Error eliminando documento', false);
         }
       } catch (e) {
-        showToast('Error eliminando documento', false);
         console.error(e);
+        showToast('Error en la eliminación', false);
       }
     });
   });
 }
 
+// Limpiar filtro y recargar lista
 export function clearConsultFilter() {
   document.getElementById('consultFilterInput').value = '';
   cargarConsulta();
 }
 
+// Filtrar por primera columna de texto multilínea
 export function doConsultFilter() {
-  const filter = document.getElementById('consultFilterInput').value.toLowerCase();
+  const raw = document.getElementById('consultFilterInput').value;
+  const lines = raw.split(/\r?\n/).map(l => l.trim()).filter(l => l);
+  const codes = lines.map(l => l.split(/\s+/)[0]);
+  
   const container = document.getElementById('results-list');
-  const items = container.querySelectorAll('div.border');
+  const items = Array.from(container.querySelectorAll('div.border'));
+
   items.forEach(item => {
     const text = item.textContent.toLowerCase();
-    item.style.display = text.includes(filter) ? '' : 'none';
+    const match = codes.some(code => text.includes(code.toLowerCase()));
+    item.style.display = match ? '' : 'none';
   });
 }
 
+// Exportar CSV
 export function downloadCsv() {
   window.open('https://gestor-doc-backend-production.up.railway.app/api/documentos?exportar=csv', '_blank');
 }
 
+// Placeholder descarga de PDFs
 export function downloadPdfs() {
-  alert('Función para descargar PDFs pendiente');
+  alert('Función de descarga de PDFs pendiente');
 }
 
-// Exponer funciones globalmente para botones generados dinámicamente
+// Exponer funciones globales para botones dinámicos
 window.editarDoc = editarDoc;
 window.eliminarDoc = eliminarDoc;
+window.doConsultFilter = doConsultFilter;
+window.clearConsultFilter = clearConsultFilter;
