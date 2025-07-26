@@ -1,37 +1,35 @@
+// GESTOR-DOC/frontend/js/consulta.js
+
 import { requireAuth } from './auth.js';
 import { showModalConfirm } from './modals.js';
 import { showToast } from './toasts.js';
+import { loadDocumentForEdit } from './upload.js'; 
 
-export async function cargarConsulta() {
-  const container = document.getElementById('results-list');
-  try {
-    const res = await fetch('https://gestor-doc-backend-production.up.railway.app/api/documentos');
-    const data = await res.json();
+// Funciones de acción para los botones de la lista (Editar, Eliminar)
+export async function editarDoc(id) { 
+  await requireAuth(async () => {
+    try {
+      const res = await fetch(`https://gestor-doc-backend-production.up.railway.app/api/documentos/${id}`, { method: 'GET' });
+      if (!res.ok) {
+        const errorData = await res.json();
+        showToast(`Error al cargar documento: ${errorData.error || res.statusText}`, false);
+        return;
+      }
+      const docData = await res.json(); 
 
-    if(data.length === 0){
-      container.innerHTML = '<p>No hay documentos.</p>';
-      return;
+      if (typeof window.showTab === 'function') {
+        window.showTab('tab-upload'); 
+        loadDocumentForEdit(docData); 
+        showToast('Documento listo para editar', true);
+      } else {
+        console.error('window.showTab no está definida. No se puede cambiar de pestaña.');
+        showToast('Error interno al preparar edición.', false);
+      }
+
+    } catch (e) {
+      showToast('Error de red al cargar documento para editar', false);
+      console.error(e);
     }
-
-    container.innerHTML = data.map(doc => `
-      <div class="border rounded p-4 mb-2">
-        <h3 class="font-semibold">${doc.name}</h3>
-        <p>Códigos: ${doc.codigos_extraidos}</p>
-        <p>PDF: ${doc.path}</p>
-        <button class="btn btn--primary mr-2" onclick="editarDoc(${doc.id})">Editar</button>
-        <button class="btn btn--secondary" onclick="eliminarDoc(${doc.id})">Eliminar</button>
-      </div>
-    `).join('');
-
-  } catch(e){
-    container.innerHTML = '<p>Error cargando documentos.</p>';
-    console.error(e);
-  }
-}
-
-export function editarDoc(id) {
-  requireAuth(() => {
-    alert('Función editar documento ID: ' + id);
   });
 }
 
@@ -39,7 +37,7 @@ export function eliminarDoc(id) {
   requireAuth(() => {
     showModalConfirm('¿Seguro que desea eliminar?', async () => {
       try {
-        const res = await fetch(`https://gestor-doc-backend-production.up.railway.app/api/documentos?id=${id}`, { method: 'DELETE' });
+        const res = await fetch(`https://gestor-doc-backend-production.up.railway.app/api/documentos/${id}`, { method: 'DELETE' });
         const data = await res.json();
         if(data.ok){
           cargarConsulta();

@@ -1,3 +1,6 @@
+// GESTOR-DOC/frontend/js/upload.js
+
+import { showToast } from './toasts.js'; 
 
 export function initUploadForm() {
   const form = document.getElementById('form-upload');
