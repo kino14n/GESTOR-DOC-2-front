@@ -1,20 +1,44 @@
-// GESTOR-DOC/frontend/js/auth.js
+// auth.js actualizado para manejar correctamente callbacks
 
-import { showModalLogin } from './modals.js'; 
-
-let isAuthenticated = false; // Estado de autenticación inicial
-
-export function requireAuth(callback) {
-  if(isAuthenticated){
-    callback(); // Si ya está autenticado, ejecuta el callback inmediatamente
+/**
+ * Muestra el modal de login y ejecuta la función callback tras autenticación.
+ * @param {Function} onSuccess - Función a ejecutar cuando el usuario se autentica.
+ */
+export function requireAuth(onSuccess) {
+  const isLoggedIn = Boolean(localStorage.getItem('token')); // o tu lógica de auth
+  if (isLoggedIn) {
+    // Ya autenticado: ejecuta callback directamente
+    if (typeof onSuccess === 'function') onSuccess();
   } else {
-    // Si no está autenticado, muestra el modal de login y le pasa el callback
-    showModalLogin(() => {
-      isAuthenticated = true; // Marca como autenticado después del éxito del login
-      callback(); // Ejecuta el callback original (ej. mostrar contenido principal)
-    });
+    // No autenticado: mostrar modal
+    const loginModal = document.getElementById('loginModal');
+    const loginButton = document.getElementById('loginButton');
+    const closeBtn = loginModal.querySelector('.close-modal');
+
+    // Abrir modal
+    loginModal.classList.remove('hidden');
+
+    // Manejar clic de login
+    const handleLogin = () => {
+      // Lógica real de login (API, validaciones...)
+      // Si login OK:
+      localStorage.setItem('token', 'tu_token');
+      loginModal.classList.add('hidden');
+      // Ejecutar el callback
+      if (typeof onSuccess === 'function') onSuccess();
+      // Limpiar listeners
+      loginButton.removeEventListener('click', handleLogin);
+      closeBtn.removeEventListener('click', handleClose);
+    };
+
+    // Manejar cierre de modal sin login
+    const handleClose = () => {
+      loginModal.classList.add('hidden');
+      loginButton.removeEventListener('click', handleLogin);
+      closeBtn.removeEventListener('click', handleClose);
+    };
+
+    loginButton.addEventListener('click', handleLogin);
+    closeBtn.addEventListener('click', handleClose);
   }
 }
-
-// Nota: La persistencia de isAuthenticated con localStorage se manejará en main.js o en el callback.
-// Si quieres persistencia, el callback de showModalLogin en main.js deberá llamar a localStorage.setItem.
