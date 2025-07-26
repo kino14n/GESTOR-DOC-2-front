@@ -122,3 +122,7 @@ export function downloadCsv() {
 export function downloadPdfs() {
   alert('Función para descargar PDFs pendiente');
 }
+
+// Exponer funciones globalmente para botones generados dinámicamente
+window.editarDoc = editarDoc;
+window.eliminarDoc = eliminarDoc;
