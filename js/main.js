@@ -1,4 +1,4 @@
-// main.js actualizado
+// main.js corregido: evita redeclarar cargarConsulta
 import {
   cargarConsulta,
   clearConsultFilter,
@@ -15,112 +15,35 @@ import { showToast } from './toasts.js';
 
 const API_BASE = 'https://gestor-doc-backend-production.up.railway.app/api/documentos';
 
-// Función global para cambiar pestaña
+// Cambiar pestañas
 window.showTab = function(tabId) {
-  const tabsContent = document.querySelectorAll('.tab-content');
-  tabsContent.forEach(tab => tab.classList.add('hidden'));
-  const activeTabContent = document.getElementById(tabId);
-  if (activeTabContent) activeTabContent.classList.remove('hidden');
-  const tabButtons = document.querySelectorAll('.tab');
-  tabButtons.forEach(btn => btn.classList.remove('active'));
-  const activeTabButton = document.querySelector(`.tab[data-target="${tabId}"]`);
-  if (activeTabButton) activeTabButton.classList.add('active');
+  document.querySelectorAll('.tab-content').forEach(tc => tc.classList.add('hidden'));
+  const content = document.getElementById(tabId);
+  if (content) content.classList.remove('hidden');
+  document.querySelectorAll('.tab').forEach(btn => btn.classList.remove('active'));
+  const activeBtn = document.querySelector(`.tab[data-target="${tabId}"]`);
+  if (activeBtn) activeBtn.classList.add('active');
 };
 
-// Esperar a que el DOM cargue antes de enganchar listeners
+// Inicialización tras autenticación
 document.addEventListener('DOMContentLoaded', () => {
-  // Autenticación
-  if (typeof requireAuth === 'function') requireAuth();
-
-  // Inicializar formulario de subida
-  if (typeof initUploadForm === 'function') initUploadForm();
-
-  // Inicializar autocomplete en Búsqueda por Código
-  if (typeof initAutocompleteCodigo === 'function') initAutocompleteCodigo();
-
-  // Cargar datos de consulta inicial
-  if (typeof cargarConsulta === 'function') cargarConsulta();
-
-  // Enganchar filtro y botones de consulta (asegúrate de tener estos IDs en tu HTML)
-  const filterInput = document.getElementById('consultFilterInput');
-  if (filterInput) {
-    filterInput.addEventListener('input', doConsultFilter);
-  }
-
-  const btnClearFilter = document.getElementById('btnClearFilter');
-  if (btnClearFilter) {
-    btnClearFilter.addEventListener('click', clearConsultFilter);
-  }
-
-  const btnDownloadCsv = document.getElementById('btnDownloadCsv');
-  if (btnDownloadCsv) {
-    btnDownloadCsv.addEventListener('click', downloadCsv);
-  }
-
-  // Otros listeners dinámicos (Editar, Eliminar, Mostrar Códigos) se gestionan internamente en consulta.js
-});
-// main.js actualizado con callback en requireAuth
-import {
-  cargarConsulta,
-  clearConsultFilter,
-  doConsultFilter,
-  downloadCsv,
-  downloadPdfs,
-  editarDoc,
-  eliminarDoc
-} from './consulta.js';
-import { initUploadForm } from './upload.js';
-import { requireAuth } from './auth.js';
-import { initAutocompleteCodigo } from './autocomplete.js';
-import { showToast } from './toasts.js';
-
-const API_BASE = 'https://gestor-doc-backend-production.up.railway.app/api/documentos';
-
-// Función global para cambiar pestaña
-window.showTab = function(tabId) {
-  const tabsContent = document.querySelectorAll('.tab-content');
-  tabsContent.forEach(tab => tab.classList.add('hidden'));
-  const activeTabContent = document.getElementById(tabId);
-  if (activeTabContent) activeTabContent.classList.remove('hidden');
-  const tabButtons = document.querySelectorAll('.tab');
-  tabButtons.forEach(btn => btn.classList.remove('active'));
-  const activeTabButton = document.querySelector(`.tab[data-target="${tabId}"]`);
-  if (activeTabButton) activeTabButton.classList.add('active');
-};
-
-// Iniciar toda la app tras auth
-document.addEventListener('DOMContentLoaded', () => {
-  requireAuth(() => {
-    // Una vez autenticado, inicializamos todo:
-    initApp();
-  });
+  requireAuth(initApp);
 });
 
+// Función que arranca la app
 function initApp() {
-  // Inicializar formulario de subida
-  if (typeof initUploadForm === 'function') initUploadForm();
+  initUploadForm();
+  initAutocompleteCodigo();
+  cargarConsulta();
 
-  // Inicializar autocomplete en Búsqueda por Código
-  if (typeof initAutocompleteCodigo === 'function') initAutocompleteCodigo();
-
-  // Cargar datos de consulta inicial
-  if (typeof cargarConsulta === 'function') cargarConsulta();
-
-  // Enganchar filtro y botones de consulta (asegúrate de tener estos IDs en tu HTML)
   const filterInput = document.getElementById('consultFilterInput');
-  if (filterInput) {
-    filterInput.addEventListener('input', doConsultFilter);
-  }
+  if (filterInput) filterInput.addEventListener('input', doConsultFilter);
 
-  const btnClearFilter = document.getElementById('btnClearFilter');
-  if (btnClearFilter) {
-    btnClearFilter.addEventListener('click', clearConsultFilter);
-  }
+  const btnClear = document.getElementById('btnClearFilter');
+  if (btnClear) btnClear.addEventListener('click', clearConsultFilter);
 
-  const btnDownloadCsv = document.getElementById('btnDownloadCsv');
-  if (btnDownloadCsv) {
-    btnDownloadCsv.addEventListener('click', downloadCsv);
-  }
+  const btnCsv = document.getElementById('btnDownloadCsv');
+  if (btnCsv) btnCsv.addEventListener('click', downloadCsv);
 
-  // Otros listeners dinámicos (Editar, Eliminar, Mostrar Códigos) se gestionan en consulta.js
+  // downloadPdfs, editarDoc y eliminarDoc están manejados en consulta.js
 }
