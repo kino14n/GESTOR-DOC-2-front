@@ -18,7 +18,7 @@ export function initAutocompleteCodigo() {
         const query = codeInput.value.trim(); 
 
         // Las sugerencias se activan a partir del segundo dígito
-        if (query.length < 2) { 
+        if (query.length < 1) { 
             suggestionsDiv.innerHTML = '';
             suggestionsDiv.classList.add('hidden'); 
             return;
