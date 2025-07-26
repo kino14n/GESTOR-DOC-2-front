@@ -42,27 +42,37 @@ export function loadDocumentForEdit(docData) {
 
 export function initUploadForm() {
   const form = document.getElementById('form-upload');
-  if(!form) return;
+  if (!form) return;
 
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
+
     const formData = new FormData(form);
+    const docId = form.querySelector('#docId').value.trim();
+
+    const isEdit = docId !== '';
+    const endpoint = isEdit
+      ? `https://gestor-doc-backend-production.up.railway.app/api/documentos/${docId}`
+      : `https://gestor-doc-backend-production.up.railway.app/api/documentos/upload`;
+    const method = isEdit ? 'PUT' : 'POST';
 
     try {
-      const res = await fetch('https://gestor-doc-backend-production.up.railway.app/api/documentos/upload', {
-        method: 'POST',
+      const res = await fetch(endpoint, {
+        method,
         body: formData
       });
       const data = await res.json();
 
-      if(data.ok){
-        showToast('Documento subido correctamente');
+      if (res.ok && data.ok) {
+        showToast(isEdit ? 'Documento editado correctamente' : 'Documento subido correctamente');
         form.reset();
+        form.querySelector('#docId').value = ''; // salir de modo edición
+        document.getElementById('currentPdfInfo').innerHTML = '';
       } else {
-        showToast('Error subiendo documento: ' + data.error, false);
+        showToast('Error: ' + (data.error || 'Desconocido'), false);
       }
-    } catch(e) {
-      showToast('Error en la subida', false);
+    } catch (e) {
+      showToast('Error en la conexión', false);
       console.error(e);
     }
   });
