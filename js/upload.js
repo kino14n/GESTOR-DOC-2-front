@@ -77,3 +77,6 @@ export function initUploadForm() {
     }
   });
 }
+
+// Haz global la función de edición para que consulta.js pueda llamarla:
+window.loadDocumentForEdit = loadDocumentForEdit;
