@@ -1,8 +1,8 @@
 // js/auth.js
 
 /**
- * requireAuth muestra el overlay de login y, tras introducir "111",
- * oculta el overlay y ejecuta el callback para continuar con la app.
+ * requireAuth muestra siempre el overlay de login y, tras introducir "111",
+ * oculta el overlay, guarda en localStorage y ejecuta el callback onSuccess().
  */
 export function requireAuth(onSuccess) {
   const loginOverlay  = document.getElementById('loginOverlay');
@@ -16,23 +16,16 @@ export function requireAuth(onSuccess) {
     return;
   }
 
-  // **Eliminamos el auto-login para que siempre pida clave:**
-  // if (localStorage.getItem('token') === '111') {
-  //   showApp();
-  //   onSuccess();
-  //   return;
-  // }
+  // Cada recarga limpia el token para forzar nueva validación
+  localStorage.removeItem('token');
 
-  // Función para mostrar la app y ocultar el login
+  // Función interna para mostrar la app
   const showApp = () => {
     loginOverlay.classList.add('hidden');
     mainContent.classList.remove('hidden');
   };
 
-  // Cada recarga limpia el token para forzar nueva validación
-  localStorage.removeItem('token');
-
-  // Caso inicial: mostramos overlay y ocultamos mensaje de error
+  // Mostrar overlay y ocultar mensaje de error
   loginOverlay.classList.remove('hidden');
   errorMsg.classList.add('hidden');
 
@@ -45,6 +38,8 @@ export function requireAuth(onSuccess) {
     } else {
       errorMsg.textContent = 'Número incorrecto. Intente de nuevo.';
       errorMsg.classList.remove('hidden');
+      accessInput.value = '';
+      accessInput.focus();
     }
   });
 }
