@@ -6,29 +6,28 @@ import { showToast } from './toasts.js';
 
 let currentDocs = [];
 
-/** Carga y renderiza todos los documentos. */
+/** Carga y renderiza la lista completa */
 export async function cargarConsulta() {
   try {
     currentDocs = await listarDocumentos();
     renderDocs(currentDocs);
   } catch (e) {
-    console.error('Error al cargar documentos:', e);
-    showToast('Error al cargar lista', 'error');
+    console.error(e);
+    showToast('Error al cargar documentos', 'error');
   }
 }
 
-/** Renderiza en #results-list usando name, date y codigos_extraidos */
+/** Renderiza dentro de #results-list */
 function renderDocs(docs) {
   const container = document.getElementById('results-list');
   if (!container) return;
-  container.innerHTML = docs
-    .map(d => {
-      const fecha = new Date(d.date).toLocaleDateString('es-ES');
-      return `
-      <div class="border rounded p-4 mb-2 bg-white shadow-sm">
-        <h3 class="font-semibold">${d.name}</h3>
-        <p><b>Fecha:</b> ${fecha}</p>
-        <p><b>Códigos:</b> ${d.codigos_extraidos || '—'}</p>
+  container.innerHTML = docs.map(d => {
+    const fecha = new Date(d.date).toLocaleDateString('es-ES');
+    return `
+      <div class="border rounded p-4 mb-3 bg-white shadow-sm">
+        <h3 class="text-lg font-semibold text-green-600">${d.name}</h3>
+        <p><small>${fecha}</small></p>
+        <p><em>${d.codigos_extraidos || '—'}</em></p>
         <div class="mt-2 flex gap-2">
           <button onclick="downloadCsv(${d.id})">CSV</button>
           <button onclick="downloadPdfs(${d.id})">PDF</button>
@@ -36,44 +35,30 @@ function renderDocs(docs) {
           <button onclick="eliminarDoc('${d.id}')">Eliminar</button>
         </div>
       </div>`;
-    })
-    .join('');
+  }).join('');
 }
 
-// Filtros cliente-side
+// filtros
 window.clearConsultFilter = () => {
-  const input = document.getElementById('consultFilterInput');
-  if (input) input.value = '';
+  document.getElementById('consultFilterInput').value = '';
   renderDocs(currentDocs);
 };
-
 window.doConsultFilter = () => {
-  const term = document.getElementById('consultFilterInput').value.toLowerCase().trim();
-  renderDocs(
-    currentDocs.filter(d =>
-      d.name.toLowerCase().includes(term) ||
-      (d.codigos_extraidos || '').toLowerCase().includes(term)
-    )
-  );
+  const t = document.getElementById('consultFilterInput').value.toLowerCase().trim();
+  renderDocs(currentDocs.filter(d =>
+    d.name.toLowerCase().includes(t) ||
+    (d.codigos_extraidos||'').toLowerCase().includes(t)
+  ));
 };
 
-// Descargas, edición y eliminación (expuestas globalmente)
+// descargas y acciones
 window.downloadCsv = id => window.open(`/api/documentos?format=csv&id=${id}`, '_blank');
 window.downloadPdfs = id => window.open(`/api/documentos?format=pdf&id=${id}`, '_blank');
-
-window.editarDoc = id => {
-  // Lanza evento que upload.js escucha para cargar edición
-  document.dispatchEvent(new CustomEvent('load-edit', { detail: { id } }));
-};
-
+window.editarDoc = id => document.dispatchEvent(new CustomEvent('load-edit', { detail:{id} }));
 window.eliminarDoc = id => {
   showModalConfirm('¿Eliminar documento?', async () => {
-    try {
-      await eliminarDocumento(id);
-      showToast('Documento eliminado', 'success');
-      cargarConsulta();
-    } catch {
-      showToast('No se pudo eliminar', 'error');
-    }
+    await eliminarDocumento(id);
+    showToast('Eliminado', 'success');
+    cargarConsulta();
   });
 };

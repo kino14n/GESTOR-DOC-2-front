@@ -2,19 +2,19 @@
 
 const API_BASE = 'https://gestor-doc-backend-production.up.railway.app/api/documentos';
 
-/** Lista todos los documentos (GET /api/documentos) */
+/** Lista todos los documentos */
 export async function listarDocumentos() {
   const res = await fetch(`${API_BASE}`, { method: 'GET' });
   return res.json();
 }
 
-/** Elimina un documento por ID (DELETE /api/documentos/{id}) */
+/** Elimina un documento */
 export async function eliminarDocumento(id) {
   const res = await fetch(`${API_BASE}/${id}`, { method: 'DELETE' });
   return res.json();
 }
 
-/** Búsqueda voraz agrupada por lista de códigos. POST /api/documentos/search { texto } */
+/** Búsqueda Óptima (agrupa por texto libre) */
 export async function buscarOptima(texto) {
   const res = await fetch(`${API_BASE}/search`, {
     method: 'POST',
@@ -24,7 +24,18 @@ export async function buscarOptima(texto) {
   return res.json();
 }
 
-/** Autocompletado de códigos. POST /api/documentos/search_by_code { codigo } */
+/** Búsqueda por Código (documentos) */
+export async function buscarPorCodigo(code) {
+  // reutilizamos el mismo endpoint /search para traer documentos que contengan ese código
+  const res = await fetch(`${API_BASE}/search`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ texto: code })
+  });
+  return res.json();
+}
+
+/** Sugerir códigos (autocomplete) */
 export async function sugerirCodigos(prefijo) {
   const res = await fetch(`${API_BASE}/search_by_code`, {
     method: 'POST',
