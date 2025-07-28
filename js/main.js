@@ -1,17 +1,16 @@
 // js/main.js
 
-import { buscarOptima, buscarPorCodigo } from './api.js';
-import { cargarConsulta } from './consulta.js';
+import { listarDocumentos, eliminarDocumento } from './api.js';
+import { buscarOptima } from './api.js';
 import { initUploadForm } from './upload.js';
 import { requireAuth } from './auth.js';
 import { initAutocompleteCodigo } from './autocomplete.js';
 import { showToast } from './toasts.js';
 
-/** Función global para cambiar pestañas */
+/** Navegación entre pestañas */
 window.showTab = tabId => {
   document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
-  const sec = document.getElementById(tabId);
-  if (sec) sec.classList.remove('hidden');
+  document.getElementById(tabId)?.classList.remove('hidden');
   document.querySelectorAll('.tab').forEach(btn =>
     btn.dataset.tab === tabId
       ? btn.classList.add('active')
@@ -21,7 +20,7 @@ window.showTab = tabId => {
 
 document.addEventListener('DOMContentLoaded', () => {
   const mainContent = document.getElementById('mainContent');
-  if (mainContent) mainContent.classList.add('hidden');
+  mainContent?.classList.add('hidden');
 
   // Bind de pestañas
   document.querySelectorAll('.tab').forEach(btn =>
@@ -35,59 +34,60 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Pestaña inicial y carga de lista
     window.showTab('tab-search');
-    cargarConsulta();
+    listarDocumentos().then(docs => {
+      // puedes reutilizar tu función de render de consulta
+      document.getElementById('results-list').innerHTML =
+        docs.map(d => `<div>${d.nombre} – ${d.codigo}</div>`).join('');
+    });
 
     // ==== BÚSQUEDA ÓPTIMA ====
     const txtArea = document.getElementById('optimaSearchInput');
-    const btnOpt   = document.getElementById('doOptimaSearchButton');
-    const btnClear = document.getElementById('clearOptimaSearchButton');
-    const resultsO = document.getElementById('results-optima-search');
+    const btnOpt  = document.getElementById('doOptimaSearchButton');
+    const btnClr  = document.getElementById('clearOptimaSearchButton');
+    const resOpt  = document.getElementById('results-optima-search');
 
-    if (btnOpt && txtArea && resultsO) {
+    if (btnOpt && txtArea && resOpt) {
       btnOpt.addEventListener('click', async () => {
         const txt = txtArea.value.trim();
         if (!txt) return showToast('Ingrese texto para buscar', 'warning');
         try {
-          const res = await buscarOptima(txt);
-          resultsO.innerHTML = res
-            .map(d => `<div class="border p-2">${d.nombre || d.name} – ${d.codigo}</div>`)
-            .join('') || '<p>No se encontraron resultados.</p>';
-        } catch (e) {
-          console.error(e);
-          showToast('Error en la búsqueda', 'error');
+          const docs = await buscarOptima(txt);
+          resOpt.innerHTML = docs.length
+            ? docs.map(d => `<div>${d.nombre} – ${d.codigo}</div>`).join('')
+            : '<p>No se encontraron resultados.</p>';
+        } catch {
+          showToast('Error en búsqueda óptima', 'error');
         }
       });
-    }
-    if (btnClear && txtArea && resultsO) {
-      btnClear.addEventListener('click', () => {
+      btnClr.addEventListener('click', () => {
         txtArea.value = '';
-        resultsO.innerHTML = '';
+        resOpt.innerHTML = '';
       });
     }
 
-    // ==== BÚSQUEDA POR CÓDIGO ====
+    // ==== BÚSQUEDA POR CÓDIGO (documentos) ====
     const codeIn = document.getElementById('codeInput');
-    const btnCode = document.getElementById('doCodeSearchButton');
-    const resultsC= document.getElementById('results-code');
+    const btnCode= document.getElementById('doCodeSearchButton');
+    const resCod = document.getElementById('results-code');
 
-    if (btnCode && codeIn && resultsC) {
+    if (btnCode && codeIn && resCod) {
       btnCode.addEventListener('click', async () => {
         const code = codeIn.value.trim();
         if (!code) return showToast('Ingrese un código', 'warning');
         try {
-          const res = await buscarPorCodigo(code);
-          resultsC.innerHTML = res.length
-            ? res.map(d => `<div class="border p-2">${d.nombre || d.name} – ${d.codigo}</div>`).join('')
+          // reutilizamos la búsqueda óptima para documentos por código
+          const docs = await buscarOptima(code);
+          resCod.innerHTML = docs.length
+            ? docs.map(d => `<div>${d.nombre} – ${d.codigo}</div>`).join('')
             : '<p>No se encontró.</p>';
-        } catch (e) {
-          console.error(e);
+        } catch {
           showToast('Error en búsqueda por código', 'error');
         }
       });
     }
   });
 
-  // Formularios de subida y autocomplete (ocultos hasta login)
+  // Inicializa formularios y autocompletado (ocultos hasta login)
   initUploadForm();
   initAutocompleteCodigo();
 });
