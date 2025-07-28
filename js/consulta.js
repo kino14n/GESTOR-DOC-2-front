@@ -6,9 +6,7 @@ import { showToast } from './toasts.js';
 
 let currentDocs = [];
 
-/**
- * Carga la lista completa de documentos y los muestra.
- */
+/** Carga y renderiza todos los documentos. */
 export async function cargarConsulta() {
   try {
     currentDocs = await listarDocumentos();
@@ -19,16 +17,14 @@ export async function cargarConsulta() {
   }
 }
 
-/**
- * Renderiza un array de documentos en el contenedor #results-list.
- * Usa los campos: name, codigos_extraidos, date, path.
- */
+/** Renderiza en #results-list usando name, date y codigos_extraidos */
 function renderDocs(docs) {
   const container = document.getElementById('results-list');
   if (!container) return;
-  container.innerHTML = docs.map(d => {
-    const fecha = new Date(d.date).toLocaleDateString('es-ES');
-    return `
+  container.innerHTML = docs
+    .map(d => {
+      const fecha = new Date(d.date).toLocaleDateString('es-ES');
+      return `
       <div class="border rounded p-4 mb-2 bg-white shadow-sm">
         <h3 class="font-semibold">${d.name}</h3>
         <p><b>Fecha:</b> ${fecha}</p>
@@ -39,19 +35,19 @@ function renderDocs(docs) {
           <button onclick="editarDoc('${d.id}')">Editar</button>
           <button onclick="eliminarDoc('${d.id}')">Eliminar</button>
         </div>
-      </div>
-    `;
-  }).join('');
+      </div>`;
+    })
+    .join('');
 }
 
-// Filtros cliente-side, exportados globalmente si son necesarios
-window.clearConsultFilter = function() {
+// Filtros cliente-side
+window.clearConsultFilter = () => {
   const input = document.getElementById('consultFilterInput');
   if (input) input.value = '';
   renderDocs(currentDocs);
 };
 
-window.doConsultFilter = function() {
+window.doConsultFilter = () => {
   const term = document.getElementById('consultFilterInput').value.toLowerCase().trim();
   renderDocs(
     currentDocs.filter(d =>
@@ -61,14 +57,13 @@ window.doConsultFilter = function() {
   );
 };
 
-// Funciones de descarga y edición (globales)
+// Descargas, edición y eliminación (expuestas globalmente)
 window.downloadCsv = id => window.open(`/api/documentos?format=csv&id=${id}`, '_blank');
 window.downloadPdfs = id => window.open(`/api/documentos?format=pdf&id=${id}`, '_blank');
 
 window.editarDoc = id => {
-  // Lógica de cargar en formulario de edición (upload.js)
-  const event = new CustomEvent('load-edit', { detail: { id } });
-  document.dispatchEvent(event);
+  // Lanza evento que upload.js escucha para cargar edición
+  document.dispatchEvent(new CustomEvent('load-edit', { detail: { id } }));
 };
 
 window.eliminarDoc = id => {

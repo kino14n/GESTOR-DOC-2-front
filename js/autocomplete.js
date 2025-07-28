@@ -2,10 +2,7 @@
 
 import { sugerirCodigos } from './api.js';
 
-/**
- * Inicializa el autocompletado en el input de código.
- * Usa el endpoint POST /search_by_code para obtener sugerencias.
- */
+/** Inicializa autocompletado en #codeInput usando #suggestions */
 export function initAutocompleteCodigo() {
   const input = document.getElementById('codeInput');
   const suggestions = document.getElementById('suggestions');
@@ -23,7 +20,6 @@ export function initAutocompleteCodigo() {
     timer = setTimeout(async () => {
       try {
         const results = await sugerirCodigos(term);
-        // Suponemos que results es un array de objetos con { codigo, nombre } o strings de código
         suggestions.innerHTML = results
           .map(r => {
             const code = typeof r === 'string' ? r : r.codigo;
@@ -31,12 +27,11 @@ export function initAutocompleteCodigo() {
           })
           .join('');
         suggestions.classList.toggle('hidden', results.length === 0);
-
         suggestions.querySelectorAll('.suggestion-item').forEach(item => {
-          item.addEventListener('click', () => {
+          item.onclick = () => {
             input.value = item.textContent;
             suggestions.classList.add('hidden');
-          });
+          };
         });
       } catch (err) {
         console.error('Error en autocomplete:', err);

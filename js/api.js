@@ -14,10 +14,7 @@ export async function eliminarDocumento(id) {
   return res.json();
 }
 
-/**
- * Búsqueda óptima (voraz) por texto libre.
- * POST /api/documentos/search { texto }
- */
+/** Búsqueda voraz agrupada por lista de códigos. POST /api/documentos/search { texto } */
 export async function buscarOptima(texto) {
   const res = await fetch(`${API_BASE}/search`, {
     method: 'POST',
@@ -27,10 +24,7 @@ export async function buscarOptima(texto) {
   return res.json();
 }
 
-/**
- * Autocompletado de códigos (POST /api/documentos/search_by_code { codigo })
- * Devuelve array de strings
- */
+/** Autocompletado de códigos. POST /api/documentos/search_by_code { codigo } */
 export async function sugerirCodigos(prefijo) {
   const res = await fetch(`${API_BASE}/search_by_code`, {
     method: 'POST',
