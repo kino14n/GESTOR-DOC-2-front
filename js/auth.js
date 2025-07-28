@@ -1,44 +1,47 @@
-// auth.js actualizado para manejar correctamente callbacks
+// js/auth.js
 
 /**
- * Muestra el modal de login y ejecuta la función callback tras autenticación.
- * @param {Function} onSuccess - Función a ejecutar cuando el usuario se autentica.
+ * requireAuth muestra el overlay de login y, tras introducir "111",
+ * oculta el overlay y ejecuta el callback para continuar con la app.
  */
 export function requireAuth(onSuccess) {
-  const isLoggedIn = Boolean(localStorage.getItem('token')); // o tu lógica de auth
-  if (isLoggedIn) {
-    // Ya autenticado: ejecuta callback directamente
-    if (typeof onSuccess === 'function') onSuccess();
-  } else {
-    // No autenticado: mostrar modal
-    const loginModal = document.getElementById('loginModal');
-    const loginButton = document.getElementById('loginButton');
-    const closeBtn = loginModal.querySelector('.close-modal');
+  const loginOverlay  = document.getElementById('loginOverlay');
+  const accessInput   = document.getElementById('accessInput');
+  const submitAccess  = document.getElementById('submitAccess');
+  const errorMsg      = document.getElementById('errorMsg');
+  const mainContent   = document.getElementById('mainContent');
 
-    // Abrir modal
-    loginModal.classList.remove('hidden');
-
-    // Manejar clic de login
-    const handleLogin = () => {
-      // Lógica real de login (API, validaciones...)
-      // Si login OK:
-      localStorage.setItem('token', 'tu_token');
-      loginModal.classList.add('hidden');
-      // Ejecutar el callback
-      if (typeof onSuccess === 'function') onSuccess();
-      // Limpiar listeners
-      loginButton.removeEventListener('click', handleLogin);
-      closeBtn.removeEventListener('click', handleClose);
-    };
-
-    // Manejar cierre de modal sin login
-    const handleClose = () => {
-      loginModal.classList.add('hidden');
-      loginButton.removeEventListener('click', handleLogin);
-      closeBtn.removeEventListener('click', handleClose);
-    };
-
-    loginButton.addEventListener('click', handleLogin);
-    closeBtn.addEventListener('click', handleClose);
+  if (!loginOverlay || !accessInput || !submitAccess || !errorMsg || !mainContent) {
+    console.error('❌ Elementos de autenticación no encontrados en el DOM');
+    return;
   }
+
+  // Función para mostrar la app y ocultar el login
+  const showApp = () => {
+    loginOverlay.classList.add('hidden');
+    mainContent.classList.remove('hidden');
+  };
+
+  // Si ya estaba autenticado (recarga), saltamos login
+  if (localStorage.getItem('token') === '111') {
+    showApp();
+    onSuccess();
+    return;
+  }
+
+  // Caso inicial: mostramos overlay y ocultamos mensaje de error
+  loginOverlay.classList.remove('hidden');
+  errorMsg.classList.add('hidden');
+
+  submitAccess.addEventListener('click', () => {
+    const val = accessInput.value.trim();
+    if (val === '111') {
+      localStorage.setItem('token', val);
+      showApp();
+      onSuccess();
+    } else {
+      errorMsg.textContent = 'Número incorrecto. Intente de nuevo.';
+      errorMsg.classList.remove('hidden');
+    }
+  });
 }
