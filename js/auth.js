@@ -16,18 +16,21 @@ export function requireAuth(onSuccess) {
     return;
   }
 
+  // **Eliminamos el auto-login para que siempre pida clave:**
+  // if (localStorage.getItem('token') === '111') {
+  //   showApp();
+  //   onSuccess();
+  //   return;
+  // }
+
   // Función para mostrar la app y ocultar el login
   const showApp = () => {
     loginOverlay.classList.add('hidden');
     mainContent.classList.remove('hidden');
   };
 
-  // Si ya estaba autenticado (recarga), saltamos login
-  if (localStorage.getItem('token') === '111') {
-    showApp();
-    onSuccess();
-    return;
-  }
+  // Cada recarga limpia el token para forzar nueva validación
+  localStorage.removeItem('token');
 
   // Caso inicial: mostramos overlay y ocultamos mensaje de error
   loginOverlay.classList.remove('hidden');
