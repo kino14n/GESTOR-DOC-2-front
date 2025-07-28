@@ -1,7 +1,11 @@
 // js/autocomplete.js
 
-import { buscarPorCodigo } from './api.js';
+import { sugerirCodigos } from './api.js';
 
+/**
+ * Inicializa el autocompletado en el input de código.
+ * Usa el endpoint POST /search_by_code para obtener sugerencias.
+ */
 export function initAutocompleteCodigo() {
   const input = document.getElementById('codeInput');
   const suggestions = document.getElementById('suggestions');
@@ -18,27 +22,29 @@ export function initAutocompleteCodigo() {
     }
     timer = setTimeout(async () => {
       try {
-        const data = await buscarPorCodigo(term);
-        const unique = Array.from(new Set(data))
-          .filter(c => c.toUpperCase().startsWith(term.toUpperCase()))
-          .sort();
-        suggestions.innerHTML = unique
-          .map(c => `<div class="p-2 cursor-pointer hover:bg-gray-200 suggestion-item">${c}</div>`)
+        const results = await sugerirCodigos(term);
+        // Suponemos que results es un array de objetos con { codigo, nombre } o strings de código
+        suggestions.innerHTML = results
+          .map(r => {
+            const code = typeof r === 'string' ? r : r.codigo;
+            return `<div class="p-2 hover:bg-gray-100 cursor-pointer suggestion-item">${code}</div>`;
+          })
           .join('');
-        suggestions.classList.toggle('hidden', unique.length === 0);
-        // click a cada item
+        suggestions.classList.toggle('hidden', results.length === 0);
+
         suggestions.querySelectorAll('.suggestion-item').forEach(item => {
-          item.onclick = () => {
+          item.addEventListener('click', () => {
             input.value = item.textContent;
             suggestions.classList.add('hidden');
-          };
+          });
         });
       } catch (err) {
-        console.error('Autocomplete error:', err);
+        console.error('Error en autocomplete:', err);
         suggestions.classList.add('hidden');
       }
     }, 300);
   });
+
   document.addEventListener('click', e => {
     if (e.target !== input && !suggestions.contains(e.target)) {
       suggestions.classList.add('hidden');
