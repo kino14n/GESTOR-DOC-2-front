@@ -16,16 +16,16 @@ export function requireAuth(onSuccess) {
     return;
   }
 
-  // Cada recarga limpia el token para forzar nueva validación
-  localStorage.removeItem('token');
-
   // Función interna para mostrar la app
   const showApp = () => {
     loginOverlay.classList.add('hidden');
     mainContent.classList.remove('hidden');
   };
 
-  // Mostrar overlay y ocultar mensaje de error
+  // Cada recarga limpia el token para forzar nueva validación
+  localStorage.removeItem('token');
+
+  // Estado inicial: mostrar overlay y ocultar mensaje de error
   loginOverlay.classList.remove('hidden');
   errorMsg.classList.add('hidden');
 
