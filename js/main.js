@@ -37,28 +37,57 @@ document.addEventListener('DOMContentLoaded', () => {
     window.showTab('tab-search');
     cargarConsulta();
 
-    // Búsqueda Óptima
-    document.getElementById('doOptimaSearchButton')?.addEventListener('click', async () => {
-      const txt = document.getElementById('optimaInput').value.trim();
-      if (!txt) return showToast('Ingrese texto para buscar', 'warning');
-      const res = await buscarOptima(txt);
-      document.getElementById('results-search').innerHTML =
-        res.map(d => `<div>${d.name || d.nombre} – ${d.codigo}</div>`).join('');
-    });
+    // ==== BÚSQUEDA ÓPTIMA ====
+    const txtArea = document.getElementById('optimaSearchInput');
+    const btnOpt   = document.getElementById('doOptimaSearchButton');
+    const btnClear = document.getElementById('clearOptimaSearchButton');
+    const resultsO = document.getElementById('results-optima-search');
 
-    // Búsqueda por Código
-    document.getElementById('doCodeSearchButton')?.addEventListener('click', async () => {
-      const code = document.getElementById('codeInput').value.trim();
-      if (!code) return showToast('Ingrese un código', 'warning');
-      const res = await buscarPorCodigo(code);
-      document.getElementById('results-code').innerHTML =
-        res.length
-          ? res.map(d => `<div>${d.name || d.nombre} – ${d.codigo}</div>`).join('')
-          : '<p>No se encontró.</p>';
-    });
+    if (btnOpt && txtArea && resultsO) {
+      btnOpt.addEventListener('click', async () => {
+        const txt = txtArea.value.trim();
+        if (!txt) return showToast('Ingrese texto para buscar', 'warning');
+        try {
+          const res = await buscarOptima(txt);
+          resultsO.innerHTML = res
+            .map(d => `<div class="border p-2">${d.nombre || d.name} – ${d.codigo}</div>`)
+            .join('') || '<p>No se encontraron resultados.</p>';
+        } catch (e) {
+          console.error(e);
+          showToast('Error en la búsqueda', 'error');
+        }
+      });
+    }
+    if (btnClear && txtArea && resultsO) {
+      btnClear.addEventListener('click', () => {
+        txtArea.value = '';
+        resultsO.innerHTML = '';
+      });
+    }
+
+    // ==== BÚSQUEDA POR CÓDIGO ====
+    const codeIn = document.getElementById('codeInput');
+    const btnCode = document.getElementById('doCodeSearchButton');
+    const resultsC= document.getElementById('results-code');
+
+    if (btnCode && codeIn && resultsC) {
+      btnCode.addEventListener('click', async () => {
+        const code = codeIn.value.trim();
+        if (!code) return showToast('Ingrese un código', 'warning');
+        try {
+          const res = await buscarPorCodigo(code);
+          resultsC.innerHTML = res.length
+            ? res.map(d => `<div class="border p-2">${d.nombre || d.name} – ${d.codigo}</div>`).join('')
+            : '<p>No se encontró.</p>';
+        } catch (e) {
+          console.error(e);
+          showToast('Error en búsqueda por código', 'error');
+        }
+      });
+    }
   });
 
-  // Formulario de subida y autocomplete (se esconden hasta login)
+  // Formularios de subida y autocomplete (ocultos hasta login)
   initUploadForm();
   initAutocompleteCodigo();
 });
