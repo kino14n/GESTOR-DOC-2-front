@@ -43,13 +43,18 @@ document.addEventListener('DOMContentLoaded', () => {
         const resultado = await buscarOptimaAvanzada(txt);
         if (resultado.documentos?.length) {
           outO.innerHTML = resultado.documentos.map(d =>
-            `<div style="color:green;font-weight:bold">
-               ${d.documento.name} — 
-               ${d.codigos_cubre.join(', ')}
+            `<div class="border rounded p-3 mb-3 bg-white">
+               <div class="font-semibold text-green-700">Documento: ${d.documento.name}</div>
+               <div><b>Códigos cubiertos:</b> <span class="text-green-800">${d.codigos_cubre.join(', ')}</span></div>
+               <div><b>PDF:</b> ${
+                 d.documento.path
+                   ? `<a href="uploads/${d.documento.path}" target="_blank" class="text-blue-600 underline">${d.documento.path}</a>`
+                   : '<span class="text-gray-400">Sin PDF</span>'
+               }</div>
              </div>`
           ).join('') +
           (resultado.codigos_faltantes?.length
-            ? `<div style="color:red">Códigos no encontrados: ${resultado.codigos_faltantes.join(', ')}</div>`
+            ? `<div style="color:red; font-weight:bold">Códigos no encontrados: ${resultado.codigos_faltantes.join(', ')}</div>`
             : '');
         } else {
           outO.innerHTML = '<p>No halló resultados.</p>';
@@ -58,6 +63,7 @@ document.addEventListener('DOMContentLoaded', () => {
         showToast('Error búsqueda', 'error');
       }
     });
+
     clrO.addEventListener('click', ()=>{ area.value=''; outO.innerHTML=''; });
 
     // === BÚSQUEDA POR CÓDIGO ===
