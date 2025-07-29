@@ -66,7 +66,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     clrO.addEventListener('click', ()=>{ area.value=''; outO.innerHTML=''; });
 
-    // === BÚSQUEDA POR CÓDIGO ===
+    // === BÚSQUEDA POR CÓDIGO MEJORADA ===
     const inputC = document.getElementById('codeInput');
     const btnC   = document.getElementById('doCodeSearchButton');
     const outC   = document.getElementById('results-code');
@@ -77,7 +77,34 @@ document.addEventListener('DOMContentLoaded', () => {
       try {
         const docs = await buscarPorCodigo(c);
         outC.innerHTML = docs.length
-          ? docs.map(d => `<p>${d.name} — ${d.codigos_extraidos}</p>`).join('')
+          ? docs.map(d => {
+              // Lista de códigos resaltando el código buscado
+              const codesArr = (d.codigos_extraidos || '').split(',').map(s => s.trim()).filter(Boolean);
+              const codesList = codesArr.length
+                ? `<ul class="codes-list mt-2 ml-4 list-disc list-inside">${codesArr
+                    .map(code =>
+                      code === c
+                        ? `<li style="color:red;font-weight:bold">${code}</li>`
+                        : `<li>${code}</li>`
+                    ).join('')}</ul>`
+                : '<p class="mt-2 italic">Sin códigos.</p>';
+
+              // PDF como enlace
+              const pdfLink = d.path
+                ? `<a href="uploads/${d.path}" target="_blank" class="text-blue-600 underline">${d.path}</a>`
+                : '<span class="text-gray-400">Sin PDF</span>';
+
+              return `
+                <div class="border rounded p-3 mb-3 bg-white">
+                  <div class="font-semibold text-green-700">${d.name}</div>
+                  <div class="mb-1">${pdfLink}</div>
+                  <button onclick="toggleCodes(${d.id})" class="btn btn-small btn-secondary mb-1">Ver Códigos</button>
+                  <div id="codes-list-${d.id}" class="hidden">
+                    ${codesList}
+                  </div>
+                </div>
+              `;
+            }).join('')
           : '<p>No encontrado.</p>';
       } catch {
         showToast('Error búsqueda por código', 'error');
@@ -89,3 +116,9 @@ document.addEventListener('DOMContentLoaded', () => {
   initUploadForm();
   initAutocompleteCodigo();
 });
+
+// Toggle para mostrar/ocultar lista de códigos por documento
+window.toggleCodes = id => {
+  const el = document.getElementById(`codes-list-${id}`);
+  if (el) el.classList.toggle('hidden');
+};
