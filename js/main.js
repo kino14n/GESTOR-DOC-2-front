@@ -11,7 +11,7 @@ window.showTab = tabId => {
   document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
   document.getElementById(tabId)?.classList.remove('hidden');
   document.querySelectorAll('.tab').forEach(btn =>
-    btn.dataset.tab===tabId?btn.classList.add('active'):btn.classList.remove('active')
+    btn.dataset.tab === tabId ? btn.classList.add('active') : btn.classList.remove('active')
   );
 };
 
@@ -64,12 +64,12 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
 
-    clrO.addEventListener('click', ()=>{ area.value=''; outO.innerHTML=''; });
+    clrO.addEventListener('click', () => { area.value = ''; outO.innerHTML = ''; });
 
     // === BÚSQUEDA POR CÓDIGO MEJORADA ===
     const inputC = document.getElementById('codeInput');
-    const btnC   = document.getElementById('doCodeSearchButton');
-    const outC   = document.getElementById('results-code');
+    const btnC = document.getElementById('doCodeSearchButton');
+    const outC = document.getElementById('results-code');
 
     btnC.addEventListener('click', async () => {
       const c = inputC.value.trim();
@@ -78,7 +78,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const docs = await buscarPorCodigo(c);
         outC.innerHTML = docs.length
           ? docs.map(d => {
-              // Lista de códigos resaltando el código buscado
               const codesArr = (d.codigos_extraidos || '').split(',').map(s => s.trim()).filter(Boolean);
               const codesList = codesArr.length
                 ? `<ul class="codes-list mt-2 ml-4 list-disc list-inside" id="codes-list-${d.id}" style="display:none;">
@@ -91,7 +90,6 @@ document.addEventListener('DOMContentLoaded', () => {
                   </ul>`
                 : `<p class="mt-2 italic" id="codes-list-${d.id}" style="display:none;">Sin códigos.</p>`;
 
-              // PDF como enlace
               const pdfLink = d.path
                 ? `<a href="uploads/${d.path}" target="_blank" class="text-blue-600 underline">${d.path}</a>`
                 : '<span class="text-gray-400">Sin PDF</span>';
@@ -117,7 +115,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initAutocompleteCodigo();
 });
 
-// Toggle para mostrar/ocultar lista de códigos por documento
+// === SOLO UNA DEFINICIÓN DE toggleCodes GLOBAL ===
 window.toggleCodes = id => {
   const el = document.getElementById(`codes-list-${id}`);
   if (el) el.style.display = (el.style.display === 'none' || !el.style.display) ? 'block' : 'none';
