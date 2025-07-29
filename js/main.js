@@ -98,7 +98,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="border rounded p-3 mb-3 bg-white">
                   <div class="font-semibold text-green-700">${d.name}</div>
                   <div class="mb-1">${pdfLink}</div>
-                  <button onclick="toggleCodes(${d.id})" class="btn btn-small btn-secondary mb-1">Ver Códigos</button>
+                  <button class="btn btn-small btn-secondary mb-1 btn-ver-codigos" data-codes-id="${d.id}">Ver Códigos</button>
                   ${codesList}
                 </div>
               `;
@@ -109,14 +109,17 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
 
+    // === DELEGACIÓN DE EVENTOS PARA VER CÓDIGOS (todas las pestañas) ===
+    document.body.addEventListener('click', function(e) {
+      const btn = e.target.closest('.btn-ver-codigos');
+      if (btn && btn.dataset.codesId) {
+        const el = document.getElementById('codes-list-' + btn.dataset.codesId);
+        if (el) el.style.display = (el.style.display === 'none' || !el.style.display) ? 'block' : 'none';
+      }
+    });
+
   });
 
   initUploadForm();
   initAutocompleteCodigo();
 });
-
-// === SOLO UNA DEFINICIÓN DE toggleCodes GLOBAL ===
-window.toggleCodes = id => {
-  const el = document.getElementById(`codes-list-${id}`);
-  if (el) el.style.display = (el.style.display === 'none' || !el.style.display) ? 'block' : 'none';
-};

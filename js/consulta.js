@@ -21,6 +21,7 @@ export async function cargarConsulta() {
 
 /**
  * Renderiza documentos con PDF como enlace y lista oculta de códigos.
+ * Usa btn-ver-codigos + data-codes-id para el toggle robusto.
  */
 function renderDocs(docs) {
   const container = document.getElementById('results-list');
@@ -47,7 +48,7 @@ function renderDocs(docs) {
         <div class="flex gap-2 mt-1 mb-1 items-center">
           ${pdfLink}
         </div>
-        <button onclick="toggleCodes(${d.id})" class="btn btn-small btn-secondary mb-1">Ver Códigos</button>
+        <button class="btn btn-small btn-secondary mb-1 btn-ver-codigos" data-codes-id="${d.id}">Ver Códigos</button>
         ${codesList}
         <div class="mt-3 flex gap-2">
           <button onclick="dispatchEdit(${d.id})" class="btn btn-small btn-primary">Editar</button>
@@ -57,12 +58,6 @@ function renderDocs(docs) {
     `;
   }).join('');
 }
-
-// Toggle lista de códigos
-window.toggleCodes = id => {
-  const list = document.getElementById(`codes-list-${id}`);
-  if (list) list.style.display = (list.style.display === 'none' || !list.style.display) ? 'block' : 'none';
-};
 
 // Editar documento y cambiar a pestaña “Subir”
 window.dispatchEdit = async id => {
