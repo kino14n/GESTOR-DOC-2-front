@@ -1,6 +1,6 @@
 // js/main.js
 
-import { buscarOptima, buscarPorCodigo, sugerirCodigos } from './api.js';
+import { buscarOptimaAvanzada, buscarPorCodigo, sugerirCodigos, listarDocumentos } from './api.js';
 import { cargarConsulta } from './consulta.js';
 import { initUploadForm } from './upload.js';
 import { requireAuth } from './auth.js';
@@ -27,11 +27,10 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('loginOverlay')?.classList.add('hidden');
     main?.classList.remove('hidden');
 
-    // Consulta inicial
     window.showTab('tab-search');
     cargarConsulta();
 
-    // Búsqueda Óptima
+    // === BÚSQUEDA ÓPTIMA (USANDO /search_optima) ===
     const area = document.getElementById('optimaSearchInput');
     const btnO = document.getElementById('doOptimaSearchButton');
     const clrO = document.getElementById('clearOptimaSearchButton');
@@ -39,19 +38,29 @@ document.addEventListener('DOMContentLoaded', () => {
 
     btnO.addEventListener('click', async () => {
       const txt = area.value.trim();
-      if (!txt) return showToast('Ingrese algo', 'warning');
+      if (!txt) return showToast('Ingrese uno o varios códigos separados por coma', 'warning');
       try {
-        const docs = await buscarOptima(txt);
-        outO.innerHTML = docs.length
-          ? docs.map(d => `<p style="color:green;font-weight:bold">${d.name} — ${d.codigos_extraidos}</p>`).join('')
-          : '<p>No halló resultados.</p>';
+        const resultado = await buscarOptimaAvanzada(txt);
+        if (resultado.documentos?.length) {
+          outO.innerHTML = resultado.documentos.map(d =>
+            `<div style="color:green;font-weight:bold">
+               ${d.documento.name} — 
+               ${d.codigos_cubre.join(', ')}
+             </div>`
+          ).join('') +
+          (resultado.codigos_faltantes?.length
+            ? `<div style="color:red">Códigos no encontrados: ${resultado.codigos_faltantes.join(', ')}</div>`
+            : '');
+        } else {
+          outO.innerHTML = '<p>No halló resultados.</p>';
+        }
       } catch {
         showToast('Error búsqueda', 'error');
       }
     });
     clrO.addEventListener('click', ()=>{ area.value=''; outO.innerHTML=''; });
 
-    // Búsqueda por Código
+    // === BÚSQUEDA POR CÓDIGO ===
     const inputC = document.getElementById('codeInput');
     const btnC   = document.getElementById('doCodeSearchButton');
     const outC   = document.getElementById('results-code');
