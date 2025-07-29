@@ -81,13 +81,15 @@ document.addEventListener('DOMContentLoaded', () => {
               // Lista de códigos resaltando el código buscado
               const codesArr = (d.codigos_extraidos || '').split(',').map(s => s.trim()).filter(Boolean);
               const codesList = codesArr.length
-                ? `<ul class="codes-list mt-2 ml-4 list-disc list-inside">${codesArr
-                    .map(code =>
-                      code === c
-                        ? `<li style="color:red;font-weight:bold">${code}</li>`
-                        : `<li>${code}</li>`
-                    ).join('')}</ul>`
-                : '<p class="mt-2 italic">Sin códigos.</p>';
+                ? `<ul class="codes-list mt-2 ml-4 list-disc list-inside" id="codes-list-${d.id}" style="display:none;">
+                    ${codesArr
+                      .map(code =>
+                        code === c
+                          ? `<li style="color:red;font-weight:bold">${code}</li>`
+                          : `<li>${code}</li>`
+                      ).join('')}
+                  </ul>`
+                : `<p class="mt-2 italic" id="codes-list-${d.id}" style="display:none;">Sin códigos.</p>`;
 
               // PDF como enlace
               const pdfLink = d.path
@@ -99,9 +101,7 @@ document.addEventListener('DOMContentLoaded', () => {
                   <div class="font-semibold text-green-700">${d.name}</div>
                   <div class="mb-1">${pdfLink}</div>
                   <button onclick="toggleCodes(${d.id})" class="btn btn-small btn-secondary mb-1">Ver Códigos</button>
-                  <div id="codes-list-${d.id}" class="hidden">
-                    ${codesList}
-                  </div>
+                  ${codesList}
                 </div>
               `;
             }).join('')
@@ -120,5 +120,5 @@ document.addEventListener('DOMContentLoaded', () => {
 // Toggle para mostrar/ocultar lista de códigos por documento
 window.toggleCodes = id => {
   const el = document.getElementById(`codes-list-${id}`);
-  if (el) el.classList.toggle('hidden');
+  if (el) el.style.display = (el.style.display === 'none' || !el.style.display) ? 'block' : 'none';
 };

@@ -1,3 +1,5 @@
+// js/consulta.js
+
 import { listarDocumentos, eliminarDocumento } from './api.js';
 import { showModalConfirm } from './modals.js';
 import { showToast } from './toasts.js';
@@ -28,9 +30,10 @@ function renderDocs(docs) {
     const fecha = new Date(d.date).toLocaleDateString('es-ES');
     const codesArray = (d.codigos_extraidos || '').split(',').map(s => s.trim()).filter(Boolean);
     const codesList = codesArray.length
-      ? `<ul class="codes-list hidden mt-2 ml-4 list-disc list-inside" id="codes-${d.id}">${codesArray
-          .map(c => `<li>${c}</li>`).join('')}</ul>`
-      : '<p class="mt-2 italic">Sin códigos.</p>';
+      ? `<ul class="codes-list mt-2 ml-4 list-disc list-inside" id="codes-list-${d.id}" style="display:none;">
+            ${codesArray.map(c => `<li>${c}</li>`).join('')}
+         </ul>`
+      : `<p class="mt-2 italic" id="codes-list-${d.id}" style="display:none;">Sin códigos.</p>`;
 
     // PDF como enlace, muestra el nombre
     const pdfLink = d.path
@@ -44,11 +47,11 @@ function renderDocs(docs) {
         <div class="flex gap-2 mt-1 mb-1 items-center">
           ${pdfLink}
         </div>
+        <button onclick="toggleCodes(${d.id})" class="btn btn-small btn-secondary mb-1">Ver Códigos</button>
         ${codesList}
         <div class="mt-3 flex gap-2">
           <button onclick="dispatchEdit(${d.id})" class="btn btn-small btn-primary">Editar</button>
           <button onclick="eliminarDoc(${d.id})" class="btn btn-small btn-danger">Eliminar</button>
-          <button onclick="toggleCodes(${d.id})" class="btn btn-small btn-secondary">Ver Códigos</button>
         </div>
       </div>
     `;
@@ -57,17 +60,15 @@ function renderDocs(docs) {
 
 // Toggle lista de códigos
 window.toggleCodes = id => {
-  const list = document.getElementById(`codes-${id}`);
-  if (list) list.classList.toggle('hidden');
+  const list = document.getElementById(`codes-list-${id}`);
+  if (list) list.style.display = (list.style.display === 'none' || !list.style.display) ? 'block' : 'none';
 };
 
 // Editar documento y cambiar a pestaña “Subir”
 window.dispatchEdit = async id => {
-  // 1. Obtener los datos del documento
   const res = await fetch(`https://gestor-doc-backend-production.up.railway.app/api/documentos/${id}`);
   const docData = await res.json();
   if (docData && !docData.error) {
-    // 2. Llamar función de upload.js
     if (window.loadDocumentForEdit) {
       window.loadDocumentForEdit(docData);
     } else if (typeof loadDocumentForEdit === 'function') {
@@ -75,7 +76,6 @@ window.dispatchEdit = async id => {
     } else {
       document.dispatchEvent(new CustomEvent('load-edit', { detail: docData }));
     }
-    // 3. Cambiar pestaña
     window.showTab('tab-upload');
   } else {
     showToast('Error al cargar el documento', false);
@@ -95,16 +95,14 @@ window.doConsultFilter = () => {
     currentDocs.filter(d =>
       d.name.toLowerCase().includes(term) ||
       (d.codigos_extraidos || '').toLowerCase().includes(term) ||
-      (d.path || '').toLowerCase().includes(term) // también por nombre del PDF
+      (d.path || '').toLowerCase().includes(term)
     )
   );
 };
 
-// Descarga global de CSV (botón arriba de la lista o donde desees)
 window.downloadCsv = () => window.open(`/api/documentos?format=csv`, '_blank');
 window.downloadPdfs = id => window.open(`/api/documentos?format=pdf&id=${id}`, '_blank');
 
-// Eliminar documento
 window.eliminarDoc = id => {
   showModalConfirm('¿Eliminar documento?', async () => {
     try {
@@ -116,4 +114,3 @@ window.eliminarDoc = id => {
     }
   });
 };
-
