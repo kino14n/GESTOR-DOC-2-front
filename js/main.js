@@ -64,7 +64,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     clrO.addEventListener('click', () => { area.value = ''; outO.innerHTML = ''; });
 
-    // === BÚSQUEDA POR CÓDIGO SINCRONIZADA (usa mismo HTML que consultar) ===
+    // === BÚSQUEDA POR CÓDIGO SINCRONIZADA (idéntica a consultar) ===
     const inputC = document.getElementById('codeInput');
     const btnC = document.getElementById('doCodeSearchButton');
     const outC = document.getElementById('results-code');
@@ -104,16 +104,14 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
 
-    // === DELEGACIÓN DE EVENTOS PARA VER CÓDIGOS (Debug incluido) ===
+    // === DELEGACIÓN DE EVENTOS PARA VER CÓDIGOS (robusto y sin fallos) ===
     document.addEventListener('click', function(e) {
       const btn = e.target.closest('.btn-ver-codigos');
       if (btn && btn.dataset.codesId) {
         const el = document.getElementById('codes-list-' + btn.dataset.codesId);
         if (el) {
+          el.classList.remove('hidden'); // Quitar Tailwind hidden si existe
           el.style.display = (el.style.display === 'none' || !el.style.display) ? 'block' : 'none';
-          console.log('[DEBUG] Toggle codes-list for id:', btn.dataset.codesId, el);
-        } else {
-          console.warn('[DEBUG] No existe codes-list-', btn.dataset.codesId);
         }
       }
     });
