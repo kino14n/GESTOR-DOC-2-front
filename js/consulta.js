@@ -1,9 +1,14 @@
+// js/consulta.js
+
 import { listarDocumentos, eliminarDocumento } from './api.js';
 import { showModalConfirm } from './modals.js';
 import { showToast } from './toasts.js';
 
 let currentDocs = [];
 
+/**
+ * Carga y muestra los documentos en #results-list.
+ */
 export async function cargarConsulta() {
   try {
     currentDocs = await listarDocumentos();
@@ -14,6 +19,10 @@ export async function cargarConsulta() {
   }
 }
 
+/**
+ * Renderiza documentos con PDF como enlace y lista oculta de códigos.
+ * Usa btn-ver-codigos + data-codes-id para toggle con delegación.
+ */
 function renderDocs(docs) {
   const container = document.getElementById('results-list');
   if (!container) return;
@@ -49,4 +58,53 @@ function renderDocs(docs) {
   }).join('');
 }
 
-// ...el resto igual (sin ningún window.toggleCodes)
+// Editar documento y cambiar a pestaña “Subir”
+window.dispatchEdit = async id => {
+  const res = await fetch(`https://gestor-doc-backend-production.up.railway.app/api/documentos/${id}`);
+  const docData = await res.json();
+  if (docData && !docData.error) {
+    if (window.loadDocumentForEdit) {
+      window.loadDocumentForEdit(docData);
+    } else if (typeof loadDocumentForEdit === 'function') {
+      loadDocumentForEdit(docData);
+    } else {
+      document.dispatchEvent(new CustomEvent('load-edit', { detail: docData }));
+    }
+    window.showTab('tab-upload');
+  } else {
+    showToast('Error al cargar el documento', false);
+  }
+};
+
+// Filtros cliente-side
+window.clearConsultFilter = () => {
+  const input = document.getElementById('consultFilterInput');
+  if (input) input.value = '';
+  renderDocs(currentDocs);
+};
+
+window.doConsultFilter = () => {
+  const term = document.getElementById('consultFilterInput').value.toLowerCase().trim();
+  renderDocs(
+    currentDocs.filter(d =>
+      d.name.toLowerCase().includes(term) ||
+      (d.codigos_extraidos || '').toLowerCase().includes(term) ||
+      (d.path || '').toLowerCase().includes(term)
+    )
+  );
+};
+
+window.downloadCsv = () => window.open(`/api/documentos?format=csv`, '_blank');
+window.downloadPdfs = id => window.open(`/api/documentos?format=pdf&id=${id}`, '_blank');
+
+window.eliminarDoc = id => {
+  showModalConfirm('¿Eliminar documento?', async () => {
+    try {
+      await eliminarDocumento(id);
+      showToast('Documento eliminado', 'success');
+      cargarConsulta();
+    } catch {
+      showToast('No se pudo eliminar', 'error');
+    }
+  });
+};
