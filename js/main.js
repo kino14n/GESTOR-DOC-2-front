@@ -64,7 +64,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     clrO.addEventListener('click', () => { area.value = ''; outO.innerHTML = ''; });
 
-    // === BÚSQUEDA POR CÓDIGO MEJORADA ===
+    // === BÚSQUEDA POR CÓDIGO SINCRONIZADA (usa mismo HTML que consultar) ===
     const inputC = document.getElementById('codeInput');
     const btnC = document.getElementById('doCodeSearchButton');
     const outC = document.getElementById('results-code');
@@ -76,15 +76,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const docs = await buscarPorCodigo(c);
         outC.innerHTML = docs.length
           ? docs.map(d => {
+              const fecha = d.date ? new Date(d.date).toLocaleDateString('es-ES') : '';
               const codesArr = (d.codigos_extraidos || '').split(',').map(s => s.trim()).filter(Boolean);
               const codesList = codesArr.length
                 ? `<ul class="codes-list mt-2 ml-4 list-disc list-inside" id="codes-list-${d.id}" style="display:none;">
-                    ${codesArr
-                      .map(code =>
-                        code === c
-                          ? `<li style="color:red;font-weight:bold">${code}</li>`
-                          : `<li>${code}</li>`
-                      ).join('')}
+                    ${codesArr.map(code => `<li>${code}</li>`).join('')}
                   </ul>`
                 : `<p class="mt-2 italic" id="codes-list-${d.id}" style="display:none;">Sin códigos.</p>`;
 
@@ -95,6 +91,7 @@ document.addEventListener('DOMContentLoaded', () => {
               return `
                 <div class="border rounded p-3 mb-3 bg-white">
                   <div class="font-semibold text-green-700">${d.name}</div>
+                  <div class="text-sm text-gray-600">${fecha}</div>
                   <div class="mb-1">${pdfLink}</div>
                   <button class="btn btn-small btn-secondary mb-1 btn-ver-codigos" data-codes-id="${d.id}">Ver Códigos</button>
                   ${codesList}
@@ -107,12 +104,17 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
 
-    // === DELEGACIÓN DE EVENTOS PARA VER CÓDIGOS (NUNCA FALLA) ===
+    // === DELEGACIÓN DE EVENTOS PARA VER CÓDIGOS (Debug incluido) ===
     document.addEventListener('click', function(e) {
       const btn = e.target.closest('.btn-ver-codigos');
       if (btn && btn.dataset.codesId) {
         const el = document.getElementById('codes-list-' + btn.dataset.codesId);
-        if (el) el.style.display = (el.style.display === 'none' || !el.style.display) ? 'block' : 'none';
+        if (el) {
+          el.style.display = (el.style.display === 'none' || !el.style.display) ? 'block' : 'none';
+          console.log('[DEBUG] Toggle codes-list for id:', btn.dataset.codesId, el);
+        } else {
+          console.warn('[DEBUG] No existe codes-list-', btn.dataset.codesId);
+        }
       }
     });
 
