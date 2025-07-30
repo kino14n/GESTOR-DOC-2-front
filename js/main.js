@@ -28,7 +28,6 @@ document.addEventListener('DOMContentLoaded', () => {
     window.showTab('tab-search');
     cargarConsulta();
 
-    // === BÚSQUEDA ÓPTIMA ===
     const area = document.getElementById('optimaSearchInput');
     const btnO = document.getElementById('doOptimaSearchButton');
     const clrO = document.getElementById('clearOptimaSearchButton');
@@ -64,7 +63,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     clrO.addEventListener('click', () => { area.value = ''; outO.innerHTML = ''; });
 
-    // === BÚSQUEDA POR CÓDIGO SINCRONIZADA (idéntica a consultar) ===
     const inputC = document.getElementById('codeInput');
     const btnC = document.getElementById('doCodeSearchButton');
     const outC = document.getElementById('results-code');
@@ -78,11 +76,10 @@ document.addEventListener('DOMContentLoaded', () => {
           ? docs.map(d => {
               const fecha = d.date ? new Date(d.date).toLocaleDateString('es-ES') : '';
               const codesArr = (d.codigos_extraidos || '').split(',').map(s => s.trim()).filter(Boolean);
+
               const codesList = codesArr.length
-                ? `<ul class="codes-list mt-2 ml-4 list-disc list-inside" id="codes-list-${d.id}" style="display:none;">
-                    ${codesArr.map(code => `<li>${code}</li>`).join('')}
-                  </ul>`
-                : `<p class="mt-2 italic" id="codes-list-${d.id}" style="display:none;">Sin códigos.</p>`;
+                ? `<ul class="codes-list mt-2 ml-4 list-disc list-inside" id="codes-list-${d.id}" style="display:none;">${codesArr.map(code => `<li>${code}</li>`).join('')}</ul>`
+                : '';
 
               const pdfLink = d.path
                 ? `<a href="uploads/${d.path}" target="_blank" class="text-blue-600 underline">${d.path}</a>`
@@ -93,10 +90,12 @@ document.addEventListener('DOMContentLoaded', () => {
                   <div class="font-semibold text-green-700">${d.name}</div>
                   <div class="text-sm text-gray-600">${fecha}</div>
                   <div class="mb-1">${pdfLink}</div>
-                  <button class="btn btn-small btn-secondary mb-1 btn-ver-codigos" data-codes-id="${d.id}">Ver Códigos</button>
+                  ${codesArr.length 
+                      ? `<button class="btn btn-small btn-secondary mb-1 btn-ver-codigos" data-codes-id="${d.id}">Ver Códigos</button>`
+                      : '<p class="mt-2 italic text-gray-400">Sin códigos extraídos.</p>'
+                  }
                   ${codesList}
-                </div>
-              `;
+                </div>`;
             }).join('')
           : '<p>No encontrado.</p>';
       } catch {
@@ -104,13 +103,12 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
 
-    // === DELEGACIÓN DE EVENTOS PARA VER CÓDIGOS (robusto y sin fallos) ===
     document.addEventListener('click', function(e) {
       const btn = e.target.closest('.btn-ver-codigos');
       if (btn && btn.dataset.codesId) {
         const el = document.getElementById('codes-list-' + btn.dataset.codesId);
         if (el) {
-          el.classList.remove('hidden'); // Quitar Tailwind hidden si existe
+          el.classList.remove('hidden');
           el.style.display = (el.style.display === 'none' || !el.style.display) ? 'block' : 'none';
         }
       }
