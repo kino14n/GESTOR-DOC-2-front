@@ -1,5 +1,3 @@
-// js/main.js
-
 import { buscarOptimaAvanzada, buscarPorCodigo, sugerirCodigos, listarDocumentos } from './api.js';
 import { cargarConsulta } from './consulta.js';
 import { initUploadForm } from './upload.js';
@@ -109,10 +107,11 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
 
-    // === DELEGACIÓN DE EVENTOS PARA VER CÓDIGOS (todas las pestañas) ===
-    document.body.addEventListener('click', function(e) {
+    // === DELEGACIÓN DE EVENTOS PARA VER CÓDIGOS (debug incluida) ===
+    document.addEventListener('click', function(e) {
       const btn = e.target.closest('.btn-ver-codigos');
       if (btn && btn.dataset.codesId) {
+        alert('¡Click recibido en botón Ver Códigos! id=' + btn.dataset.codesId);
         const el = document.getElementById('codes-list-' + btn.dataset.codesId);
         if (el) el.style.display = (el.style.display === 'none' || !el.style.display) ? 'block' : 'none';
       }
