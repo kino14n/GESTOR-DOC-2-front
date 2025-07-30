@@ -49,4 +49,4 @@ function renderDocs(docs) {
   }).join('');
 }
 
-// ... (resto igual, sin window.toggleCodes)
+// ...el resto igual (sin ningún window.toggleCodes)
