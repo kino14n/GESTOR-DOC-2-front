@@ -1,9 +1,8 @@
-// js/consulta.js
-
 import { listarDocumentos, eliminarDocumento } from './api.js';
 import { showModalConfirm } from './modals.js';
 import { showToast } from './toasts.js';
 
+// Contiene la lista actual de documentos para filtros o recargas
 let currentDocs = [];
 
 /**
@@ -20,47 +19,51 @@ export async function cargarConsulta() {
 }
 
 /**
- * Renderiza documentos con PDF como enlace y lista oculta de códigos.
- * Usa btn-ver-codigos + data-codes-id para toggle con delegación.
+ * Renderiza documentos con un enlace al PDF y una lista oculta de códigos.
+ * Cada fila incluye un botón con la clase `.btn-ver-codigos` y un atributo
+ * `data-codes-id` para permitir el toggle mediante delegación de eventos.
  */
 function renderDocs(docs) {
   const container = document.getElementById('results-list');
   if (!container) return;
-
-  container.innerHTML = docs.map(d => {
-    const fecha = new Date(d.date).toLocaleDateString('es-ES');
-    const codesArray = (d.codigos_extraidos || '').split(',').map(s => s.trim()).filter(Boolean);
-    const codesList = codesArray.length
-      ? `<ul class="codes-list mt-2 ml-4 list-disc list-inside" id="codes-list-${d.id}" style="display:none;">
-            ${codesArray.map(c => `<li>${c}</li>`).join('')}
-         </ul>`
-      : `<p class="mt-2 italic" id="codes-list-${d.id}" style="display:none;">Sin códigos.</p>`;
-
-    const pdfLink = d.path
-      ? `<a href="uploads/${d.path}" target="_blank" class="btn btn-small btn-pdf">${d.path}</a>`
-      : '<span class="italic text-gray-400">Sin PDF</span>';
-
-    return `
-      <div class="border rounded p-4 mb-4 bg-white shadow-sm" id="doc-${d.id}">
-        <h3 class="text-lg font-semibold text-green-600">${d.name}</h3>
-        <p class="text-sm text-gray-600">${fecha}</p>
-        <div class="flex gap-2 mt-1 mb-1 items-center">
-          ${pdfLink}
+  container.innerHTML = docs
+    .map(d => {
+      const fecha = d.date ? new Date(d.date).toLocaleDateString('es-ES') : '';
+      const codesArray = (d.codigos_extraidos || '')
+        .split(',')
+        .map(s => s.trim())
+        .filter(Boolean);
+      const codesId = d.id || Math.random().toString(36).slice(2);
+      const codesListHtml = codesArray.length
+        ? `<div id="codes-list-${codesId}" class="codes-list hidden">${codesArray
+            .map(c => `<span class="code-item">${c}</span>`)
+            .join(' ')}</div>`
+        : `<div id="codes-list-${codesId}" class="codes-list hidden"><span>Sin códigos.</span></div>`;
+      const pdfLink = d.path
+        ? `<a href="${d.path}" target="_blank">Ver PDF</a>`
+        : 'Sin PDF';
+      return `
+        <div class="doc-item">
+          <p><strong>${d.name}</strong></p>
+          <p>${fecha}</p>
+          <p>${pdfLink}</p>
+          <button class="btn-ver-codigos" data-codes-id="${codesId}">Ver Códigos</button>
+          ${codesListHtml}
+          <div class="actions">
+            <button class="btn btn-secondary" onclick="dispatchEdit(${d.id})">Editar</button>
+            <button class="btn btn-danger" onclick="eliminarDoc(${d.id})">Eliminar</button>
+          </div>
         </div>
-        <button class="btn btn-small btn-secondary mb-1 btn-ver-codigos" data-codes-id="${d.id}">Ver Códigos</button>
-        ${codesList}
-        <div class="mt-3 flex gap-2">
-          <button onclick="dispatchEdit(${d.id})" class="btn btn-small btn-primary">Editar</button>
-          <button onclick="eliminarDoc(${d.id})" class="btn btn-small btn-danger">Eliminar</button>
-        </div>
-      </div>
-    `;
-  }).join('');
+      `;
+    })
+    .join('');
 }
 
 // Editar documento y cambiar a pestaña “Subir”
 window.dispatchEdit = async id => {
-  const res = await fetch(`https://gestor-doc-backend-production.up.railway.app/api/documentos/${id}`);
+  const res = await fetch(
+    `https://gestor-doc-backend-production.up.railway.app/api/documentos/${id}`
+  );
   const docData = await res.json();
   if (docData && !docData.error) {
     if (window.loadDocumentForEdit) {
@@ -97,6 +100,7 @@ window.doConsultFilter = () => {
 window.downloadCsv = () => window.open(`/api/documentos?format=csv`, '_blank');
 window.downloadPdfs = id => window.open(`/api/documentos?format=pdf&id=${id}`, '_blank');
 
+// Confirma eliminación y recarga la lista
 window.eliminarDoc = id => {
   showModalConfirm('¿Eliminar documento?', async () => {
     try {
