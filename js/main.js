@@ -83,9 +83,7 @@ document.addEventListener('DOMContentLoaded', () => {
     window.showTab('tab-search');
     cargarConsulta();
 
-    // === MANEJADOR DE EVENTOS DELEGADO (SOLUCIÓN) ===
-    // Se asigna un listener al contenedor padre que funciona para todos los botones,
-    // incluso los que se creen en el futuro.
+    // === MANEJADOR DE EVENTOS DELEGADO (SOLUCIÓN PARA "VER CÓDIGOS") ===
     const resultsContainer = document.querySelector('.p-6.space-y-6');
     resultsContainer.addEventListener('click', (event) => {
         const button = event.target.closest('.btn-ver-codigos');
@@ -100,6 +98,52 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
     });
+
+    // === BÚSQUEDA ÓPTIMA (LÓGICA RESTAURADA) ===
+    const optimaInput = document.getElementById('optimaSearchInput');
+    const optimaButton = document.getElementById('doOptimaSearchButton');
+    const optimaClear = document.getElementById('clearOptimaSearchButton');
+    const optimaResults = document.getElementById('results-optima-search');
+
+    optimaButton.addEventListener('click', async () => {
+      const txt = optimaInput.value.trim();
+      if (!txt) return showToast('Ingrese uno o varios códigos separados por coma', 'warning');
+      try {
+        const resultado = await buscarOptimaAvanzada(txt);
+        if (resultado.documentos?.length) {
+          optimaResults.innerHTML =
+            resultado.documentos
+              .map(d => {
+                const documento = d.documento;
+                const codigos = d.codigos_cubre;
+                const pdf = documento.path
+                  ? `<a class="btn btn--primary" href="uploads/${documento.path}" target="_blank">Ver PDF</a>`
+                  : 'Sin PDF';
+                return `
+                  <div class="doc-item">
+                    <p><strong>Documento:</strong> ${documento.name}</p>
+                    <p><strong>Códigos cubiertos:</strong> ${codigos.join(', ')}</p>
+                    <p><strong>PDF:</strong> ${pdf}</p>
+                  </div>
+                `;
+              })
+              .join('') +
+            (resultado.codigos_faltantes?.length
+              ? `<p>Códigos no encontrados: ${resultado.codigos_faltantes.join(', ')}</p>`
+              : '');
+        } else {
+          optimaResults.innerHTML = 'No halló resultados.';
+        }
+      } catch {
+        showToast('Error en la búsqueda', 'error');
+      }
+    });
+
+    optimaClear.addEventListener('click', () => {
+      optimaInput.value = '';
+      optimaResults.innerHTML = '';
+    });
+
 
     // === BÚSQUEDA POR CÓDIGO ===
     const codeInput = document.getElementById('codeInput');
@@ -136,7 +180,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (matchedDocs.length) {
           codeResults.innerHTML = renderBuscarCodigoResults(matchedDocs);
-          // Ya no es necesario llamar a bindCodeButtons. El listener principal se encarga.
         } else {
           codeResults.innerHTML = 'No encontrado.';
         }
