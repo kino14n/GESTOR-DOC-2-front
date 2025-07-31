@@ -101,6 +101,29 @@ document.addEventListener('DOMContentLoaded', () => {
           docsArray = [];
         }
         if (Array.isArray(docsArray) && docsArray.length) {
+          // Fallback: si los documentos no traen códigos en ningún campo, consulta toda la lista
+          // y fusiona los códigos por id.
+          const docsWithCodes = await (async () => {
+            const hasCodes = doc => {
+              const fields = ['codigos_extraidos', 'codigos', 'codes', 'codigo', 'codigos_cubre', 'codigosAsignados'];
+              return fields.some(f => doc && doc[f]);
+            };
+            if (docsArray.some(hasCodes)) {
+              return docsArray;
+            }
+            try {
+              const allDocs = await listarDocumentos();
+              return docsArray.map(d => {
+                const match = Array.isArray(allDocs)
+                  ? allDocs.find(item => item.id === d.id)
+                  : null;
+                return match ? { ...d, ...match } : d;
+              });
+            } catch {
+              return docsArray;
+            }
+          })();
+
           /**
            * Extrae un array de códigos desde el objeto documento. Maneja múltiples
            * posibles nombres de campos y distintos tipos (cadena, array) para una
@@ -136,7 +159,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             return [];
           }
-          codeResults.innerHTML = docsArray
+          codeResults.innerHTML = docsWithCodes
             .map(doc => {
               const fecha = doc.date ? new Date(doc.date).toLocaleDateString('es-ES') : '';
               const codesArr = getCodesArray(doc);
