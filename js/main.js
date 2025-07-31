@@ -161,17 +161,8 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
 
-    // Delegación de eventos para mostrar/ocultar lista de códigos
-    document.addEventListener('click', e => {
-      const btn = e.target.closest('.btn-ver-codigos');
-      if (btn && btn.dataset.codesId) {
-        const el = document.getElementById('codes-list-' + btn.dataset.codesId);
-        if (el) {
-          el.classList.remove('hidden');
-          el.style.display = el.style.display === 'block' ? 'none' : 'block';
-        }
-      }
-    });
+        // No usamos delegación global aquí porque cada pestaña maneja sus propios
+        // botones con bindCodeButtons.
   });
 
   // Inicializa formulario de subida y autocompletado
@@ -185,7 +176,7 @@ document.addEventListener('DOMContentLoaded', () => {
  * que cada botón togglee correctamente su lista asociada.
  * @param {HTMLElement} container - El contenedor que contiene los resultados y los botones.
  */
-function bindCodeButtons(container) {
+export function bindCodeButtons(container) {
   if (!container) return;
   const buttons = container.querySelectorAll('.btn-ver-codigos');
   buttons.forEach(btn => {
