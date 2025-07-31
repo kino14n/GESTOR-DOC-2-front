@@ -151,15 +151,55 @@ function bindCodeButtons(container) {
  * @returns {string} HTML para insertar en el contenedor de resultados.
  */
 function renderBuscarCodigoResults(docs) {
-  return docs
-    .map(d => {
-      const fecha = d.date ? new Date(d.date).toLocaleDateString('es-ES') : '';
-      const codesArr = (d.codigos_extraidos || '')
-        .split(',')
+  /**
+   * Obtiene un array de códigos a partir del objeto documento.
+   * Intenta detectar el nombre del campo y el tipo de dato para ser
+   * robusto ante distintas implementaciones del backend. Se aceptan
+   * strings con diferentes separadores (coma, punto y coma, espacio) o
+   * arrays de cadenas.
+   * @param {any} doc
+   * @returns {string[]} array de códigos limpios
+   */
+  function getCodesArray(doc) {
+    // Posibles nombres de propiedad donde el backend envía los códigos
+    const possibleFields = [
+      'codigos_extraidos',
+      'codigos',
+      'codes',
+      'codigo',
+      'codigos_cubre',
+      'codigosAsignados',
+    ];
+    // Encuentra el primer campo que exista en el objeto
+    let value;
+    for (const field of possibleFields) {
+      if (doc && Object.prototype.hasOwnProperty.call(doc, field)) {
+        value = doc[field];
+        break;
+      }
+    }
+    if (!value) return [];
+    // Si ya es un array, devuélvelo tal cual (filtrando falsy)
+    if (Array.isArray(value)) {
+      return value.map(v => String(v).trim()).filter(Boolean);
+    }
+    // Si es una cadena, dividirla por coma, punto y coma o espacios consecutivos
+    if (typeof value === 'string') {
+      return value
+        .split(/[;,\s]+/)
         .map(s => s.trim())
         .filter(Boolean);
-      // Generar id para asociar el botón y la lista
-      const codesId = d.id || Math.random().toString(36).slice(2);
+    }
+    // En cualquier otro caso, devolver vacío
+    return [];
+  }
+
+  return docs
+    .map(doc => {
+      const fecha = doc.date ? new Date(doc.date).toLocaleDateString('es-ES') : '';
+      const codesArr = getCodesArray(doc);
+      // Generar id para asociar el botón y la lista; si doc.id no existe, usar un hash aleatorio
+      const codesId = doc.id || Math.random().toString(36).slice(2);
       // Construir la lista de códigos como columna oculta
       const codesListHtml = codesArr.length
         ? `<div id="codes-list-${codesId}" class="codes-list hidden">${codesArr
@@ -167,12 +207,12 @@ function renderBuscarCodigoResults(docs) {
             .join('')}</div>`
         : `<div id="codes-list-${codesId}" class="codes-list hidden"><span>Sin códigos.</span></div>`;
       // Resaltar Ver PDF como botón
-      const pdfButton = d.path
-        ? `<a class="btn btn--primary" href="${d.path}" target="_blank">Ver PDF</a>`
+      const pdfButton = doc.path
+        ? `<a class="btn btn--primary" href="${doc.path}" target="_blank">Ver PDF</a>`
         : 'Sin PDF';
       return `
         <div class="doc-item">
-          <p><strong>${d.name}</strong></p>
+          <p><strong>${doc.name}</strong></p>
           <p>${fecha}</p>
           <p>${pdfButton}</p>
           <button class="btn-ver-codigos" data-codes-id="${codesId}">Ver Códigos</button>
