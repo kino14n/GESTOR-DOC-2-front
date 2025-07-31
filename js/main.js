@@ -49,8 +49,9 @@ document.addEventListener('DOMContentLoaded', () => {
               .map(d => {
                 const documento = d.documento;
                 const codigos = d.codigos_cubre;
+                // Resaltar el enlace de PDF como un botón
                 const pdf = documento.path
-                  ? `<a href="${documento.path}" target="_blank">${documento.path}</a>`
+                  ? `<a class="btn btn--primary" href="${documento.path}" target="_blank">Ver PDF</a>`
                   : 'Sin PDF';
                 return `
                   <div class="doc-item">
@@ -88,7 +89,7 @@ document.addEventListener('DOMContentLoaded', () => {
       try {
         const docs = await buscarPorCodigo(c);
         // Construir resultados con botones que muestran/ocultan códigos
-        if (docs.length) {
+        if (Array.isArray(docs) && docs.length) {
           codeResults.innerHTML = docs
             .map(d => {
               const fecha = d.date ? new Date(d.date).toLocaleDateString('es-ES') : '';
@@ -96,29 +97,26 @@ document.addEventListener('DOMContentLoaded', () => {
                 .split(',')
                 .map(s => s.trim())
                 .filter(Boolean);
-              // Utilice el id del documento si existe; de lo contrario, genere uno
-              const codesId = d.id || Math.random().toString(36).slice(2);
+              // Construir la lista de códigos como columna (una fila por código)
               const codesListHtml = codesArr.length
-                ? `<div id="codes-list-${codesId}" class="codes-list hidden">${codesArr
-                    .map(code => `<span class="code-item">${code}</span>`)
-                    .join(' ')}</div>`
-                : `<div id="codes-list-${codesId}" class="codes-list hidden"><span>Sin códigos.</span></div>`;
-              const pdfLink = d.path
-                ? `<a href="${d.path}" target="_blank">Ver PDF</a>`
+                ? `<div class="codes-list">${codesArr
+                    .map(code => `<div class="code-item">${code}</div>`)
+                    .join('')}</div>`
+                : `<div class="codes-list"><span>Sin códigos.</span></div>`;
+              // Resaltar Ver PDF como botón
+              const pdfButton = d.path
+                ? `<a class="btn btn--primary" href="${d.path}" target="_blank">Ver PDF</a>`
                 : 'Sin PDF';
               return `
                 <div class="doc-item">
                   <p><strong>${d.name}</strong></p>
                   <p>${fecha}</p>
-                  <p>${pdfLink}</p>
-                  <button class="btn-ver-codigos" data-codes-id="${codesId}">Ver Códigos</button>
+                  <p>${pdfButton}</p>
                   ${codesListHtml}
                 </div>
               `;
             })
             .join('');
-          // Después de inyectar los resultados, adjunta listeners a cada botón
-          bindCodeButtons(codeResults);
         } else {
           codeResults.innerHTML = 'No encontrado.';
         }

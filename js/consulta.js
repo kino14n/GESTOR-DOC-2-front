@@ -19,9 +19,10 @@ export async function cargarConsulta() {
 }
 
 /**
- * Renderiza documentos con un enlace al PDF y una lista oculta de códigos.
- * Cada fila incluye un botón con la clase `.btn-ver-codigos` y un atributo
- * `data-codes-id` para permitir el toggle mediante delegación de eventos.
+ * Renderiza documentos mostrando el enlace al PDF como un botón y la lista
+ * de códigos asociada en una columna. Ya no se utiliza un botón "Ver Códigos",
+ * por lo que los códigos se muestran directamente. Cada fila incluye botones
+ * para editar o eliminar según corresponda.
  */
 function renderDocs(docs) {
   const container = document.getElementById('results-list');
@@ -33,25 +34,25 @@ function renderDocs(docs) {
         .split(',')
         .map(s => s.trim())
         .filter(Boolean);
-      const codesId = d.id || Math.random().toString(36).slice(2);
+      // Construir lista de códigos como columna (una línea por código)
       const codesListHtml = codesArray.length
-        ? `<div id="codes-list-${codesId}" class="codes-list hidden">${codesArray
-            .map(c => `<span class="code-item">${c}</span>`)
-            .join(' ')}</div>`
-        : `<div id="codes-list-${codesId}" class="codes-list hidden"><span>Sin códigos.</span></div>`;
-      const pdfLink = d.path
-        ? `<a href="${d.path}" target="_blank">Ver PDF</a>`
+        ? `<div class="codes-list">${codesArray
+            .map(c => `<div class="code-item">${c}</div>`)
+            .join('')}</div>`
+        : `<div class="codes-list"><span>Sin códigos.</span></div>`;
+      // Resaltar Ver PDF como botón
+      const pdfButton = d.path
+        ? `<a class="btn btn--primary" href="${d.path}" target="_blank">Ver PDF</a>`
         : 'Sin PDF';
       return `
         <div class="doc-item">
           <p><strong>${d.name}</strong></p>
           <p>${fecha}</p>
-          <p>${pdfLink}</p>
-          <button class="btn-ver-codigos" data-codes-id="${codesId}">Ver Códigos</button>
+          <p>${pdfButton}</p>
           ${codesListHtml}
           <div class="actions">
-            <button class="btn btn-secondary" onclick="dispatchEdit(${d.id})">Editar</button>
-            <button class="btn btn-danger" onclick="eliminarDoc(${d.id})">Eliminar</button>
+            <button class="btn btn--secondary" onclick="dispatchEdit(${d.id})">Editar</button>
+            <button class="btn btn--warning" onclick="eliminarDoc(${d.id})">Eliminar</button>
           </div>
         </div>
       `;
