@@ -3,13 +3,11 @@
 import { listarDocumentos, eliminarDocumento } from './api.js';
 import { showModalConfirm } from './modals.js';
 import { showToast } from './toasts.js';
-// La importación de 'bindCodeButtons' se ha eliminado para corregir el error.
 
 let currentDocs = [];
 
 /**
  * Renderiza la lista de documentos en la pestaña "Consultar".
- * @param {Array} docs - El array de documentos a mostrar.
  */
 function renderDocs(docs) {
   const container = document.getElementById('results-list');
@@ -21,8 +19,7 @@ function renderDocs(docs) {
       const codesId = d.id || Math.random().toString(36).slice(2);
 
       const codesListHtml = codesArray.length
-        ? `<div id="codes-list-${codesId}" class="codes-list hidden">${codesArray
-            .map(c => `<div class="code-item">${c}</div>`).join('')}</div>`
+        ? `<div id="codes-list-${codesId}" class="codes-list hidden">${codesArray.map(c => `<div class="code-item">${c}</div>`).join('')}</div>`
         : `<div id="codes-list-${codesId}" class="codes-list hidden"><span>Sin códigos.</span></div>`;
 
       const pdfButton = d.path ? `<a class="btn btn--primary btn-small" href="uploads/${d.path}" target="_blank">Ver PDF</a>` : '';
@@ -34,7 +31,7 @@ function renderDocs(docs) {
               <div><strong>${d.name}</strong> (${fecha})</div>
               <div class="actions">
                   ${pdfButton}
-                  <button class="btn btn-ver-codigos btn--secondary btn-small" data-codes-id="${codesId}">Ver Códigos</button>
+                  <button class="btn btn--secondary btn-small" onclick="window.toggleCodeVisibility('${codesId}')">Ver Códigos</button>
                   ${adminButtons}
               </div>
               ${codesListHtml}
@@ -51,9 +48,7 @@ export async function cargarConsulta() {
     const docsRaw = await listarDocumentos();
     currentDocs = Array.isArray(docsRaw) ? docsRaw : (docsRaw?.documentos || []);
     renderDocs(currentDocs);
-    // Ya no se llama a bindCodeButtons, el listener en main.js se encarga de todo.
   } catch (e) {
-    console.error('Error al cargar documentos:', e);
     showToast('Error al cargar la lista de documentos', 'error');
   }
 }
