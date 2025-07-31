@@ -90,36 +90,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const docs = await buscarPorCodigo(c);
         // Construir resultados con botones que muestran/ocultan códigos
         if (Array.isArray(docs) && docs.length) {
-          codeResults.innerHTML = docs
-            .map(d => {
-              const fecha = d.date ? new Date(d.date).toLocaleDateString('es-ES') : '';
-              const codesArr = (d.codigos_extraidos || '')
-                .split(',')
-                .map(s => s.trim())
-                .filter(Boolean);
-              // Generar id para asociar el botón y la lista
-              const codesId = d.id || Math.random().toString(36).slice(2);
-              // Construir la lista de códigos como columna oculta
-              const codesListHtml = codesArr.length
-                ? `<div id="codes-list-${codesId}" class="codes-list hidden">${codesArr
-                    .map(code => `<div class="code-item">${code}</div>`)
-                    .join('')}</div>`
-                : `<div id="codes-list-${codesId}" class="codes-list hidden"><span>Sin códigos.</span></div>`;
-              // Resaltar Ver PDF como botón
-              const pdfButton = d.path
-                ? `<a class="btn btn--primary" href="${d.path}" target="_blank">Ver PDF</a>`
-                : 'Sin PDF';
-              return `
-                <div class="doc-item">
-                  <p><strong>${d.name}</strong></p>
-                  <p>${fecha}</p>
-                  <p>${pdfButton}</p>
-                  <button class="btn-ver-codigos" data-codes-id="${codesId}">Ver Códigos</button>
-                  ${codesListHtml}
-                </div>
-              `;
-            })
-            .join('');
+          // Usar función dedicada para renderizar documentos de búsqueda por código
+          codeResults.innerHTML = renderBuscarCodigoResults(docs);
           // Atar escuchadores a los botones recién renderizados
           bindCodeButtons(codeResults);
         } else {
@@ -168,4 +140,45 @@ function bindCodeButtons(container) {
       }
     });
   });
+}
+
+/**
+ * Renderiza un array de documentos devueltos por la búsqueda por código.
+ * Cada documento incluye un botón "Ver Códigos" y una lista de códigos
+ * en columna dentro de un contenedor oculto. El enlace al PDF se muestra
+ * como un botón destacado.
+ * @param {Array} docs - Lista de objetos de documento.
+ * @returns {string} HTML para insertar en el contenedor de resultados.
+ */
+function renderBuscarCodigoResults(docs) {
+  return docs
+    .map(d => {
+      const fecha = d.date ? new Date(d.date).toLocaleDateString('es-ES') : '';
+      const codesArr = (d.codigos_extraidos || '')
+        .split(',')
+        .map(s => s.trim())
+        .filter(Boolean);
+      // Generar id para asociar el botón y la lista
+      const codesId = d.id || Math.random().toString(36).slice(2);
+      // Construir la lista de códigos como columna oculta
+      const codesListHtml = codesArr.length
+        ? `<div id="codes-list-${codesId}" class="codes-list hidden">${codesArr
+            .map(code => `<div class="code-item">${code}</div>`)
+            .join('')}</div>`
+        : `<div id="codes-list-${codesId}" class="codes-list hidden"><span>Sin códigos.</span></div>`;
+      // Resaltar Ver PDF como botón
+      const pdfButton = d.path
+        ? `<a class="btn btn--primary" href="${d.path}" target="_blank">Ver PDF</a>`
+        : 'Sin PDF';
+      return `
+        <div class="doc-item">
+          <p><strong>${d.name}</strong></p>
+          <p>${fecha}</p>
+          <p>${pdfButton}</p>
+          <button class="btn-ver-codigos" data-codes-id="${codesId}">Ver Códigos</button>
+          ${codesListHtml}
+        </div>
+      `;
+    })
+    .join('');
 }
