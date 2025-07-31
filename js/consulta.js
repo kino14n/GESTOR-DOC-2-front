@@ -1,7 +1,9 @@
+// js/consulta.js
+
 import { listarDocumentos, eliminarDocumento } from './api.js';
 import { showModalConfirm } from './modals.js';
 import { showToast } from './toasts.js';
-import { bindCodeButtons } from './main.js';
+import { bindCodeButtons } from './main.js'; // Importación de bindCodeButtons
 
 // Contiene la lista actual de documentos para filtros o recargas
 let currentDocs = [];
