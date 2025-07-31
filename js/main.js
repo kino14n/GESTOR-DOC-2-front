@@ -96,6 +96,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 .split(',')
                 .map(s => s.trim())
                 .filter(Boolean);
+              // Utilice el id del documento si existe; de lo contrario, genere uno
               const codesId = d.id || Math.random().toString(36).slice(2);
               const codesListHtml = codesArr.length
                 ? `<div id="codes-list-${codesId}" class="codes-list hidden">${codesArr
@@ -116,6 +117,8 @@ document.addEventListener('DOMContentLoaded', () => {
               `;
             })
             .join('');
+          // Después de inyectar los resultados, adjunta listeners a cada botón
+          bindCodeButtons(codeResults);
         } else {
           codeResults.innerHTML = 'No encontrado.';
         }
@@ -130,7 +133,6 @@ document.addEventListener('DOMContentLoaded', () => {
       if (btn && btn.dataset.codesId) {
         const el = document.getElementById('codes-list-' + btn.dataset.codesId);
         if (el) {
-          // Mostrar la lista (quitar hidden) y alternar display
           el.classList.remove('hidden');
           el.style.display = el.style.display === 'block' ? 'none' : 'block';
         }
@@ -142,3 +144,25 @@ document.addEventListener('DOMContentLoaded', () => {
   initUploadForm();
   initAutocompleteCodigo();
 });
+
+/**
+ * Adjunta listeners individuales a todos los botones "Ver Códigos" dentro de un contenedor.
+ * Esta función se invoca después de renderizar los resultados de búsqueda para asegurar
+ * que cada botón togglee correctamente su lista asociada.
+ * @param {HTMLElement} container - El contenedor que contiene los resultados y los botones.
+ */
+function bindCodeButtons(container) {
+  if (!container) return;
+  const buttons = container.querySelectorAll('.btn-ver-codigos');
+  buttons.forEach(btn => {
+    const codesId = btn.dataset.codesId;
+    btn.addEventListener('click', e => {
+      e.preventDefault();
+      const el = document.getElementById('codes-list-' + codesId);
+      if (el) {
+        el.classList.remove('hidden');
+        el.style.display = el.style.display === 'block' ? 'none' : 'block';
+      }
+    });
+  });
+}
