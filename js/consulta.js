@@ -3,7 +3,7 @@
 import { listarDocumentos, eliminarDocumento } from './api.js';
 import { showModalConfirm } from './modals.js';
 import { showToast } from './toasts.js';
-import { bindCodeButtons } from './main.js'; // Solo importamos la función para activar botones
+// Ya no se necesita bindCodeButtons aquí
 
 let currentDocs = [];
 
@@ -17,7 +17,6 @@ function renderDocs(docs) {
 
   container.innerHTML = docs.map(d => {
       const fecha = d.date ? new Date(d.date).toLocaleDateString('es-ES') : '';
-      // Para la consulta, podemos asumir que los códigos vienen en 'codigos_extraidos'
       const codesArray = (d.codigos_extraidos || '').split(',').map(s => s.trim()).filter(Boolean);
       const codesId = d.id || Math.random().toString(36).slice(2);
 
@@ -57,8 +56,7 @@ export async function cargarConsulta() {
     const docsRaw = await listarDocumentos();
     currentDocs = Array.isArray(docsRaw) ? docsRaw : (docsRaw?.documentos || []);
     renderDocs(currentDocs);
-    const listEl = document.getElementById('results-list');
-    if (listEl) bindCodeButtons(listEl);
+    // La llamada a bindCodeButtons se elimina, el nuevo listener lo maneja todo.
   } catch (e) {
     console.error('Error al cargar documentos:', e);
     showToast('Error al cargar la lista de documentos', 'error');
@@ -88,8 +86,6 @@ window.clearConsultFilter = () => {
   const input = document.getElementById('consultFilterInput');
   if (input) input.value = '';
   renderDocs(currentDocs);
-  const listEl = document.getElementById('results-list');
-  if (listEl) bindCodeButtons(listEl);
 };
 
 window.doConsultFilter = () => {
@@ -100,8 +96,6 @@ window.doConsultFilter = () => {
     (d.path || '').toLowerCase().includes(term)
   );
   renderDocs(filteredDocs);
-  const listEl = document.getElementById('results-list');
-  if (listEl) bindCodeButtons(listEl);
 };
 
 window.downloadCsv = () => {

@@ -8,33 +8,7 @@ import { initAutocompleteCodigo } from './autocomplete.js';
 import { showToast } from './toasts.js';
 
 /**
- * Adjunta listeners a los botones "Ver Códigos" para que muestren/oculten la lista.
- * Se exporta para que consulta.js también pueda usarla.
- * @param {HTMLElement} container - El elemento que contiene los resultados.
- */
-export function bindCodeButtons(container) {
-  if (!container) return;
-  const buttons = container.querySelectorAll('.btn-ver-codigos');
-  buttons.forEach(btn => {
-    const codesId = btn.dataset.codesId;
-    const oldHandler = btn.__codeToggleHandler;
-    if (oldHandler) {
-      btn.removeEventListener('click', oldHandler);
-    }
-    const newHandler = e => {
-      e.preventDefault();
-      const el = document.getElementById('codes-list-' + codesId);
-      if (el) {
-        el.classList.toggle('hidden');
-      }
-    };
-    btn.addEventListener('click', newHandler);
-    btn.__codeToggleHandler = newHandler;
-  });
-}
-
-/**
- * Función de renderizado dedicada para la pestaña "Buscar por Código".
+ * Función de renderizado para la pestaña "Buscar por Código".
  * @param {Array} docs - Lista de documentos a mostrar.
  * @returns {string} El HTML de los resultados.
  */
@@ -109,18 +83,22 @@ document.addEventListener('DOMContentLoaded', () => {
     window.showTab('tab-search');
     cargarConsulta();
 
-    // === BÚSQUEDA ÓPTIMA ===
-    const optimaInput = document.getElementById('optimaSearchInput');
-    const optimaButton = document.getElementById('doOptimaSearchButton');
-    const optimaClear = document.getElementById('clearOptimaSearchButton');
-    const optimaResults = document.getElementById('results-optima-search');
-
-    optimaButton.addEventListener('click', async () => {
-      // (Esta sección no se modifica)
-    });
-
-    optimaClear.addEventListener('click', () => {
-      // (Esta sección no se modifica)
+    // === MANEJADOR DE EVENTOS DELEGADO (SOLUCIÓN) ===
+    // Se asigna un listener al contenedor padre que funciona para todos los botones,
+    // incluso los que se creen en el futuro.
+    const resultsContainer = document.querySelector('.p-6.space-y-6');
+    resultsContainer.addEventListener('click', (event) => {
+        const button = event.target.closest('.btn-ver-codigos');
+        if (button) {
+            event.preventDefault();
+            const codesId = button.dataset.codesId;
+            if (codesId) {
+                const codesList = document.getElementById(`codes-list-${codesId}`);
+                if (codesList) {
+                    codesList.classList.toggle('hidden');
+                }
+            }
+        }
     });
 
     // === BÚSQUEDA POR CÓDIGO ===
@@ -158,7 +136,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (matchedDocs.length) {
           codeResults.innerHTML = renderBuscarCodigoResults(matchedDocs);
-          bindCodeButtons(codeResults); // Llamada clave para activar los botones
+          // Ya no es necesario llamar a bindCodeButtons. El listener principal se encarga.
         } else {
           codeResults.innerHTML = 'No encontrado.';
         }
