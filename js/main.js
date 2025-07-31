@@ -49,8 +49,9 @@ document.addEventListener('DOMContentLoaded', () => {
               .map(d => {
                 const documento = d.documento;
                 const codigos = d.codigos_cubre;
+                // Resaltar el enlace de PDF como un botón
                 const pdf = documento.path
-                  ? `<a href="${documento.path}" target="_blank">${documento.path}</a>`
+                  ? `<a class="btn btn--primary" href="${documento.path}" target="_blank">Ver PDF</a>`
                   : 'Sin PDF';
                 return `
                   <div class="doc-item">
@@ -87,7 +88,10 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!c) return showToast('Ingrese código', 'warning');
       try {
         const resp = await buscarPorCodigo(c);
-        // Determinar dónde está el array de documentos en la respuesta
+        // Determinar dónde se encuentra el array de documentos. Algunos backend
+        // devuelven un objeto con propiedad "documentos" o "docs". Si resp es
+        // ya un array, úsalo directamente. De lo contrario, busca dentro de
+        // posibles campos. Finalmente, asegúrate de que sea un array.
         let docsArray;
         if (Array.isArray(resp)) {
           docsArray = resp;
@@ -101,88 +105,34 @@ document.addEventListener('DOMContentLoaded', () => {
           docsArray = [];
         }
         if (Array.isArray(docsArray) && docsArray.length) {
-          // Fallback: si los documentos no traen códigos en ningún campo, consulta toda la lista
-          // y fusiona los códigos por id.
+          // Comprobar si los documentos tienen algún campo de códigos. Si no, obtén los códigos
+          // completos de la API de listar documentos y fusiónalos. Esto sirve como fallback
+          // cuando el backend no devuelve codigos_extraidos en /search.
           const docsWithCodes = await (async () => {
+            // Función para determinar si un documento ya tiene códigos (cualquier campo posible)
             const hasCodes = doc => {
               const fields = ['codigos_extraidos', 'codigos', 'codes', 'codigo', 'codigos_cubre', 'codigosAsignados'];
               return fields.some(f => doc && doc[f]);
             };
+            // Si al menos un doc tiene códigos ya, simplemente devuelve docsArray
             if (docsArray.some(hasCodes)) {
               return docsArray;
             }
+            // De lo contrario, obtener la lista completa de documentos para mapear códigos
             try {
               const allDocs = await listarDocumentos();
               return docsArray.map(d => {
                 const match = Array.isArray(allDocs)
-                  ? allDocs.find(item => item.id === d.id)
+                  ? allDocs.find(item => String(item.id) === String(d.id))
                   : null;
                 return match ? { ...d, ...match } : d;
               });
-            } catch {
+            } catch (e) {
+              // Si falla la llamada, simplemente retorna los docs sin códigos
               return docsArray;
             }
           })();
-
-          /**
-           * Extrae un array de códigos desde el objeto documento. Maneja múltiples
-           * posibles nombres de campos y distintos tipos (cadena, array) para una
-           * mayor robustez.
-           * @param {any} doc
-           * @returns {string[]}
-           */
-          function getCodesArray(doc) {
-            const possibleFields = [
-              'codigos_extraidos',
-              'codigos',
-              'codes',
-              'codigo',
-              'codigos_cubre',
-              'codigosAsignados',
-            ];
-            let value;
-            for (const field of possibleFields) {
-              if (doc && Object.prototype.hasOwnProperty.call(doc, field)) {
-                value = doc[field];
-                break;
-              }
-            }
-            if (!value) return [];
-            if (Array.isArray(value)) {
-              return value.map(v => String(v).trim()).filter(Boolean);
-            }
-            if (typeof value === 'string') {
-              return value
-                .split(/[;,\s]+/)
-                .map(s => s.trim())
-                .filter(Boolean);
-            }
-            return [];
-          }
-          codeResults.innerHTML = docsWithCodes
-            .map(doc => {
-              const fecha = doc.date ? new Date(doc.date).toLocaleDateString('es-ES') : '';
-              const codesArr = getCodesArray(doc);
-              const codesId = doc.id || Math.random().toString(36).slice(2);
-              const codesListHtml = codesArr.length
-                ? `<div id="codes-list-${codesId}" class="codes-list hidden">${codesArr
-                    .map(code => `<span class="code-item">${code}</span>`)
-                    .join(' ')}</div>`
-                : `<div id="codes-list-${codesId}" class="codes-list hidden"><span>Sin códigos.</span></div>`;
-              const pdfLink = doc.path
-                ? `<a class="btn btn--primary" href="${doc.path}" target="_blank">Ver PDF</a>`
-                : 'Sin PDF';
-              return `
-                <div class="doc-item">
-                  <p><strong>${doc.name}</strong></p>
-                  <p>${fecha}</p>
-                  <p>${pdfLink}</p>
-                  <button class="btn-ver-codigos" data-codes-id="${codesId}">Ver Códigos</button>
-                  ${codesListHtml}
-                </div>
-              `;
-            })
-            .join('');
+          codeResults.innerHTML = renderBuscarCodigoResults(docsWithCodes);
           bindCodeButtons(codeResults);
         } else {
           codeResults.innerHTML = 'No encontrado.';
@@ -230,4 +180,85 @@ function bindCodeButtons(container) {
       }
     });
   });
+}
+
+/**
+ * Renderiza un array de documentos devueltos por la búsqueda por código.
+ * Cada documento incluye un botón "Ver Códigos" y una lista de códigos
+ * en columna dentro de un contenedor oculto. El enlace al PDF se muestra
+ * como un botón destacado.
+ * @param {Array} docs - Lista de objetos de documento.
+ * @returns {string} HTML para insertar en el contenedor de resultados.
+ */
+function renderBuscarCodigoResults(docs) {
+  /**
+   * Obtiene un array de códigos a partir del objeto documento.
+   * Intenta detectar el nombre del campo y el tipo de dato para ser
+   * robusto ante distintas implementaciones del backend. Se aceptan
+   * strings con diferentes separadores (coma, punto y coma, espacio) o
+   * arrays de cadenas.
+   * @param {any} doc
+   * @returns {string[]} array de códigos limpios
+   */
+  function getCodesArray(doc) {
+  // Posibles nombres de propiedad donde el backend envía los códigos
+    const possibleFields = [
+      'codigos_extraidos',
+      'codigos',
+      'codes',
+      'codigo',
+      'codigos_cubre',
+      'codigosAsignados',
+    ];
+    // Encuentra el primer campo que exista en el objeto
+    let value;
+    for (const field of possibleFields) {
+      if (doc && Object.prototype.hasOwnProperty.call(doc, field)) {
+        value = doc[field];
+        break;
+      }
+    }
+    if (!value) return [];
+    // Si ya es un array, devuélvelo tal cual (filtrando falsy)
+    if (Array.isArray(value)) {
+      return value.map(v => String(v).trim()).filter(Boolean);
+    }
+    // Si es una cadena, dividirla por coma, punto y coma o espacios consecutivos
+    if (typeof value === 'string') {
+      return value
+        .split(/[;,\s]+/)
+        .map(s => s.trim())
+        .filter(Boolean);
+    }
+    // En cualquier otro caso, devolver vacío
+    return [];
+  }
+
+  return docs
+    .map(doc => {
+      const fecha = doc.date ? new Date(doc.date).toLocaleDateString('es-ES') : '';
+      const codesArr = getCodesArray(doc);
+      // Generar id para asociar el botón y la lista; si doc.id no existe, usar un hash aleatorio
+      const codesId = doc.id || Math.random().toString(36).slice(2);
+      // Construir la lista de códigos como columna oculta
+      const codesListHtml = codesArr.length
+        ? `<div id="codes-list-${codesId}" class="codes-list hidden">${codesArr
+            .map(code => `<div class="code-item">${code}</div>`)
+            .join('')}</div>`
+        : `<div id="codes-list-${codesId}" class="codes-list hidden"><span>Sin códigos.</span></div>`;
+      // Resaltar Ver PDF como botón
+      const pdfButton = doc.path
+        ? `<a class="btn btn--primary" href="${doc.path}" target="_blank">Ver PDF</a>`
+        : 'Sin PDF';
+      return `
+        <div class="doc-item">
+          <p><strong>${doc.name}</strong></p>
+          <p>${fecha}</p>
+          <p>${pdfButton}</p>
+          <button class="btn-ver-codigos" data-codes-id="${codesId}">Ver Códigos</button>
+          ${codesListHtml}
+        </div>
+      `;
+    })
+    .join('');
 }
