@@ -83,61 +83,80 @@ document.addEventListener('DOMContentLoaded', () => {
     const codeSearchButton = document.getElementById('doCodeSearchButton');
     const codeResults = document.getElementById('results-code');
 
+    /**
+     * Extrae un array de códigos de un documento. Esta función replica la lógica
+     * de renderBuscarCodigoResults para detectar los posibles campos de
+     * códigos y normalizar el valor a un array de strings. Se exporta aquí
+     * porque se utiliza tanto para filtrar resultados como para mostrarlos.
+     *
+     * @param {any} doc
+     * @returns {string[]} array de códigos limpios
+     */
+    function extractCodes(doc) {
+      const possibleFields = [
+        'codigos_extraidos',
+        'codigos',
+        'codes',
+        'codigo',
+        'codigos_cubre',
+        'codigosAsignados'
+      ];
+      let value;
+      for (const field of possibleFields) {
+        if (doc && Object.prototype.hasOwnProperty.call(doc, field)) {
+          value = doc[field];
+          break;
+        }
+      }
+      if (!value) return [];
+      if (Array.isArray(value)) {
+        return value.map(v => String(v).trim()).filter(Boolean);
+      }
+      if (typeof value === 'string') {
+        return value
+          .split(/[;,\s]+/)
+          .map(s => s.trim())
+          .filter(Boolean);
+      }
+      return [];
+    }
+
     codeSearchButton.addEventListener('click', async () => {
       const c = codeInput.value.trim();
       if (!c) return showToast('Ingrese código', 'warning');
       try {
-        const resp = await buscarPorCodigo(c);
-        // Determinar dónde se encuentra el array de documentos. Algunos backend
-        // devuelven un objeto con propiedad "documentos" o "docs". Si resp es
-        // ya un array, úsalo directamente. De lo contrario, busca dentro de
-        // posibles campos. Finalmente, asegúrate de que sea un array.
-        let docsArray;
-        if (Array.isArray(resp)) {
-          docsArray = resp;
-        } else if (resp && Array.isArray(resp.documentos)) {
-          docsArray = resp.documentos;
-        } else if (resp && Array.isArray(resp.docs)) {
-          docsArray = resp.docs;
-        } else if (resp && Array.isArray(resp.results)) {
-          docsArray = resp.results;
+        // En lugar de depender de que el backend devuelva los códigos en la respuesta
+        // del endpoint /search, obtenemos la lista completa de documentos y filtramos
+        // los que contengan el código buscado. Esto garantiza que siempre tendremos
+        // acceso al campo codigos_extraidos (o equivalente) para mostrar la lista.
+        const allDocsRaw = await listarDocumentos();
+        // Determinar dónde está el array de documentos (puede venir como array plano
+        // o dentro de propiedades tipo "documentos" o "docs")
+        let allDocs;
+        if (Array.isArray(allDocsRaw)) {
+          allDocs = allDocsRaw;
+        } else if (allDocsRaw && Array.isArray(allDocsRaw.documentos)) {
+          allDocs = allDocsRaw.documentos;
+        } else if (allDocsRaw && Array.isArray(allDocsRaw.docs)) {
+          allDocs = allDocsRaw.docs;
         } else {
-          docsArray = [];
+          allDocs = [];
         }
-        if (Array.isArray(docsArray) && docsArray.length) {
-          // Comprobar si los documentos tienen algún campo de códigos. Si no, obtén los códigos
-          // completos de la API de listar documentos y fusiónalos. Esto sirve como fallback
-          // cuando el backend no devuelve codigos_extraidos en /search.
-          const docsWithCodes = await (async () => {
-            // Función para determinar si un documento ya tiene códigos (cualquier campo posible)
-            const hasCodes = doc => {
-              const fields = ['codigos_extraidos', 'codigos', 'codes', 'codigo', 'codigos_cubre', 'codigosAsignados'];
-              return fields.some(f => doc && doc[f]);
-            };
-            // Si al menos un doc tiene códigos ya, simplemente devuelve docsArray
-            if (docsArray.some(hasCodes)) {
-              return docsArray;
-            }
-            // De lo contrario, obtener la lista completa de documentos para mapear códigos
-            try {
-              const allDocs = await listarDocumentos();
-              return docsArray.map(d => {
-                const match = Array.isArray(allDocs)
-                  ? allDocs.find(item => String(item.id) === String(d.id))
-                  : null;
-                return match ? { ...d, ...match } : d;
-              });
-            } catch (e) {
-              // Si falla la llamada, simplemente retorna los docs sin códigos
-              return docsArray;
-            }
-          })();
-          codeResults.innerHTML = renderBuscarCodigoResults(docsWithCodes);
+        // Normalizar el código buscado para comparaciones sin distinguir mayúsculas
+        const searchCode = c.toUpperCase();
+        // Filtrar documentos cuyo listado de códigos contenga el código buscado
+        const matchedDocs = allDocs.filter(doc => {
+          const codes = extractCodes(doc).map(str => str.toUpperCase());
+          return codes.some(code => code === searchCode || code.includes(searchCode));
+        });
+        if (matchedDocs.length) {
+          codeResults.innerHTML = renderBuscarCodigoResults(matchedDocs);
           bindCodeButtons(codeResults);
         } else {
           codeResults.innerHTML = 'No encontrado.';
         }
-      } catch {
+      } catch (err) {
+        console.error(err);
         showToast('Error búsqueda por código', 'error');
       }
     });
@@ -201,7 +220,7 @@ function renderBuscarCodigoResults(docs) {
    * @returns {string[]} array de códigos limpios
    */
   function getCodesArray(doc) {
-  // Posibles nombres de propiedad donde el backend envía los códigos
+    // Posibles nombres de propiedad donde el backend envía los códigos
     const possibleFields = [
       'codigos_extraidos',
       'codigos',
