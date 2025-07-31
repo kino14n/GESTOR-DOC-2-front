@@ -153,7 +153,8 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         if (matchedDocs.length) {
           codeResults.innerHTML = renderBuscarCodigoResults(matchedDocs);
-          bindCodeButtons(codeResults); // Llama a bindCodeButtons aquí
+          // ¡CORRECCIÓN CLAVE! Llamamos a bindCodeButtons aquí
+          bindCodeButtons(codeResults); 
         } else {
           codeResults.innerHTML = 'No encontrado.';
         }
@@ -180,7 +181,6 @@ export function bindCodeButtons(container) {
   const buttons = container.querySelectorAll('.btn-ver-codigos');
   buttons.forEach(btn => {
     const codesId = btn.dataset.codesId;
-    // Remueve cualquier listener previo para evitar duplicados si se llama varias veces
     const oldHandler = btn.__codeToggleHandler;
     if (oldHandler) {
       btn.removeEventListener('click', oldHandler);
@@ -189,48 +189,24 @@ export function bindCodeButtons(container) {
       e.preventDefault();
       const el = document.getElementById('codes-list-' + codesId);
       if (el) {
-        // Alternar la clase 'hidden' para mostrar/ocultar el elemento
         el.classList.toggle('hidden');
-        // Si necesitas asegurar que 'display: block' se aplique cuando no está hidden
-        // y 'display: none' cuando sí, puedes añadir esto, pero 'toggle' de 'hidden'
-        // usualmente es suficiente con Tailwind.
-        // el.style.display = el.classList.contains('hidden') ? 'none' : 'block';
       }
     };
     btn.addEventListener('click', newHandler);
-    btn.__codeToggleHandler = newHandler; // Guarda la referencia al handler para poder removerlo
+    btn.__codeToggleHandler = newHandler;
   });
 }
 
 /**
  * Renderiza un array de documentos devueltos por la búsqueda por código.
- * Cada documento incluye un botón "Ver Códigos" y una lista de códigos
- * en columna dentro de un contenedor oculto. El enlace al PDF se muestra
- * como un botón destacado.
  * @param {Array} docs - Lista de objetos de documento.
  * @returns {string} HTML para insertar en el contenedor de resultados.
  */
 function renderBuscarCodigoResults(docs) {
-  /**
-   * Obtiene un array de códigos a partir del objeto documento.
-   * Intenta detectar el nombre del campo y el tipo de dato para ser
-   * robusto ante distintas implementaciones del backend. Se aceptan
-   * strings con diferentes separadores (coma, punto y coma, espacio) o
-   * arrays de cadenas.
-   * @param {any} doc
-   * @returns {string[]} array de códigos limpios
-   */
   function getCodesArray(doc) {
-    // Posibles nombres de propiedad donde el backend envía los códigos
     const possibleFields = [
-      'codigos_extraidos',
-      'codigos',
-      'codes',
-      'codigo',
-      'codigos_cubre',
-      'codigosAsignados',
+      'codigos_extraidos', 'codigos', 'codes', 'codigo', 'codigos_cubre', 'codigosAsignados',
     ];
-    // Encuentra el primer campo que exista en el objeto
     let value;
     for (const field of possibleFields) {
       if (doc && Object.prototype.hasOwnProperty.call(doc, field)) {
@@ -239,46 +215,39 @@ function renderBuscarCodigoResults(docs) {
       }
     }
     if (!value) return [];
-    // Si ya es un array, devuélvelo tal cual (filtrando falsy)
     if (Array.isArray(value)) {
       return value.map(v => String(v).trim()).filter(Boolean);
     }
-    // Si es una cadena, dividirla por coma, punto y coma o espacios consecutivos
     if (typeof value === 'string') {
-      return value
-        .split(/[;,\s]+/)
-        .map(s => s.trim())
-        .filter(Boolean);
+      return value.split(/[;,\s]+/).map(s => s.trim()).filter(Boolean);
     }
-    // En cualquier otro caso, devolver vacío
     return [];
   }
 
-  return docs
-    .map(doc => {
+  return docs.map(doc => {
       const fecha = doc.date ? new Date(doc.date).toLocaleDateString('es-ES') : '';
       const codesArr = getCodesArray(doc);
-      // Generar id para asociar el botón y la lista; si doc.id no existe, usar un hash aleatorio
       const codesId = doc.id || Math.random().toString(36).slice(2);
-      // Construir la lista de códigos como columna oculta
+      
       const codesListHtml = codesArr.length
         ? `<div id="codes-list-${codesId}" class="codes-list hidden">${codesArr
             .map(code => `<div class="code-item">${code}</div>`)
             .join('')}</div>`
         : `<div id="codes-list-${codesId}" class="codes-list hidden"><span>Sin códigos.</span></div>`;
-      // Resaltar Ver PDF como botón
+      
       const pdfButton = doc.path
-        ? `<a class="btn btn--primary" href="uploads/${doc.path}" target="_blank">Ver PDF</a>`
-        : 'Sin PDF';
+        ? `<a class="btn btn--primary btn-small" href="uploads/${doc.path}" target="_blank">Ver PDF</a>`
+        : '<span>Sin PDF</span>';
+
       return `
         <div class="doc-item">
-          <p><strong>${doc.name}</strong></p>
-          <p>${fecha}</p>
-          <p>${pdfButton}</p>
-          <button class="btn-ver-codigos" data-codes-id="${codesId}">Ver Códigos</button>
+          <div><strong>${doc.name}</strong> (${fecha})</div>
+          <div class="actions">
+            ${pdfButton}
+            <button class="btn btn-ver-codigos btn--secondary btn-small" data-codes-id="${codesId}">Ver Códigos</button>
+          </div>
           ${codesListHtml}
         </div>
       `;
-    })
-    .join('');
+    }).join('');
 }
