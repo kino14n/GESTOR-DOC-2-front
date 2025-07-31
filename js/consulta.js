@@ -6,9 +6,6 @@ import { showToast } from './toasts.js';
 
 let currentDocs = [];
 
-/**
- * Renderiza la lista de documentos en la pestaña "Consultar".
- */
 function renderDocs(docs) {
   const container = document.getElementById('results-list');
   if (!container) return;
@@ -16,7 +13,7 @@ function renderDocs(docs) {
   container.innerHTML = docs.map(d => {
       const fecha = d.date ? new Date(d.date).toLocaleDateString('es-ES') : '';
       const codesArray = (d.codigos_extraidos || '').split(',').map(s => s.trim()).filter(Boolean);
-      // Se usa el ID del documento para crear un identificador único.
+      // CORRECCIÓN CLAVE: Se usa el ID único del documento (d.id).
       const codesId = d.id;
 
       const codesListHtml = codesArray.length
@@ -27,7 +24,7 @@ function renderDocs(docs) {
       const adminButtons = `<button class="btn btn--secondary btn-small" onclick="dispatchEdit(${d.id})">Editar</button>
                             <button class="btn btn--warning btn-small" onclick="eliminarDoc(${d.id})">Eliminar</button>`;
 
-      // CORRECCIÓN: Se pasa el ID único del documento a la función.
+      // Se pasa el ID único y correcto del documento a la función del botón.
       return `
           <div class="doc-item">
               <div><strong>${d.name}</strong> (${fecha})</div>
@@ -42,9 +39,6 @@ function renderDocs(docs) {
     }).join('');
 }
 
-/**
- * Carga y muestra la lista inicial de todos los documentos.
- */
 export async function cargarConsulta() {
   try {
     const docsRaw = await listarDocumentos();
@@ -55,7 +49,7 @@ export async function cargarConsulta() {
   }
 }
 
-// --- FUNCIONES GLOBALES PARA BOTONES ---
+// --- FUNCIONES GLOBALES ---
 
 window.dispatchEdit = async id => {
   try {
