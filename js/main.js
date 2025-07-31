@@ -1,5 +1,3 @@
-// js/main.js
-
 import { buscarOptimaAvanzada, buscarPorCodigo, sugerirCodigos, listarDocumentos } from './api.js';
 import { cargarConsulta } from './consulta.js';
 import { initUploadForm } from './upload.js';
@@ -153,7 +151,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         if (matchedDocs.length) {
           codeResults.innerHTML = renderBuscarCodigoResults(matchedDocs);
-          bindCodeButtons(codeResults); // Llama a bindCodeButtons aquí
+          bindCodeButtons(codeResults);
         } else {
           codeResults.innerHTML = 'No encontrado.';
         }
@@ -163,8 +161,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
 
-    // Se remueve este listener duplicado. La lógica de `bindCodeButtons` ahora lo maneja.
-    /*
+    // Delegación de eventos para mostrar/ocultar lista de códigos
     document.addEventListener('click', e => {
       const btn = e.target.closest('.btn-ver-codigos');
       if (btn && btn.dataset.codesId) {
@@ -175,7 +172,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       }
     });
-    */
   });
 
   // Inicializa formulario de subida y autocompletado
@@ -194,29 +190,21 @@ function bindCodeButtons(container) {
   const buttons = container.querySelectorAll('.btn-ver-codigos');
   buttons.forEach(btn => {
     const codesId = btn.dataset.codesId;
-    // Remueve cualquier listener previo para evitar duplicados si se llama varias veces
-    const oldHandler = btn.__codeToggleHandler;
-    if (oldHandler) {
-      btn.removeEventListener('click', oldHandler);
-    }
-    const newHandler = e => {
+    btn.addEventListener('click', e => {
       e.preventDefault();
       const el = document.getElementById('codes-list-' + codesId);
       if (el) {
-        // Alternar visibilidad: si está oculto (display:none o hidden), mostrarlo. Si está visible (display:block), ocultarlo.
-        if (el.classList.contains('hidden') || el.style.display === 'none') {
-            el.classList.remove('hidden');
-            el.style.display = 'block';
-        } else {
-            el.classList.add('hidden');
-            el.style.display = 'none';
-        }
+        el.classList.remove('hidden');
+        el.style.display = el.style.display === 'block' ? 'none' : 'block';
       }
-    };
-    btn.addEventListener('click', newHandler);
-    btn.__codeToggleHandler = newHandler; // Guarda la referencia al handler para poder removerlo
+    });
   });
 }
+
+// Exponer la función bindCodeButtons en el ámbito global para que otros módulos (como
+// consulta.js) puedan llamarla sin crear una dependencia circular entre módulos.
+// Esto permite que la pestaña de consulta adjunte eventos a sus botones "Ver Códigos".
+window.bindCodeButtons = bindCodeButtons;
 
 /**
  * Renderiza un array de documentos devueltos por la búsqueda por código.

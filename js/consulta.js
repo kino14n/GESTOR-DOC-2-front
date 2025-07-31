@@ -1,6 +1,7 @@
 import { listarDocumentos, eliminarDocumento } from './api.js';
 import { showModalConfirm } from './modals.js';
 import { showToast } from './toasts.js';
+import { bindCodeButtons } from './main.js';
 
 // Contiene la lista actual de documentos para filtros o recargas
 let currentDocs = [];
@@ -12,6 +13,9 @@ export async function cargarConsulta() {
   try {
     currentDocs = await listarDocumentos();
     renderDocs(currentDocs);
+    // Vincular los eventos de los botones "Ver Códigos" después de renderizar
+    const listEl = document.getElementById('results-list');
+    if (listEl) bindCodeButtons(listEl);
   } catch (e) {
     console.error('Error al cargar documentos:', e);
     showToast('Error al cargar lista', 'error');
@@ -44,7 +48,7 @@ function renderDocs(docs) {
         : `<div id="codes-list-${codesId}" class="codes-list hidden"><span>Sin códigos.</span></div>`;
       // Resaltar Ver PDF como botón
       const pdfButton = d.path
-        ? `<a class="btn btn--primary" href="${d.path}" target="_blank">Ver PDF</a>`
+        ? `<a class="btn btn--primary" href="uploads/${d.path}" target="_blank">Ver PDF</a>`
         : 'Sin PDF';
       return `
         <div class="doc-item">
@@ -61,6 +65,7 @@ function renderDocs(docs) {
       `;
     })
     .join('');
+
 }
 
 // Editar documento y cambiar a pestaña “Subir”
@@ -88,6 +93,9 @@ window.clearConsultFilter = () => {
   const input = document.getElementById('consultFilterInput');
   if (input) input.value = '';
   renderDocs(currentDocs);
+  // Volver a vincular los eventos de los botones después de filtrar
+  const listEl = document.getElementById('results-list');
+  if (listEl) bindCodeButtons(listEl);
 };
 
 window.doConsultFilter = () => {
@@ -99,6 +107,9 @@ window.doConsultFilter = () => {
       (d.path || '').toLowerCase().includes(term)
     )
   );
+  // Vincular eventos a los botones en el resultado filtrado
+  const listEl = document.getElementById('results-list');
+  if (listEl) bindCodeButtons(listEl);
 };
 
 window.downloadCsv = () => window.open(`/api/documentos?format=csv`, '_blank');
