@@ -3,13 +3,12 @@
 import { listarDocumentos, eliminarDocumento } from './api.js';
 import { showModalConfirm } from './modals.js';
 import { showToast } from './toasts.js';
-// Ya no se necesita bindCodeButtons aquí
+import { bindCodeButtons } from './main.js'; // Se importa la función para activar botones.
 
 let currentDocs = [];
 
 /**
  * Renderiza la lista de documentos en la pestaña "Consultar".
- * @param {Array} docs - El array de documentos a mostrar.
  */
 function renderDocs(docs) {
   const container = document.getElementById('results-list');
@@ -25,14 +24,9 @@ function renderDocs(docs) {
             .map(c => `<div class="code-item">${c}</div>`).join('')}</div>`
         : `<div id="codes-list-${codesId}" class="codes-list hidden"><span>Sin códigos.</span></div>`;
 
-      const pdfButton = d.path
-        ? `<a class="btn btn--primary btn-small" href="uploads/${d.path}" target="_blank">Ver PDF</a>`
-        : '';
-
-      const adminButtons = `
-          <button class="btn btn--secondary btn-small" onclick="dispatchEdit(${d.id})">Editar</button>
-          <button class="btn btn--warning btn-small" onclick="eliminarDoc(${d.id})">Eliminar</button>
-      `;
+      const pdfButton = d.path ? `<a class="btn btn--primary btn-small" href="uploads/${d.path}" target="_blank">Ver PDF</a>` : '';
+      const adminButtons = `<button class="btn btn--secondary btn-small" onclick="dispatchEdit(${d.id})">Editar</button>
+                            <button class="btn btn--warning btn-small" onclick="eliminarDoc(${d.id})">Eliminar</button>`;
 
       return `
           <div class="doc-item">
@@ -56,7 +50,8 @@ export async function cargarConsulta() {
     const docsRaw = await listarDocumentos();
     currentDocs = Array.isArray(docsRaw) ? docsRaw : (docsRaw?.documentos || []);
     renderDocs(currentDocs);
-    // La llamada a bindCodeButtons se elimina, el nuevo listener lo maneja todo.
+    // ¡LLAMADA CLAVE! Se activan los botones de la lista inicial.
+    bindCodeButtons(document.getElementById('results-list'));
   } catch (e) {
     console.error('Error al cargar documentos:', e);
     showToast('Error al cargar la lista de documentos', 'error');
@@ -70,9 +65,7 @@ window.dispatchEdit = async id => {
     const res = await fetch(`https://gestor-doc-backend-production.up.railway.app/api/documentos/${id}`);
     const docData = await res.json();
     if (docData && !docData.error) {
-      if (window.loadDocumentForEdit) {
-        window.loadDocumentForEdit(docData);
-      }
+      if (window.loadDocumentForEdit) window.loadDocumentForEdit(docData);
       window.showTab('tab-upload');
     } else {
       showToast('Error al cargar datos del documento', false);
@@ -86,6 +79,8 @@ window.clearConsultFilter = () => {
   const input = document.getElementById('consultFilterInput');
   if (input) input.value = '';
   renderDocs(currentDocs);
+  // ¡LLAMADA CLAVE! Se reactivan los botones después de limpiar el filtro.
+  bindCodeButtons(document.getElementById('results-list'));
 };
 
 window.doConsultFilter = () => {
@@ -96,6 +91,8 @@ window.doConsultFilter = () => {
     (d.path || '').toLowerCase().includes(term)
   );
   renderDocs(filteredDocs);
+  // ¡LLAMADA CLAVE! Se reactivan los botones después de filtrar.
+  bindCodeButtons(document.getElementById('results-list'));
 };
 
 window.downloadCsv = () => {

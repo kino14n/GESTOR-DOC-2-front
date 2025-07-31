@@ -8,9 +8,38 @@ import { initAutocompleteCodigo } from './autocomplete.js';
 import { showToast } from './toasts.js';
 
 /**
- * Función de renderizado para la pestaña "Buscar por Código".
+ * Adjunta listeners a los botones "Ver Códigos" para que muestren/oculten la lista.
+ * Se exporta para que otros módulos (como consulta.js) puedan usarla.
+ * @param {HTMLElement} container - El elemento que contiene los botones a activar.
+ */
+export function bindCodeButtons(container) {
+  if (!container) return;
+  const buttons = container.querySelectorAll('.btn-ver-codigos');
+  buttons.forEach(btn => {
+    // Para evitar duplicar eventos, primero removemos el anterior si existe.
+    const oldHandler = btn.__codeToggleHandler;
+    if (oldHandler) {
+      btn.removeEventListener('click', oldHandler);
+    }
+    // Creamos el nuevo manejador del evento.
+    const newHandler = (event) => {
+      event.preventDefault();
+      const codesId = btn.dataset.codesId;
+      const el = document.getElementById('codes-list-' + codesId);
+      if (el) {
+        el.classList.toggle('hidden');
+      }
+    };
+    // Añadimos el nuevo evento y guardamos una referencia para poder quitarlo después.
+    btn.addEventListener('click', newHandler);
+    btn.__codeToggleHandler = newHandler;
+  });
+}
+
+/**
+ * Renderiza el HTML para los resultados de la búsqueda por código.
  * @param {Array} docs - Lista de documentos a mostrar.
- * @returns {string} El HTML de los resultados.
+ * @returns {string} El HTML generado.
  */
 function renderBuscarCodigoResults(docs) {
     function getCodesArray(doc) {
@@ -23,12 +52,8 @@ function renderBuscarCodigoResults(docs) {
             }
         }
         if (!value) return [];
-        if (Array.isArray(value)) {
-            return value.map(v => String(v).trim()).filter(Boolean);
-        }
-        if (typeof value === 'string') {
-            return value.split(/[;,\s]+/).map(s => s.trim()).filter(Boolean);
-        }
+        if (Array.isArray(value)) return value.map(v => String(v).trim()).filter(Boolean);
+        if (typeof value === 'string') return value.split(/[;,\s]+/).map(s => s.trim()).filter(Boolean);
         return [];
     }
 
@@ -83,26 +108,10 @@ document.addEventListener('DOMContentLoaded', () => {
     window.showTab('tab-search');
     cargarConsulta();
 
-    // === MANEJADOR DE EVENTOS DELEGADO (SOLUCIÓN PARA "VER CÓDIGOS") ===
-    const resultsContainer = document.querySelector('.p-6.space-y-6');
-    resultsContainer.addEventListener('click', (event) => {
-        const button = event.target.closest('.btn-ver-codigos');
-        if (button) {
-            event.preventDefault();
-            const codesId = button.dataset.codesId;
-            if (codesId) {
-                const codesList = document.getElementById(`codes-list-${codesId}`);
-                if (codesList) {
-                    codesList.classList.toggle('hidden');
-                }
-            }
-        }
-    });
-
-    // === BÚSQUEDA ÓPTIMA (LÓGICA RESTAURADA) ===
-    const optimaInput = document.getElementById('optimaSearchInput');
+    // === BÚSQUEDA ÓPTIMA ===
     const optimaButton = document.getElementById('doOptimaSearchButton');
     const optimaClear = document.getElementById('clearOptimaSearchButton');
+    const optimaInput = document.getElementById('optimaSearchInput');
     const optimaResults = document.getElementById('results-optima-search');
 
     optimaButton.addEventListener('click', async () => {
@@ -112,25 +121,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const resultado = await buscarOptimaAvanzada(txt);
         if (resultado.documentos?.length) {
           optimaResults.innerHTML =
-            resultado.documentos
-              .map(d => {
+            resultado.documentos.map(d => {
                 const documento = d.documento;
                 const codigos = d.codigos_cubre;
-                const pdf = documento.path
-                  ? `<a class="btn btn--primary" href="uploads/${documento.path}" target="_blank">Ver PDF</a>`
-                  : 'Sin PDF';
-                return `
-                  <div class="doc-item">
-                    <p><strong>Documento:</strong> ${documento.name}</p>
-                    <p><strong>Códigos cubiertos:</strong> ${codigos.join(', ')}</p>
-                    <p><strong>PDF:</strong> ${pdf}</p>
-                  </div>
-                `;
-              })
-              .join('') +
-            (resultado.codigos_faltantes?.length
-              ? `<p>Códigos no encontrados: ${resultado.codigos_faltantes.join(', ')}</p>`
-              : '');
+                const pdf = documento.path ? `<a class="btn btn--primary" href="uploads/${documento.path}" target="_blank">Ver PDF</a>` : 'Sin PDF';
+                return `<div class="doc-item"><p><strong>Documento:</strong> ${documento.name}</p><p><strong>Códigos cubiertos:</strong> ${codigos.join(', ')}</p><p><strong>PDF:</strong> ${pdf}</p></div>`;
+            }).join('') +
+            (resultado.codigos_faltantes?.length ? `<p>Códigos no encontrados: ${resultado.codigos_faltantes.join(', ')}</p>` : '');
         } else {
           optimaResults.innerHTML = 'No halló resultados.';
         }
@@ -144,26 +141,10 @@ document.addEventListener('DOMContentLoaded', () => {
       optimaResults.innerHTML = '';
     });
 
-
     // === BÚSQUEDA POR CÓDIGO ===
     const codeInput = document.getElementById('codeInput');
     const codeSearchButton = document.getElementById('doCodeSearchButton');
     const codeResults = document.getElementById('results-code');
-
-    function extractCodes(doc) {
-        const possibleFields = ['codigos_extraidos', 'codigos', 'codes', 'codigo', 'codigos_cubre', 'codigosAsignados'];
-        let value;
-        for (const field of possibleFields) {
-            if (doc && Object.prototype.hasOwnProperty.call(doc, field)) {
-                value = doc[field];
-                break;
-            }
-        }
-        if (!value) return [];
-        if (Array.isArray(value)) { return value.map(v => String(v).trim()).filter(Boolean); }
-        if (typeof value === 'string') { return value.split(/[;,\s]+/).map(s => s.trim()).filter(Boolean); }
-        return [];
-    }
 
     codeSearchButton.addEventListener('click', async () => {
       const c = codeInput.value.trim();
@@ -174,12 +155,14 @@ document.addEventListener('DOMContentLoaded', () => {
         
         const searchCode = c.toUpperCase();
         const matchedDocs = allDocs.filter(doc => {
-          const codes = extractCodes(doc).map(str => str.toUpperCase());
+          const codes = (doc.codigos_extraidos || '').split(',').map(str => str.trim().toUpperCase());
           return codes.some(code => code === searchCode || code.includes(searchCode));
         });
 
         if (matchedDocs.length) {
           codeResults.innerHTML = renderBuscarCodigoResults(matchedDocs);
+          // ¡LLAMADA CLAVE! Se activan los botones recién creados.
+          bindCodeButtons(codeResults);
         } else {
           codeResults.innerHTML = 'No encontrado.';
         }
