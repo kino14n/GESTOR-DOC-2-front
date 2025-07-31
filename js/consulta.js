@@ -16,7 +16,8 @@ function renderDocs(docs) {
   container.innerHTML = docs.map(d => {
       const fecha = d.date ? new Date(d.date).toLocaleDateString('es-ES') : '';
       const codesArray = (d.codigos_extraidos || '').split(',').map(s => s.trim()).filter(Boolean);
-      const codesId = d.id || Math.random().toString(36).slice(2);
+      // Se usa el ID del documento para crear un identificador único.
+      const codesId = d.id;
 
       const codesListHtml = codesArray.length
         ? `<div id="codes-list-${codesId}" class="codes-list hidden">${codesArray.map(c => `<div class="code-item">${c}</div>`).join('')}</div>`
@@ -26,6 +27,7 @@ function renderDocs(docs) {
       const adminButtons = `<button class="btn btn--secondary btn-small" onclick="dispatchEdit(${d.id})">Editar</button>
                             <button class="btn btn--warning btn-small" onclick="eliminarDoc(${d.id})">Eliminar</button>`;
 
+      // CORRECCIÓN: Se pasa el ID único del documento a la función.
       return `
           <div class="doc-item">
               <div><strong>${d.name}</strong> (${fecha})</div>
