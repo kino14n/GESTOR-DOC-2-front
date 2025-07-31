@@ -11,20 +11,19 @@ function renderDocs(docs) {
   if (!container) return;
 
   container.innerHTML = docs.map(d => {
+      if (!d || !d.id) return '';
       const fecha = d.date ? new Date(d.date).toLocaleDateString('es-ES') : '';
       const codesArray = (d.codigos_extraidos || '').split(',').map(s => s.trim()).filter(Boolean);
-      // CORRECCIÓN CLAVE: Se usa el ID único del documento (d.id).
       const codesId = d.id;
 
       const codesListHtml = codesArray.length
-        ? `<div id="codes-list-${codesId}" class="codes-list hidden">${codesArray.map(c => `<div class="code-item">${c}</div>`).join('')}</div>`
-        : `<div id="codes-list-${codesId}" class="codes-list hidden"><span>Sin códigos.</span></div>`;
+        ? `<div id="codes-list-${codesId}" class="codes-list" style="display: none;">${codesArray.map(c => `<div class="code-item">${c}</div>`).join('')}</div>`
+        : `<div id="codes-list-${codesId}" class="codes-list" style="display: none;"><span>Sin códigos asignados.</span></div>`;
 
       const pdfButton = d.path ? `<a class="btn btn--primary btn-small" href="uploads/${d.path}" target="_blank">Ver PDF</a>` : '';
       const adminButtons = `<button class="btn btn--secondary btn-small" onclick="dispatchEdit(${d.id})">Editar</button>
                             <button class="btn btn--warning btn-small" onclick="eliminarDoc(${d.id})">Eliminar</button>`;
-
-      // Se pasa el ID único y correcto del documento a la función del botón.
+      
       return `
           <div class="doc-item">
               <div><strong>${d.name}</strong> (${fecha})</div>
@@ -42,7 +41,7 @@ function renderDocs(docs) {
 export async function cargarConsulta() {
   try {
     const docsRaw = await listarDocumentos();
-    currentDocs = Array.isArray(docsRaw) ? docsRaw : (docsRaw?.documentos || []);
+    currentDocs = Array.isArray(docsRaw) ? docsRaw : [];
     renderDocs(currentDocs);
   } catch (e) {
     showToast('Error al cargar la lista de documentos', 'error');
@@ -80,10 +79,6 @@ window.doConsultFilter = () => {
     (d.path || '').toLowerCase().includes(term)
   );
   renderDocs(filteredDocs);
-};
-
-window.downloadCsv = () => {
-  window.open(`https://gestor-doc-backend-production.up.railway.app/api/documentos?format=csv`, '_blank');
 };
 
 window.eliminarDoc = id => {

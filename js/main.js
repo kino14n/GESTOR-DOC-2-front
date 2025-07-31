@@ -1,31 +1,25 @@
 // js/main.js
 
-import { buscarOptimaAvanzada, listarDocumentos } from './api.js';
+import { listarDocumentos } from './api.js';
 import { cargarConsulta } from './consulta.js';
 import { initUploadForm } from './upload.js';
 import { requireAuth } from './auth.js';
 import { initAutocompleteCodigo } from './autocomplete.js';
 import { showToast } from './toasts.js';
 
-/**
- * Renderiza el HTML para los resultados de la búsqueda por código.
- * @param {Array} docs - Lista de documentos a mostrar.
- * @returns {string} El HTML generado.
- */
 function renderBuscarCodigoResults(docs) {
     return docs.map(doc => {
+        if (!doc || !doc.id) { return ''; }
         const fecha = doc.date ? new Date(doc.date).toLocaleDateString('es-ES') : '';
         const codesArray = (doc.codigos_extraidos || '').split(',').map(s => s.trim()).filter(Boolean);
-        // CORRECCIÓN CLAVE: Se usa el ID único del documento (doc.id).
-        const codesId = doc.id; 
+        const codesId = doc.id;
         
         const codesListHtml = codesArray.length
-            ? `<div id="codes-list-${codesId}" class="codes-list hidden">${codesArray.map(code => `<div class="code-item">${code}</div>`).join('')}</div>`
-            : `<div id="codes-list-${codesId}" class="codes-list hidden"><span>Sin códigos.</span></div>`;
+            ? `<div id="codes-list-${codesId}" class="codes-list" style="display: none;">${codesArray.map(code => `<div class="code-item">${code}</div>`).join('')}</div>`
+            : `<div id="codes-list-${codesId}" class="codes-list" style="display: none;"><span>Sin códigos asignados.</span></div>`;
         
         const pdfButton = doc.path ? `<a class="btn btn--primary btn-small" href="uploads/${doc.path}" target="_blank">Ver PDF</a>` : '<span>Sin PDF</span>';
 
-        // Se pasa el ID único y correcto del documento a la función del botón.
         return `
             <div class="doc-item">
                 <div><strong>${doc.name}</strong> (${fecha})</div>
@@ -41,15 +35,13 @@ function renderBuscarCodigoResults(docs) {
 
 // --- LÓGICA PRINCIPAL ---
 
-/**
- * Función global para mostrar/ocultar la lista de códigos.
- * @param {string} codesId - El ID único de la lista de códigos.
- */
 window.toggleCodeVisibility = (codesId) => {
     if (!codesId) return;
     const codesList = document.getElementById(`codes-list-${codesId}`);
     if (codesList) {
-        codesList.classList.toggle('hidden');
+        // Solución final: se manipula el estilo directamente para forzar la visibilidad.
+        const isVisible = codesList.style.display === 'block';
+        codesList.style.display = isVisible ? 'none' : 'block';
     }
 };
 
@@ -72,26 +64,19 @@ document.addEventListener('DOMContentLoaded', () => {
   requireAuth(() => {
     document.getElementById('loginOverlay')?.classList.add('hidden');
     main?.classList.remove('hidden');
-    window.showTab('tab-search');
+    window.showTab('tab-list');
     cargarConsulta();
 
-    // Lógica de Búsqueda Óptima (ya funcional)
-    const optimaButton = document.getElementById('doOptimaSearchButton');
-    if(optimaButton) {
-        // ... (Aquí iría la lógica completa si es necesario restaurarla)
-    }
-
-    // Lógica de Búsqueda por Código
     const codeInput = document.getElementById('codeInput');
     const codeSearchButton = document.getElementById('doCodeSearchButton');
     const codeResults = document.getElementById('results-code');
 
     codeSearchButton.addEventListener('click', async () => {
       const c = codeInput.value.trim();
-      if (!c) return showToast('Ingrese un código', 'warning');
+      if (!c) return showToast('Ingrese un código para buscar', 'warning');
       try {
         const allDocsRaw = await listarDocumentos();
-        const allDocs = Array.isArray(allDocsRaw) ? allDocsRaw : (allDocsRaw?.documentos || []);
+        const allDocs = Array.isArray(allDocsRaw) ? allDocsRaw : [];
         const searchCode = c.toUpperCase();
         const matchedDocs = allDocs.filter(doc => {
           const codes = (doc.codigos_extraidos || '').split(',').map(str => str.trim().toUpperCase());
@@ -101,7 +86,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (matchedDocs.length) {
           codeResults.innerHTML = renderBuscarCodigoResults(matchedDocs);
         } else {
-          codeResults.innerHTML = 'No encontrado.';
+          codeResults.innerHTML = '<p>No se encontraron documentos con ese código.</p>';
         }
       } catch (err) {
         showToast('Error en la búsqueda por código', 'error');
