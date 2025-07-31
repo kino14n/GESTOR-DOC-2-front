@@ -1,3 +1,5 @@
+// js/main.js
+
 import { buscarOptimaAvanzada, buscarPorCodigo, sugerirCodigos, listarDocumentos } from './api.js';
 import { cargarConsulta } from './consulta.js';
 import { initUploadForm } from './upload.js';
@@ -51,7 +53,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const codigos = d.codigos_cubre;
                 // Resaltar el enlace de PDF como un botón
                 const pdf = documento.path
-                  ? `<a class="btn btn--primary" href="${documento.path}" target="_blank">Ver PDF</a>`
+                  ? `<a class="btn btn--primary" href="uploads/${documento.path}" target="_blank">Ver PDF</a>`
                   : 'Sin PDF';
                 return `
                   <div class="doc-item">
@@ -151,7 +153,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         if (matchedDocs.length) {
           codeResults.innerHTML = renderBuscarCodigoResults(matchedDocs);
-          bindCodeButtons(codeResults);
+          bindCodeButtons(codeResults); // Llama a bindCodeButtons aquí
         } else {
           codeResults.innerHTML = 'No encontrado.';
         }
@@ -161,7 +163,8 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
 
-    // Delegación de eventos para mostrar/ocultar lista de códigos
+    // Se remueve este listener duplicado. La lógica de `bindCodeButtons` ahora lo maneja.
+    /*
     document.addEventListener('click', e => {
       const btn = e.target.closest('.btn-ver-codigos');
       if (btn && btn.dataset.codesId) {
@@ -172,6 +175,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       }
     });
+    */
   });
 
   // Inicializa formulario de subida y autocompletado
@@ -190,14 +194,27 @@ function bindCodeButtons(container) {
   const buttons = container.querySelectorAll('.btn-ver-codigos');
   buttons.forEach(btn => {
     const codesId = btn.dataset.codesId;
-    btn.addEventListener('click', e => {
+    // Remueve cualquier listener previo para evitar duplicados si se llama varias veces
+    const oldHandler = btn.__codeToggleHandler;
+    if (oldHandler) {
+      btn.removeEventListener('click', oldHandler);
+    }
+    const newHandler = e => {
       e.preventDefault();
       const el = document.getElementById('codes-list-' + codesId);
       if (el) {
-        el.classList.remove('hidden');
-        el.style.display = el.style.display === 'block' ? 'none' : 'block';
+        // Alternar visibilidad: si está oculto (display:none o hidden), mostrarlo. Si está visible (display:block), ocultarlo.
+        if (el.classList.contains('hidden') || el.style.display === 'none') {
+            el.classList.remove('hidden');
+            el.style.display = 'block';
+        } else {
+            el.classList.add('hidden');
+            el.style.display = 'none';
+        }
       }
-    });
+    };
+    btn.addEventListener('click', newHandler);
+    btn.__codeToggleHandler = newHandler; // Guarda la referencia al handler para poder removerlo
   });
 }
 
@@ -267,7 +284,7 @@ function renderBuscarCodigoResults(docs) {
         : `<div id="codes-list-${codesId}" class="codes-list hidden"><span>Sin códigos.</span></div>`;
       // Resaltar Ver PDF como botón
       const pdfButton = doc.path
-        ? `<a class="btn btn--primary" href="${doc.path}" target="_blank">Ver PDF</a>`
+        ? `<a class="btn btn--primary" href="uploads/${doc.path}" target="_blank">Ver PDF</a>`
         : 'Sin PDF';
       return `
         <div class="doc-item">
