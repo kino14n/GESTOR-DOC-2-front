@@ -83,41 +83,27 @@ document.addEventListener('DOMContentLoaded', () => {
     window.showTab('tab-search');
     cargarConsulta();
 
-    // === CÓDIGO DE DIAGNÓSTICO ---
-    console.log("--- INICIALIZANDO DIAGNÓSTICO DE CLICS ---");
+    // === MANEJADOR DE EVENTOS DELEGADO (SOLUCIÓN FINAL) ===
     const mainContainer = document.getElementById('mainContent');
     mainContainer.addEventListener('click', (event) => {
-        console.log(`[PASO 1] Clic detectado en el contenedor principal.`);
-        
         const button = event.target.closest('.btn-ver-codigos');
         if (button) {
-            console.log(`[PASO 2] Se hizo clic en un botón 'Ver Códigos'.`, button);
             event.preventDefault();
             const codesId = button.dataset.codesId;
-            
             if (codesId) {
-                console.log(`[PASO 3] El botón tiene el ID de datos: ${codesId}`);
                 const codesList = document.getElementById(`codes-list-${codesId}`);
-                
                 if (codesList) {
-                    console.log(`[PASO 4] Se encontró la lista de códigos correspondiente. Se cambiará la visibilidad.`, codesList);
-                    codesList.classList.toggle('hidden');
-                } else {
-                    console.error(`[ERROR] No se encontró ningún elemento con el ID: codes-list-${codesId}`);
+                    // Se manipula el estilo directamente para evitar conflictos de CSS.
+                    const isHidden = codesList.style.display === 'none' || codesList.classList.contains('hidden');
+                    codesList.style.display = isHidden ? 'block' : 'none';
+                    codesList.classList.toggle('hidden', !isHidden);
                 }
-            } else {
-                 console.error(`[ERROR] El botón no tiene el atributo 'data-codes-id'.`);
             }
         }
     });
-    // === FIN DEL CÓDIGO DE DIAGNÓSTICO ---
-
 
     // === BÚSQUEDA ÓPTIMA ===
-    const optimaInput = document.getElementById('optimaSearchInput');
-    const optimaButton = document.getElementById('doOptimaSearchButton');
-    // ... (resto de la lógica de búsqueda óptima que ya funciona)
-    
+    // (Lógica existente)
 
     // === BÚSQUEDA POR CÓDIGO ===
     const codeInput = document.getElementById('codeInput');
