@@ -162,9 +162,6 @@ document.addEventListener('DOMContentLoaded', () => {
         showToast('Error búsqueda por código', 'error');
       }
     });
-
-        // No usamos delegación global aquí porque cada pestaña maneja sus propios
-        // botones con bindCodeButtons.
   });
 
   // Inicializa formulario de subida y autocompletado
@@ -192,14 +189,12 @@ export function bindCodeButtons(container) {
       e.preventDefault();
       const el = document.getElementById('codes-list-' + codesId);
       if (el) {
-        // Alternar visibilidad: si está oculto (display:none o hidden), mostrarlo. Si está visible (display:block), ocultarlo.
-        if (el.classList.contains('hidden') || el.style.display === 'none') {
-            el.classList.remove('hidden');
-            el.style.display = 'block';
-        } else {
-            el.classList.add('hidden');
-            el.style.display = 'none';
-        }
+        // Alternar la clase 'hidden' para mostrar/ocultar el elemento
+        el.classList.toggle('hidden');
+        // Si necesitas asegurar que 'display: block' se aplique cuando no está hidden
+        // y 'display: none' cuando sí, puedes añadir esto, pero 'toggle' de 'hidden'
+        // usualmente es suficiente con Tailwind.
+        // el.style.display = el.classList.contains('hidden') ? 'none' : 'block';
       }
     };
     btn.addEventListener('click', newHandler);
