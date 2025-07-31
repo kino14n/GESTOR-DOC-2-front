@@ -3,12 +3,13 @@
 import { listarDocumentos, eliminarDocumento } from './api.js';
 import { showModalConfirm } from './modals.js';
 import { showToast } from './toasts.js';
-import { bindCodeButtons } from './main.js'; // Se importa la función para activar botones.
+// La importación de 'bindCodeButtons' se ha eliminado para corregir el error.
 
 let currentDocs = [];
 
 /**
  * Renderiza la lista de documentos en la pestaña "Consultar".
+ * @param {Array} docs - El array de documentos a mostrar.
  */
 function renderDocs(docs) {
   const container = document.getElementById('results-list');
@@ -50,8 +51,7 @@ export async function cargarConsulta() {
     const docsRaw = await listarDocumentos();
     currentDocs = Array.isArray(docsRaw) ? docsRaw : (docsRaw?.documentos || []);
     renderDocs(currentDocs);
-    // ¡LLAMADA CLAVE! Se activan los botones de la lista inicial.
-    bindCodeButtons(document.getElementById('results-list'));
+    // Ya no se llama a bindCodeButtons, el listener en main.js se encarga de todo.
   } catch (e) {
     console.error('Error al cargar documentos:', e);
     showToast('Error al cargar la lista de documentos', 'error');
@@ -79,8 +79,6 @@ window.clearConsultFilter = () => {
   const input = document.getElementById('consultFilterInput');
   if (input) input.value = '';
   renderDocs(currentDocs);
-  // ¡LLAMADA CLAVE! Se reactivan los botones después de limpiar el filtro.
-  bindCodeButtons(document.getElementById('results-list'));
 };
 
 window.doConsultFilter = () => {
@@ -91,8 +89,6 @@ window.doConsultFilter = () => {
     (d.path || '').toLowerCase().includes(term)
   );
   renderDocs(filteredDocs);
-  // ¡LLAMADA CLAVE! Se reactivan los botones después de filtrar.
-  bindCodeButtons(document.getElementById('results-list'));
 };
 
 window.downloadCsv = () => {
