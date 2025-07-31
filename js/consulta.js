@@ -34,12 +34,14 @@ function renderDocs(docs) {
         .split(',')
         .map(s => s.trim())
         .filter(Boolean);
-      // Construir lista de códigos como columna (una línea por código)
+      // Generar un id para los códigos (se usa para asociar el botón y la lista)
+      const codesId = d.id || Math.random().toString(36).slice(2);
+      // Construir la lista de códigos como columna (una línea por código)
       const codesListHtml = codesArray.length
-        ? `<div class="codes-list">${codesArray
+        ? `<div id="codes-list-${codesId}" class="codes-list hidden">${codesArray
             .map(c => `<div class="code-item">${c}</div>`)
             .join('')}</div>`
-        : `<div class="codes-list"><span>Sin códigos.</span></div>`;
+        : `<div id="codes-list-${codesId}" class="codes-list hidden"><span>Sin códigos.</span></div>`;
       // Resaltar Ver PDF como botón
       const pdfButton = d.path
         ? `<a class="btn btn--primary" href="${d.path}" target="_blank">Ver PDF</a>`
@@ -49,6 +51,7 @@ function renderDocs(docs) {
           <p><strong>${d.name}</strong></p>
           <p>${fecha}</p>
           <p>${pdfButton}</p>
+          <button class="btn-ver-codigos" data-codes-id="${codesId}">Ver Códigos</button>
           ${codesListHtml}
           <div class="actions">
             <button class="btn btn--secondary" onclick="dispatchEdit(${d.id})">Editar</button>

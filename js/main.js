@@ -97,12 +97,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 .split(',')
                 .map(s => s.trim())
                 .filter(Boolean);
-              // Construir la lista de códigos como columna (una fila por código)
+              // Generar id para asociar el botón y la lista
+              const codesId = d.id || Math.random().toString(36).slice(2);
+              // Construir la lista de códigos como columna oculta
               const codesListHtml = codesArr.length
-                ? `<div class="codes-list">${codesArr
+                ? `<div id="codes-list-${codesId}" class="codes-list hidden">${codesArr
                     .map(code => `<div class="code-item">${code}</div>`)
                     .join('')}</div>`
-                : `<div class="codes-list"><span>Sin códigos.</span></div>`;
+                : `<div id="codes-list-${codesId}" class="codes-list hidden"><span>Sin códigos.</span></div>`;
               // Resaltar Ver PDF como botón
               const pdfButton = d.path
                 ? `<a class="btn btn--primary" href="${d.path}" target="_blank">Ver PDF</a>`
@@ -112,11 +114,14 @@ document.addEventListener('DOMContentLoaded', () => {
                   <p><strong>${d.name}</strong></p>
                   <p>${fecha}</p>
                   <p>${pdfButton}</p>
+                  <button class="btn-ver-codigos" data-codes-id="${codesId}">Ver Códigos</button>
                   ${codesListHtml}
                 </div>
               `;
             })
             .join('');
+          // Atar escuchadores a los botones recién renderizados
+          bindCodeButtons(codeResults);
         } else {
           codeResults.innerHTML = 'No encontrado.';
         }
