@@ -55,9 +55,10 @@ document.addEventListener('DOMContentLoaded', () => {
                   ? `<a class="btn btn--primary" href="uploads/${documento.path}" target="_blank">Ver PDF</a>`
                   : 'Sin PDF';
                 return `
-                  <div class="doc-item" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; padding: 0.75rem; border: 1px solid #f3f3f3; border-radius: 0.5rem;">
+                  <div class="doc-item" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem; padding: 0.75rem; border: 1px solid #f3f3f3; border-radius: 0.5rem;">
                     <div style="flex: 1;">
-                      <p><strong>Documento:</strong> ${documento.name}</p>
+                      <p><strong>${documento.name}</strong></p>
+                      ${documento.path ? `<p style="font-size:0.875rem; color:#555;">Archivo PDF: ${documento.path}</p>` : ''}
                       <p><strong>Códigos cubiertos:</strong> ${codigos.join(', ')}</p>
                     </div>
                     <div style="margin-left: 1rem;">${pdfLink}</div>
