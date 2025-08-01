@@ -2,6 +2,7 @@ import { listarDocumentos, eliminarDocumento } from './api.js';
 import { showModalConfirm } from './modals.js';
 import { showToast } from './toasts.js';
 import { bindCodeButtons } from './main.js';
+import { config } from './config.js'; // Importar la configuración
 
 // Contiene la lista actual de documentos para filtros o recargas
 let currentDocs = [];
@@ -42,32 +43,26 @@ function renderDocs(docs) {
       const codesId = d.id || Math.random().toString(36).slice(2);
       // Construir la lista de códigos como columna (una línea por código)
       const codesListHtml = codesArray.length
-        ? `<div id="codes-list-${codesId}" class="codes-list" style="display: none;">${codesArray
+        ? `<div id="codes-list-${codesId}" class="codes-list hidden">${codesArray
             .map(c => `<div class="code-item">${c}</div>`)
             .join('')}</div>`
-        : `<div id="codes-list-${codesId}" class="codes-list" style="display: none;"><span>Sin códigos.</span></div>`;
-      // Mostrar nombre del archivo PDF y resaltar el enlace "Ver PDF" como botón
-      const pdfInfo = d.path
-        ? `<div class="pdf-info"><span>Archivo PDF: ${d.path}</span></div>`
-        : '';
+        : `<div id="codes-list-${codesId}" class="codes-list hidden"><span>Sin códigos.</span></div>`;
+      // Resaltar Ver PDF como botón
       const pdfButton = d.path
         ? `<a class="btn btn--primary" href="uploads/${d.path}" target="_blank">Ver PDF</a>`
         : 'Sin PDF';
       return `
-        <div class="doc-item" style="display: flex; justify-content: space-between; align-items: flex-start;">
-          <div class="doc-info" style="flex: 1;">
-            <p><strong>${d.name}</strong></p>
-            <p>${fecha}</p>
-            ${pdfInfo}
-            <p>${pdfButton}</p>
-          </div>
-          <div class="actions" style="display: flex; flex-direction: column; align-items: flex-end; gap: 0.25rem;">
+        <div class="doc-item">
+          <p><strong>${d.name}</strong></p>
+          <p>${fecha}</p>
+          <p>${pdfButton}</p>
+          <button class="btn-ver-codigos" data-codes-id="${codesId}">Ver Códigos</button>
+          ${codesListHtml}
+          <div class="actions">
             <button class="btn btn--secondary" onclick="dispatchEdit(${d.id})">Editar</button>
             <button class="btn btn--warning" onclick="eliminarDoc(${d.id})">Eliminar</button>
-            <button class="btn-ver-codigos" data-codes-id="${codesId}">Ver Códigos</button>
           </div>
         </div>
-        ${codesListHtml}
       `;
     })
     .join('');
@@ -77,7 +72,7 @@ function renderDocs(docs) {
 // Editar documento y cambiar a pestaña “Subir”
 window.dispatchEdit = async id => {
   const res = await fetch(
-    `https://gestor-doc-backend-production.up.railway.app/api/documentos/${id}`
+    `${config.API_BASE}/${id}` // Usar config
   );
   const docData = await res.json();
   if (docData && !docData.error) {

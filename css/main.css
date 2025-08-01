@@ -140,15 +140,11 @@ function descargarPDFs() {
 function buscarPorCodigo() {
   alert('🔎 Buscar por código (función pendiente)...');
 }
-
-/* --- CAMBIO REALIZADO AQUÍ --- */
 /* Resultados de búsqueda óptima */
 #results-optima-search p {
   color: #374151;    /* Gris oscuro elegante */
   font-weight: bold;
 }
-/* --- FIN DEL CAMBIO --- */
-
 .btn {
   padding: 0.25rem 0.75rem;
   border-radius: 0.375rem;

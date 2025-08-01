@@ -1,6 +1,7 @@
 // GESTOR-DOC/frontend/js/upload.js
 
 import { showToast } from './toasts.js';
+import { config } from './config.js'; // Importar la configuración
 
 // Carga datos para editar un documento, presentando los códigos en columna
 export function loadDocumentForEdit(docData) {
@@ -54,8 +55,8 @@ export function initUploadForm() {
 
     const isEdit = docId !== '';
     const endpoint = isEdit
-      ? `https://gestor-doc-backend-production.up.railway.app/api/documentos/${docId}`
-      : `https://gestor-doc-backend-production.up.railway.app/api/documentos/upload`;
+      ? `${config.API_BASE}/${docId}` // Usar config
+      : `${config.API_BASE}/upload`; // Usar config
     const method = isEdit ? 'PUT' : 'POST';
 
     try {
