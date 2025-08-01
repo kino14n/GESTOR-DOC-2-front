@@ -2,7 +2,7 @@ import { listarDocumentos, eliminarDocumento } from './api.js';
 import { showModalConfirm } from './modals.js';
 import { showToast } from './toasts.js';
 import { bindCodeButtons } from './main.js';
-import { config } from './config.js'; // Importar la configuración
+import { config } from './config.js';
 
 // Contiene la lista actual de documentos para filtros o recargas
 let currentDocs = [];
@@ -24,55 +24,53 @@ export async function cargarConsulta() {
 }
 
 /**
- * Renderiza documentos mostrando el enlace al PDF como un botón y la lista
- * de códigos asociada en una columna. Ya no se utiliza un botón "Ver Códigos",
- * por lo que los códigos se muestran directamente. Cada fila incluye botones
- * para editar o eliminar según corresponda.
+ * Renderiza documentos con la información a la izquierda y las acciones a la derecha.
  */
 function renderDocs(docs) {
   const container = document.getElementById('results-list');
   if (!container) return;
   container.innerHTML = docs
     .map(d => {
-      const fecha = d.date ? new Date(d.date).toLocaleDateString('es-ES') : '';
-      const codesArray = (d.codigos_extraidos || '')
-        .split(',')
-        .map(s => s.trim())
-        .filter(Boolean);
-      // Generar un id para los códigos (se usa para asociar el botón y la lista)
-      const codesId = d.id || Math.random().toString(36).slice(2);
-      // Construir la lista de códigos como columna (una línea por código)
-      const codesListHtml = codesArray.length
-        ? `<div id="codes-list-${codesId}" class="codes-list hidden">${codesArray
-            .map(c => `<div class="code-item">${c}</div>`)
-            .join('')}</div>`
-        : `<div id="codes-list-${codesId}" class="codes-list hidden"><span>Sin códigos.</span></div>`;
-      // Resaltar Ver PDF como botón
-      const pdfButton = d.path
-        ? `<a class="btn btn--primary" href="uploads/${d.path}" target="_blank">Ver PDF</a>`
-        : 'Sin PDF';
+      // Formatea la fecha o muestra un texto por defecto
+      const fecha = d.date ? new Date(d.date).toISOString().split('T')[0] : 'Sin fecha';
+      const codesArray = (d.codigos_extraidos || '').split(',').map(s => s.trim()).filter(Boolean);
+      const codesId = `codes-list-${d.id || Math.random().toString(36).slice(2)}`;
+
+      // Genera la lista de códigos (oculta inicialmente)
+      const codesListHtml = `<div id="${codesId}" class="codes-list hidden">${
+        codesArray.length > 0
+          ? codesArray.map(c => `<div class="code-item">${c}</div>`).join('')
+          : '<span>Sin códigos.</span>'
+      }</div>`;
+
+      // Genera el enlace para ver el PDF
+      const pdfLink = d.path ? `<a href="uploads/${d.path}" target="_blank" class="text-blue-600 hover:underline">Ver PDF</a>` : 'Sin PDF';
+
       return `
         <div class="doc-item">
-          <p><strong>${d.name}</strong></p>
-          <p>${fecha}</p>
-          <p>${pdfButton}</p>
-          <button class="btn-ver-codigos" data-codes-id="${codesId}">Ver Códigos</button>
-          ${codesListHtml}
-          <div class="actions">
-            <button class="btn btn--secondary" onclick="dispatchEdit(${d.id})">Editar</button>
-            <button class="btn btn--warning" onclick="eliminarDoc(${d.id})">Eliminar</button>
+          <div class="doc-item-info">
+            <p class="font-bold text-lg">${d.name}</p>
+            <p class="text-sm text-gray-600 mt-1">${fecha}</p>
+            <p class="text-xs text-gray-500 mt-1">Archivo PDF: ${d.path || 'No disponible'}</p>
+            <p class="text-sm mt-2">${pdfLink}</p>
           </div>
+          <div class="doc-item-actions">
+            <button class="btn btn--secondary btn--full-width" onclick="dispatchEdit(${d.id})">Editar</button>
+            <button class="btn btn--warning btn--full-width" onclick="eliminarDoc(${d.id})">Eliminar</button>
+            <button class="btn btn--secondary btn--full-width btn-ver-codigos" data-codes-id="${codesId}">Ver Códigos</button>
+          </div>
+          ${codesListHtml}
         </div>
       `;
     })
     .join('');
-
 }
+
 
 // Editar documento y cambiar a pestaña “Subir”
 window.dispatchEdit = async id => {
   const res = await fetch(
-    `${config.API_BASE}/${id}` // Usar config
+    `${config.API_BASE}/${id}`
   );
   const docData = await res.json();
   if (docData && !docData.error) {

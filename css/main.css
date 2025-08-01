@@ -145,13 +145,58 @@ function buscarPorCodigo() {
   color: #374151;    /* Gris oscuro elegante */
   font-weight: bold;
 }
+
+/* --- ESTILOS PARA LA NUEVA VISTA DE CONSULTA --- */
+.doc-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start; /* Alinea los items al tope */
+  padding: 1.25rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  flex-wrap: wrap; /* Permite que la lista de códigos se vaya abajo */
+  gap: 1.5rem; /* Espacio entre info y acciones */
+}
+
+.doc-item-info {
+  flex: 1; /* Ocupa el espacio disponible */
+  min-width: 300px; /* Ancho mínimo para que no se comprima mucho */
+}
+
+.doc-item-actions {
+  display: flex;
+  flex-direction: column; /* Apila los botones verticalmente */
+  gap: 0.5rem; /* Espacio entre botones */
+  width: 160px; /* Ancho fijo para la columna de botones */
+}
+
+.codes-list {
+  flex-basis: 100%; /* Ocupa todo el ancho cuando es visible */
+  margin-top: 1rem;
+  padding: 0.75rem;
+  background-color: #f9fafb;
+  border-radius: 0.375rem;
+  border: 1px solid #e5e7eb;
+}
+.code-item {
+  padding: 0.25rem 0;
+}
+/* --- FIN DE ESTILOS DE CONSULTA --- */
+
+
 .btn {
-  padding: 0.25rem 0.75rem;
+  padding: 0.5rem 1rem;
   border-radius: 0.375rem;
   font-size: 0.875rem;
   cursor: pointer;
   border: none;
   transition: background-color 0.3s ease;
+  text-align: center;
+  font-weight: 500;
+}
+
+.btn--full-width {
+    width: 100%;
 }
 
 .btn-small {
