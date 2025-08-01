@@ -46,7 +46,10 @@ function renderDocs(docs) {
             .map(c => `<div class="code-item">${c}</div>`)
             .join('')}</div>`
         : `<div id="codes-list-${codesId}" class="codes-list" style="display: none;"><span>Sin códigos.</span></div>`;
-      // Resaltar Ver PDF como botón
+      // Mostrar nombre del archivo PDF y resaltar el enlace "Ver PDF" como botón
+      const pdfInfo = d.path
+        ? `<div class="pdf-info"><span>Archivo PDF: ${d.path}</span></div>`
+        : '';
       const pdfButton = d.path
         ? `<a class="btn btn--primary" href="uploads/${d.path}" target="_blank">Ver PDF</a>`
         : 'Sin PDF';
@@ -54,6 +57,7 @@ function renderDocs(docs) {
         <div class="doc-item">
           <p><strong>${d.name}</strong></p>
           <p>${fecha}</p>
+          ${pdfInfo}
           <p>${pdfButton}</p>
           <button class="btn-ver-codigos" data-codes-id="${codesId}">Ver Códigos</button>
           ${codesListHtml}
