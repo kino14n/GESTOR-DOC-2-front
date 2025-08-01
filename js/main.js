@@ -185,8 +185,8 @@ export function bindCodeButtons(container) {
       e.preventDefault();
       const el = document.getElementById('codes-list-' + codesId);
       if (el) {
-        el.classList.remove('hidden');
-        el.style.display = el.style.display === 'block' ? 'none' : 'block';
+        // Alternar entre oculto y visible ajustando el estilo display.
+        el.style.display = el.style.display === 'none' || !el.style.display ? 'block' : 'none';
       }
     });
   });
@@ -256,11 +256,13 @@ function renderBuscarCodigoResults(docs) {
       // Generar id para asociar el botón y la lista; si doc.id no existe, usar un hash aleatorio
       const codesId = doc.id || Math.random().toString(36).slice(2);
       // Construir la lista de códigos como columna oculta
+      // Usar style="display: none;" en lugar de la clase .hidden para evitar que
+      // reglas CSS globales con !important impidan mostrar la lista
       const codesListHtml = codesArr.length
-        ? `<div id="codes-list-${codesId}" class="codes-list hidden">${codesArr
+        ? `<div id="codes-list-${codesId}" class="codes-list" style="display: none;">${codesArr
             .map(code => `<div class="code-item">${code}</div>`)
             .join('')}</div>`
-        : `<div id="codes-list-${codesId}" class="codes-list hidden"><span>Sin códigos.</span></div>`;
+        : `<div id="codes-list-${codesId}" class="codes-list" style="display: none;"><span>Sin códigos.</span></div>`;
       // Resaltar Ver PDF como botón
       const pdfButton = doc.path
         ? `<a class="btn btn--primary" href="uploads/${doc.path}" target="_blank">Ver PDF</a>`
