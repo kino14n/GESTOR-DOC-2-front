@@ -44,24 +44,20 @@ document.addEventListener('DOMContentLoaded', () => {
       try {
         const resultado = await buscarOptimaAvanzada(txt);
         if (resultado.documentos?.length) {
-          // Construir resultados con un estilo similar a las otras pestañas: tarjeta flex con
-          // el documento a la izquierda, los códigos en el centro y el enlace al PDF a la derecha.
           optimaResults.innerHTML =
             resultado.documentos
               .map(d => {
                 const documento = d.documento;
                 const codigos = d.codigos_cubre;
-                const pdfLink = documento.path
+                // Resaltar el enlace de PDF como un botón
+                const pdf = documento.path
                   ? `<a class="btn btn--primary" href="uploads/${documento.path}" target="_blank">Ver PDF</a>`
                   : 'Sin PDF';
                 return `
-                  <div class="doc-item" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem; padding: 0.75rem; border: 1px solid #f3f3f3; border-radius: 0.5rem;">
-                    <div style="flex: 1;">
-                      <p><strong>${documento.name}</strong></p>
-                      ${documento.path ? `<p style="font-size:0.875rem; color:#555;">Archivo PDF: ${documento.path}</p>` : ''}
-                      <p><strong>Códigos cubiertos:</strong> ${codigos.join(', ')}</p>
-                    </div>
-                    <div style="margin-left: 1rem;">${pdfLink}</div>
+                  <div class="doc-item">
+                    <p><strong>Documento:</strong> ${documento.name}</p>
+                    <p><strong>Códigos cubiertos:</strong> ${codigos.join(', ')}</p>
+                    <p><strong>PDF:</strong> ${pdf}</p>
                   </div>
                 `;
               })
@@ -88,13 +84,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const codeResults = document.getElementById('results-code');
 
     /**
-     * Extrae un array de códigos de un documento. Esta función replica la lógica
-     * de renderBuscarCodigoResults para detectar los posibles campos de
-     * códigos y normalizar el valor a un array de strings. Se exporta aquí
-     * porque se utiliza tanto para filtrar resultados como para mostrarlos.
-     *
-     * @param {any} doc
-     * @returns {string[]} array de códigos limpios
+     * Extrae un array de códigos de un documento.
      */
     function extractCodes(doc) {
       const possibleFields = [
@@ -129,13 +119,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const c = codeInput.value.trim();
       if (!c) return showToast('Ingrese código', 'warning');
       try {
-        // En lugar de depender de que el backend devuelva los códigos en la respuesta
-        // del endpoint /search, obtenemos la lista completa de documentos y filtramos
-        // los que contengan el código buscado. Esto garantiza que siempre tendremos
-        // acceso al campo codigos_extraidos (o equivalente) para mostrar la lista.
         const allDocsRaw = await listarDocumentos();
-        // Determinar dónde está el array de documentos (puede venir como array plano
-        // o dentro de propiedades tipo "documentos" o "docs")
         let allDocs;
         if (Array.isArray(allDocsRaw)) {
           allDocs = allDocsRaw;
@@ -146,9 +130,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
           allDocs = [];
         }
-        // Normalizar el código buscado para comparaciones sin distinguir mayúsculas
         const searchCode = c.toUpperCase();
-        // Filtrar documentos cuyo listado de códigos contenga el código buscado
         const matchedDocs = allDocs.filter(doc => {
           const codes = extractCodes(doc).map(str => str.toUpperCase());
           return codes.some(code => code === searchCode || code.includes(searchCode));
@@ -164,9 +146,6 @@ document.addEventListener('DOMContentLoaded', () => {
         showToast('Error búsqueda por código', 'error');
       }
     });
-
-        // No usamos delegación global aquí porque cada pestaña maneja sus propios
-        // botones con bindCodeButtons.
   });
 
   // Inicializa formulario de subida y autocompletado
@@ -175,61 +154,38 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 /**
- * Adjunta listeners individuales a todos los botones "Ver Códigos" dentro de un contenedor.
- * Esta función se invoca después de renderizar los resultados de búsqueda para asegurar
- * que cada botón togglee correctamente su lista asociada.
+ * Adjunta listeners a los botones "Ver Códigos".
+ * Esta función está CORREGIDA.
  * @param {HTMLElement} container - El contenedor que contiene los resultados y los botones.
  */
 export function bindCodeButtons(container) {
   if (!container) return;
   const buttons = container.querySelectorAll('.btn-ver-codigos');
   buttons.forEach(btn => {
+    // Obtiene el ID completo del elemento a mostrar desde el atributo data
     const codesId = btn.dataset.codesId;
+    if (!codesId) return; // Si no hay ID, no hace nada
+
     btn.addEventListener('click', e => {
       e.preventDefault();
-      const el = document.getElementById('codes-list-' + codesId);
+      // Busca el elemento directamente por su ID
+      const el = document.getElementById(codesId);
       if (el) {
-        // Alternar entre oculto y visible ajustando el estilo display.
-        el.style.display = el.style.display === 'none' || !el.style.display ? 'block' : 'none';
+        // Alterna la visibilidad de la lista de códigos
+        el.classList.toggle('hidden');
       }
     });
   });
 }
 
-// Exponer la función bindCodeButtons en el ámbito global para que otros módulos (como
-// consulta.js) puedan llamarla sin crear una dependencia circular entre módulos.
-// Esto permite que la pestaña de consulta adjunte eventos a sus botones "Ver Códigos".
+// Exponer la función bindCodeButtons en el ámbito global para que otros módulos puedan llamarla
 window.bindCodeButtons = bindCodeButtons;
-
-// Fallback: compatibilidad con versiones anteriores que usan onclick="window.toggleCodeVisibility(id)".
-// Permite mostrar u ocultar la lista de códigos cuando se llama a toggleCodeVisibility desde el HTML.
-window.toggleCodeVisibility = function(id) {
-  const el = document.getElementById('codes-list-' + id);
-  if (el) {
-    el.style.display = (el.style.display === 'none' || !el.style.display) ? 'block' : 'none';
-  }
-};
 
 /**
  * Renderiza un array de documentos devueltos por la búsqueda por código.
- * Cada documento incluye un botón "Ver Códigos" y una lista de códigos
- * en columna dentro de un contenedor oculto. El enlace al PDF se muestra
- * como un botón destacado.
- * @param {Array} docs - Lista de objetos de documento.
- * @returns {string} HTML para insertar en el contenedor de resultados.
  */
 function renderBuscarCodigoResults(docs) {
-  /**
-   * Obtiene un array de códigos a partir del objeto documento.
-   * Intenta detectar el nombre del campo y el tipo de dato para ser
-   * robusto ante distintas implementaciones del backend. Se aceptan
-   * strings con diferentes separadores (coma, punto y coma, espacio) o
-   * arrays de cadenas.
-   * @param {any} doc
-   * @returns {string[]} array de códigos limpios
-   */
   function getCodesArray(doc) {
-    // Posibles nombres de propiedad donde el backend envía los códigos
     const possibleFields = [
       'codigos_extraidos',
       'codigos',
@@ -238,7 +194,6 @@ function renderBuscarCodigoResults(docs) {
       'codigos_cubre',
       'codigosAsignados',
     ];
-    // Encuentra el primer campo que exista en el objeto
     let value;
     for (const field of possibleFields) {
       if (doc && Object.prototype.hasOwnProperty.call(doc, field)) {
@@ -247,18 +202,15 @@ function renderBuscarCodigoResults(docs) {
       }
     }
     if (!value) return [];
-    // Si ya es un array, devuélvelo tal cual (filtrando falsy)
     if (Array.isArray(value)) {
       return value.map(v => String(v).trim()).filter(Boolean);
     }
-    // Si es una cadena, dividirla por coma, punto y coma o espacios consecutivos
     if (typeof value === 'string') {
       return value
         .split(/[;,\s]+/)
         .map(s => s.trim())
         .filter(Boolean);
     }
-    // En cualquier otro caso, devolver vacío
     return [];
   }
 
@@ -266,16 +218,14 @@ function renderBuscarCodigoResults(docs) {
     .map(doc => {
       const fecha = doc.date ? new Date(doc.date).toLocaleDateString('es-ES') : '';
       const codesArr = getCodesArray(doc);
-      // Generar id para asociar el botón y la lista; si doc.id no existe, usar un hash aleatorio
-      const codesId = doc.id || Math.random().toString(36).slice(2);
+      // Generar id para asociar el botón y la lista
+      const codesId = `codes-${doc.id || Math.random().toString(36).slice(2)}`;
       // Construir la lista de códigos como columna oculta
-      // Usar style="display: none;" en lugar de la clase .hidden para evitar que
-      // reglas CSS globales con !important impidan mostrar la lista
       const codesListHtml = codesArr.length
-        ? `<div id="codes-list-${codesId}" class="codes-list" style="display: none;">${codesArr
+        ? `<div id="${codesId}" class="codes-list hidden">${codesArr
             .map(code => `<div class="code-item">${code}</div>`)
             .join('')}</div>`
-        : `<div id="codes-list-${codesId}" class="codes-list" style="display: none;"><span>Sin códigos.</span></div>`;
+        : `<div id="${codesId}" class="codes-list hidden"><span>Sin códigos.</span></div>`;
       // Resaltar Ver PDF como botón
       const pdfButton = doc.path
         ? `<a class="btn btn--primary" href="uploads/${doc.path}" target="_blank">Ver PDF</a>`
