@@ -15,6 +15,7 @@ window.showTab = tabId => {
   );
 };
 
+
 /**
  * Llama al backend de App1 para que este pida el PDF resaltado a App2.
  * @param {HTMLButtonElement} button - El botón que fue presionado.
@@ -44,7 +45,8 @@ async function solicitarPdfResaltado(button, pdfPath, codes) {
         const blob = await response.blob();
         const url = window.URL.createObjectURL(blob);
         window.open(url, '_blank');
-        window.URL.revokeObjectURL(url);
+        // Limpia la URL del objeto después de abrirlo para liberar memoria
+        setTimeout(() => window.URL.revokeObjectURL(url), 100);
 
     } catch (error) {
         console.error('Error al solicitar PDF resaltado:', error);
@@ -54,12 +56,15 @@ async function solicitarPdfResaltado(button, pdfPath, codes) {
         button.textContent = originalText;
     }
 }
-window.solicitarPdfResaltado = solicitarPdfResaltado;
+// NO es necesario hacerla global con el nuevo método de event listeners.
+// window.solicitarPdfResaltado = solicitarPdfResaltado;
 
 
 document.addEventListener('DOMContentLoaded', () => {
   const main = document.getElementById('mainContent');
-  main?.classList.add('hidden');
+  if (main) {
+    main.classList.add('hidden');
+  }
 
   // Wire up tab buttons to switch tabs
   document.querySelectorAll('.tab').forEach(btn =>
@@ -69,21 +74,38 @@ document.addEventListener('DOMContentLoaded', () => {
   // Once authenticated, reveal the main UI and set up handlers
   requireAuth(() => {
     document.getElementById('loginOverlay')?.classList.add('hidden');
-    main?.classList.remove('hidden');
+    if (main) {
+      main.classList.remove('hidden');
+    }
 
     window.showTab('tab-search');
     cargarConsulta();
 
-    // === BÚSQUEDA ÓPTIMA (MODIFICADA) ===
+    // === BÚSQUEDA ÓPTIMA (CORREGIDA) ===
     const optimaInput = document.getElementById('optimaSearchInput');
     const optimaButton = document.getElementById('doOptimaSearchButton');
     const optimaClear = document.getElementById('clearOptimaSearchButton');
     const optimaResults = document.getElementById('results-optima-search');
 
+    /**
+     * CORRECCIÓN: Esta función ahora añade los event listeners a los botones
+     * de "PDF Resaltado" después de que se han creado.
+     */
+    function attachResaltarListeners() {
+        optimaResults.querySelectorAll('.btn-resaltar').forEach(button => {
+            button.addEventListener('click', () => {
+                const pdfPath = button.dataset.pdfPath;
+                // Los códigos se guardan como un string JSON, hay que parsearlos de vuelta
+                const codes = JSON.parse(button.dataset.codes);
+                solicitarPdfResaltado(button, pdfPath, codes);
+            });
+        });
+    }
+
     optimaButton.addEventListener('click', async () => {
         const txt = optimaInput.value.trim();
         if (!txt) return showToast('Ingrese uno o varios códigos separados por coma', 'warning');
-        
+
         optimaButton.disabled = true;
         optimaButton.textContent = "Buscando...";
         optimaResults.innerHTML = '<p>Buscando...</p>';
@@ -94,10 +116,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 optimaResults.innerHTML = resultado.documentos.map(d => {
                     const doc = d.documento;
                     const codes = d.codigos_cubre;
-                    const codesJson = JSON.stringify(codes); // Prepara los códigos para el onclick
+                    // Preparamos los códigos como un string JSON para guardarlos en el atributo data-*
+                    const codesJsonString = JSON.stringify(codes);
 
-                    const verPdfBtn = doc.path ? `<a class="btn btn-primary" href="uploads/${doc.path}" target="_blank">Ver PDF</a>` : '';
-                    const resaltarPdfBtn = doc.path ? `<button class="btn btn-secondary" onclick="solicitarPdfResaltado(this, '${doc.path}', ${codesJson})">PDF Resaltado</button>` : '';
+                    const verPdfBtn = doc.path ? `<a class="btn btn--primary" href="uploads/${doc.path}" target="_blank">Ver PDF</a>` : '';
+                    
+                    // CORRECCIÓN: Ya no usamos 'onclick'. Usamos atributos 'data-*' para guardar la información.
+                    const resaltarPdfBtn = doc.path 
+                        ? `<button class="btn btn-secondary btn-resaltar" data-pdf-path="${doc.path}" data-codes='${codesJsonString}'>PDF Resaltado</button>` 
+                        : '';
 
                     return `
                         <div class="doc-item" style="justify-content: space-between; align-items: center;">
@@ -111,6 +138,10 @@ document.addEventListener('DOMContentLoaded', () => {
                             </div>
                         </div>`;
                 }).join('') + (resultado.codigos_faltantes?.length ? `<p class="mt-4 text-red-600">Códigos no encontrados: ${resultado.codigos_faltantes.join(', ')}</p>` : '');
+
+                // CORRECCIÓN: Después de crear los botones, les añadimos el listener.
+                attachResaltarListeners();
+
             } else {
                 optimaResults.innerHTML = '<p>No se encontraron documentos que cubran los códigos solicitados.</p>';
             }
@@ -129,11 +160,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     // === FIN DE BÚSQUEDA ÓPTIMA ===
 
-    // === BÚSQUEDA POR CÓDIGO ===
-    // ... El resto del archivo se mantiene sin cambios ...
-    const codeInput = document.getElementById('codeInput');
-    const codeSearchButton = document.getElementById('doCodeSearchButton');
-    const codeResults = document.getElementById('results-code');
+    // El resto de las búsquedas y funciones se mantienen sin cambios...
     // ...
   });
 
@@ -141,7 +168,6 @@ document.addEventListener('DOMContentLoaded', () => {
   initAutocompleteCodigo();
 });
 
-// ... (El resto de funciones como bindCodeButtons, renderBuscarCodigoResults, etc., se mantienen sin cambios)
 export function bindCodeButtons(container) {
   if (!container) return;
   const buttons = container.querySelectorAll('.btn-ver-codigos');
@@ -161,5 +187,5 @@ export function bindCodeButtons(container) {
 window.bindCodeButtons = bindCodeButtons;
 
 function renderBuscarCodigoResults(docs) {
-    // ...
+    // Esta función se mantiene igual...
 }
