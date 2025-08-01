@@ -54,18 +54,20 @@ function renderDocs(docs) {
         ? `<a class="btn btn--primary" href="uploads/${d.path}" target="_blank">Ver PDF</a>`
         : 'Sin PDF';
       return `
-        <div class="doc-item">
-          <p><strong>${d.name}</strong></p>
-          <p>${fecha}</p>
-          ${pdfInfo}
-          <p>${pdfButton}</p>
-          <button class="btn-ver-codigos" data-codes-id="${codesId}">Ver Códigos</button>
-          ${codesListHtml}
-          <div class="actions">
+        <div class="doc-item" style="display: flex; justify-content: space-between; align-items: flex-start;">
+          <div class="doc-info" style="flex: 1;">
+            <p><strong>${d.name}</strong></p>
+            <p>${fecha}</p>
+            ${pdfInfo}
+            <p>${pdfButton}</p>
+          </div>
+          <div class="actions" style="display: flex; flex-direction: column; align-items: flex-end; gap: 0.25rem;">
             <button class="btn btn--secondary" onclick="dispatchEdit(${d.id})">Editar</button>
             <button class="btn btn--warning" onclick="eliminarDoc(${d.id})">Eliminar</button>
+            <button class="btn-ver-codigos" data-codes-id="${codesId}">Ver Códigos</button>
           </div>
         </div>
+        ${codesListHtml}
       `;
     })
     .join('');
