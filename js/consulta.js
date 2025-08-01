@@ -1,94 +1,129 @@
-// js/consulta.js
-
 import { listarDocumentos, eliminarDocumento } from './api.js';
 import { showModalConfirm } from './modals.js';
 import { showToast } from './toasts.js';
+import { bindCodeButtons } from './main.js';
 
+// Contiene la lista actual de documentos para filtros o recargas
 let currentDocs = [];
 
+/**
+ * Carga y muestra los documentos en #results-list.
+ */
+export async function cargarConsulta() {
+  try {
+    currentDocs = await listarDocumentos();
+    renderDocs(currentDocs);
+    // Vincular los eventos de los botones "Ver Códigos" después de renderizar
+    const listEl = document.getElementById('results-list');
+    if (listEl) bindCodeButtons(listEl);
+  } catch (e) {
+    console.error('Error al cargar documentos:', e);
+    showToast('Error al cargar lista', 'error');
+  }
+}
+
+/**
+ * Renderiza documentos mostrando el enlace al PDF como un botón y la lista
+ * de códigos asociada en una columna. Ya no se utiliza un botón "Ver Códigos",
+ * por lo que los códigos se muestran directamente. Cada fila incluye botones
+ * para editar o eliminar según corresponda.
+ */
 function renderDocs(docs) {
   const container = document.getElementById('results-list');
   if (!container) return;
-
-  container.innerHTML = docs.map(d => {
-      if (!d || !d.id) return '';
+  container.innerHTML = docs
+    .map(d => {
       const fecha = d.date ? new Date(d.date).toLocaleDateString('es-ES') : '';
-      const codesArray = (d.codigos_extraidos || '').split(',').map(s => s.trim()).filter(Boolean);
-      const codesId = d.id;
-
+      const codesArray = (d.codigos_extraidos || '')
+        .split(',')
+        .map(s => s.trim())
+        .filter(Boolean);
+      // Generar un id para los códigos (se usa para asociar el botón y la lista)
+      const codesId = d.id || Math.random().toString(36).slice(2);
+      // Construir la lista de códigos como columna (una línea por código)
       const codesListHtml = codesArray.length
-        ? `<div id="codes-list-${codesId}" class="codes-list" style="display: none;">${codesArray.map(c => `<div class="code-item">${c}</div>`).join('')}</div>`
-        : `<div id="codes-list-${codesId}" class="codes-list" style="display: none;"><span>Sin códigos asignados.</span></div>`;
-
-      const pdfButton = d.path ? `<a class="btn btn--primary btn-small" href="uploads/${d.path}" target="_blank">Ver PDF</a>` : '';
-      const adminButtons = `<button class="btn btn--secondary btn-small" onclick="dispatchEdit(${d.id})">Editar</button>
-                            <button class="btn btn--warning btn-small" onclick="eliminarDoc(${d.id})">Eliminar</button>`;
-      
+        ? `<div id="codes-list-${codesId}" class="codes-list hidden">${codesArray
+            .map(c => `<div class="code-item">${c}</div>`)
+            .join('')}</div>`
+        : `<div id="codes-list-${codesId}" class="codes-list hidden"><span>Sin códigos.</span></div>`;
+      // Resaltar Ver PDF como botón
+      const pdfButton = d.path
+        ? `<a class="btn btn--primary" href="uploads/${d.path}" target="_blank">Ver PDF</a>`
+        : 'Sin PDF';
       return `
-          <div class="doc-item">
-              <div><strong>${d.name}</strong> (${fecha})</div>
-              <div class="actions">
-                  ${pdfButton}
-                  <button class="btn btn--secondary btn-small" onclick="window.toggleCodeVisibility('${codesId}')">Ver Códigos</button>
-                  ${adminButtons}
-              </div>
-              ${codesListHtml}
+        <div class="doc-item">
+          <p><strong>${d.name}</strong></p>
+          <p>${fecha}</p>
+          <p>${pdfButton}</p>
+          <button class="btn-ver-codigos" data-codes-id="${codesId}">Ver Códigos</button>
+          ${codesListHtml}
+          <div class="actions">
+            <button class="btn btn--secondary" onclick="dispatchEdit(${d.id})">Editar</button>
+            <button class="btn btn--warning" onclick="eliminarDoc(${d.id})">Eliminar</button>
           </div>
+        </div>
       `;
-    }).join('');
+    })
+    .join('');
+
 }
 
-export async function cargarConsulta() {
-  try {
-    const docsRaw = await listarDocumentos();
-    currentDocs = Array.isArray(docsRaw) ? docsRaw : [];
-    renderDocs(currentDocs);
-  } catch (e) {
-    showToast('Error al cargar la lista de documentos', 'error');
-  }
-}
-
-// --- FUNCIONES GLOBALES ---
-
+// Editar documento y cambiar a pestaña “Subir”
 window.dispatchEdit = async id => {
-  try {
-    const res = await fetch(`https://gestor-doc-backend-production.up.railway.app/api/documentos/${id}`);
-    const docData = await res.json();
-    if (docData && !docData.error) {
-      if (window.loadDocumentForEdit) window.loadDocumentForEdit(docData);
-      window.showTab('tab-upload');
+  const res = await fetch(
+    `https://gestor-doc-backend-production.up.railway.app/api/documentos/${id}`
+  );
+  const docData = await res.json();
+  if (docData && !docData.error) {
+    if (window.loadDocumentForEdit) {
+      window.loadDocumentForEdit(docData);
+    } else if (typeof loadDocumentForEdit === 'function') {
+      loadDocumentForEdit(docData);
     } else {
-      showToast('Error al cargar datos del documento', false);
+      document.dispatchEvent(new CustomEvent('load-edit', { detail: docData }));
     }
-  } catch (e) {
-    showToast('Error de conexión al intentar editar', false);
+    window.showTab('tab-upload');
+  } else {
+    showToast('Error al cargar el documento', false);
   }
 };
 
+// Filtros cliente-side
 window.clearConsultFilter = () => {
   const input = document.getElementById('consultFilterInput');
   if (input) input.value = '';
   renderDocs(currentDocs);
+  // Volver a vincular los eventos de los botones después de filtrar
+  const listEl = document.getElementById('results-list');
+  if (listEl) bindCodeButtons(listEl);
 };
 
 window.doConsultFilter = () => {
   const term = document.getElementById('consultFilterInput').value.toLowerCase().trim();
-  const filteredDocs = currentDocs.filter(d =>
-    d.name.toLowerCase().includes(term) ||
-    (d.codigos_extraidos || '').toLowerCase().includes(term) ||
-    (d.path || '').toLowerCase().includes(term)
+  renderDocs(
+    currentDocs.filter(d =>
+      d.name.toLowerCase().includes(term) ||
+      (d.codigos_extraidos || '').toLowerCase().includes(term) ||
+      (d.path || '').toLowerCase().includes(term)
+    )
   );
-  renderDocs(filteredDocs);
+  // Vincular eventos a los botones en el resultado filtrado
+  const listEl = document.getElementById('results-list');
+  if (listEl) bindCodeButtons(listEl);
 };
 
+window.downloadCsv = () => window.open(`/api/documentos?format=csv`, '_blank');
+window.downloadPdfs = id => window.open(`/api/documentos?format=pdf&id=${id}`, '_blank');
+
+// Confirma eliminación y recarga la lista
 window.eliminarDoc = id => {
-  showModalConfirm('¿Está seguro de que desea eliminar este documento?', async () => {
+  showModalConfirm('¿Eliminar documento?', async () => {
     try {
       await eliminarDocumento(id);
-      showToast('Documento eliminado correctamente', 'success');
+      showToast('Documento eliminado', 'success');
       cargarConsulta();
     } catch {
-      showToast('No se pudo eliminar el documento', 'error');
+      showToast('No se pudo eliminar', 'error');
     }
   });
 };
