@@ -44,20 +44,23 @@ document.addEventListener('DOMContentLoaded', () => {
       try {
         const resultado = await buscarOptimaAvanzada(txt);
         if (resultado.documentos?.length) {
+          // Construir resultados con un estilo similar a las otras pestañas: tarjeta flex con
+          // el documento a la izquierda, los códigos en el centro y el enlace al PDF a la derecha.
           optimaResults.innerHTML =
             resultado.documentos
               .map(d => {
                 const documento = d.documento;
                 const codigos = d.codigos_cubre;
-                // Resaltar el enlace de PDF como un botón
-                const pdf = documento.path
+                const pdfLink = documento.path
                   ? `<a class="btn btn--primary" href="uploads/${documento.path}" target="_blank">Ver PDF</a>`
                   : 'Sin PDF';
                 return `
-                  <div class="doc-item">
-                    <p><strong>Documento:</strong> ${documento.name}</p>
-                    <p><strong>Códigos cubiertos:</strong> ${codigos.join(', ')}</p>
-                    <p><strong>PDF:</strong> ${pdf}</p>
+                  <div class="doc-item" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; padding: 0.75rem; border: 1px solid #f3f3f3; border-radius: 0.5rem;">
+                    <div style="flex: 1;">
+                      <p><strong>Documento:</strong> ${documento.name}</p>
+                      <p><strong>Códigos cubiertos:</strong> ${codigos.join(', ')}</p>
+                    </div>
+                    <div style="margin-left: 1rem;">${pdfLink}</div>
                   </div>
                 `;
               })
@@ -196,6 +199,15 @@ export function bindCodeButtons(container) {
 // consulta.js) puedan llamarla sin crear una dependencia circular entre módulos.
 // Esto permite que la pestaña de consulta adjunte eventos a sus botones "Ver Códigos".
 window.bindCodeButtons = bindCodeButtons;
+
+// Fallback: compatibilidad con versiones anteriores que usan onclick="window.toggleCodeVisibility(id)".
+// Permite mostrar u ocultar la lista de códigos cuando se llama a toggleCodeVisibility desde el HTML.
+window.toggleCodeVisibility = function(id) {
+  const el = document.getElementById('codes-list-' + id);
+  if (el) {
+    el.style.display = (el.style.display === 'none' || !el.style.display) ? 'block' : 'none';
+  }
+};
 
 /**
  * Renderiza un array de documentos devueltos por la búsqueda por código.
