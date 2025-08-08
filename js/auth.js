@@ -1,45 +1,53 @@
-// js/auth.js
+// Control de acceso simple con overlay. Acepta callback tras autenticación.
+
+const STORAGE_KEY = 'gd_auth_ok';
 
 /**
- * requireAuth muestra siempre el overlay de login y, tras introducir "111",
- * oculta el overlay, guarda en localStorage y ejecuta el callback onSuccess().
+ * Muestra overlay hasta que el usuario ingrese la clave. Luego ejecuta callback.
+ * @param {() => void} [onReady]
  */
-export function requireAuth(onSuccess) {
-  const loginOverlay  = document.getElementById('loginOverlay');
-  const accessInput   = document.getElementById('accessInput');
-  const submitAccess  = document.getElementById('submitAccess');
-  const errorMsg      = document.getElementById('errorMsg');
-  const mainContent   = document.getElementById('mainContent');
+export function requireAuth(onReady) {
+  const overlay = document.getElementById('loginOverlay');
+  const input = /** @type {HTMLInputElement|null} */(document.getElementById('accessInput'));
+  const submit = document.getElementById('submitAccess');
+  const errorMsg = document.getElementById('errorMsg');
+  const main = document.getElementById('mainContent');
 
-  if (!loginOverlay || !accessInput || !submitAccess || !errorMsg || !mainContent) {
-    console.error('❌ Elementos de autenticación no encontrados en el DOM');
+  const showMain = () => {
+    if (overlay) overlay.classList.add('hidden');
+    if (main) main.classList.remove('hidden');
+    try { onReady && onReady(); } catch (e) { console.error(e); }
+  };
+
+  // Si ya está autenticado
+  if (localStorage.getItem(STORAGE_KEY) === '1') {
+    showMain();
     return;
   }
 
-  // Función interna para mostrar la app
-  const showApp = () => {
-    loginOverlay.classList.add('hidden');
-    mainContent.classList.remove('hidden');
+  // Estado inicial
+  if (main) main.classList.add('hidden');
+  if (overlay) overlay.classList.remove('hidden');
+  if (errorMsg) errorMsg.textContent = '';
+
+  const tryLogin = () => {
+    const v = (input?.value || '').trim();
+    if (v === '111') { // clave de pruebas
+      localStorage.setItem(STORAGE_KEY, '1');
+      showMain();
+    } else {
+      if (errorMsg) errorMsg.textContent = 'Clave incorrecta';
+      input?.focus();
+    }
   };
 
-  // Cada recarga limpia el token para forzar nueva validación
-  localStorage.removeItem('token');
-
-  // Estado inicial: mostrar overlay y ocultar mensaje de error
-  loginOverlay.classList.remove('hidden');
-  errorMsg.classList.add('hidden');
-
-  submitAccess.addEventListener('click', () => {
-    const val = accessInput.value.trim();
-    if (val === '111') {
-      localStorage.setItem('token', val);
-      showApp();
-      onSuccess();
-    } else {
-      errorMsg.textContent = 'Número incorrecto. Intente de nuevo.';
-      errorMsg.classList.remove('hidden');
-      accessInput.value = '';
-      accessInput.focus();
-    }
+  submit?.addEventListener('click', tryLogin);
+  input?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); tryLogin(); }
   });
+}
+
+export function logout() {
+  localStorage.removeItem(STORAGE_KEY);
+  location.reload();
 }

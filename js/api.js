@@ -1,51 +1,71 @@
-// js/api.js
+// Punto único de acceso al backend (Railway). Incluye todas las funciones usadas
+// por main.js y otros módulos: buscarOptimaAvanzada, buscarPorCodigo,
+// sugerirCodigos, listarDocumentos, etc.
 
 import { config } from './config.js';
 
-/** Lista todos los documentos (GET /api/documentos) */
+const API_BASE = config.API_BASE.replace(/\/$/, '');
+
+async function jfetch(path, opts = {}) {
+  const url = path.startsWith('http') ? path : `${API_BASE}${path}`;
+  const res = await fetch(url, {
+    headers: { 'Content-Type': 'application/json' },
+    ...opts,
+  });
+  if (!res.ok) {
+    let msg = `${res.status} ${res.statusText}`;
+    try { const j = await res.json(); msg = j?.message || j?.error || msg; } catch (_) {}
+    throw new Error(msg);
+  }
+  try { return await res.json(); } catch (_) { return { ok: true }; }
+}
+
+// Salud
+export async function ping() { return jfetch('/api/ping'); }
+export async function envInfo() { return jfetch('/api/env'); }
+
+// Listado general de documentos
 export async function listarDocumentos() {
-  const res = await fetch(`${config.API_BASE}`, { method: 'GET' });
-  return res.json();
+  return jfetch('/api/documentos');
 }
 
-/** Elimina un documento por ID (DELETE /api/documentos/{id}) */
-export async function eliminarDocumento(id) {
-  const res = await fetch(`${config.API_BASE}/${id}`, { method: 'DELETE' });
-  return res.json();
-}
-
-/**
- * Búsqueda Óptima Avanzada (set cover) por lista de códigos.
- * POST /api/documentos/search_optima { codigos }
- * Devuelve { documentos: [{ documento, codigos_cubre }], codigos_faltantes: [] }
- */
-export async function buscarOptimaAvanzada(codigosTexto) {
-  const res = await fetch(`${config.API_BASE}/search_optima`, {
+// Búsqueda óptima avanzada (texto puede ser lista de códigos separada por comas)
+export async function buscarOptimaAvanzada(texto) {
+  return jfetch('/api/documentos/search', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ codigos: codigosTexto })
+    body: JSON.stringify({ texto }),
   });
-  return res.json();
 }
 
-/**
- * Búsqueda por código (usa /search para 1 solo código si lo necesitas).
- */
-export async function buscarPorCodigo(code) {
-  const res = await fetch(`${config.API_BASE}/search`, {
+// Búsqueda por código (exacto)
+export async function buscarPorCodigo(codigo) {
+  return jfetch('/api/documentos/search_by_code', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ texto: code })
+    body: JSON.stringify({ codigo, modo: 'exacto' }),
   });
-  return res.json();
 }
 
-/** Sugerir códigos (autocomplete) */
-export async function sugerirCodigos(prefijo) {
-  const res = await fetch(`${config.API_BASE}/search_by_code`, {
+// Sugerencias de códigos por prefijo (para autocompletado)
+export async function sugerirCodigos(prefix, { signal } = {}) {
+  return jfetch('/api/documentos/search_by_code', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ codigo: prefijo })
+    body: JSON.stringify({ codigo: prefix, modo: 'prefijo' }),
+    signal,
   });
-  return res.json();
+}
+
+// Subida/edición (si tu endpoint usa multipart, maneja eso en upload.js)
+export async function subirDocumento(payload) {
+  return jfetch('/api/documentos/upload', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+}
+
+// Eliminar documento
+export async function eliminarDocumento(id, clave) {
+  return jfetch('/api/documentos', {
+    method: 'DELETE',
+    body: JSON.stringify({ id, clave }),
+  });
 }
