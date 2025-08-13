@@ -1,20 +1,20 @@
 // api.js — Punto único de acceso al backend (Railway)
-// Importa la base del backend desde config.js
+
 import { config } from './config.js';
 
 // Normaliza la base (sin / final)
 const API_BASE = (config?.API_BASE || '').replace(/\/$/, '');
 
-// ===== Helpers =====
 function buildUrl(path) {
   return path.startsWith('http') ? path : `${API_BASE}${path}`;
 }
 
-/** fetch JSON/Texto con headers correctos (auto-JSON si body es objeto) */
-async function jfetch(path, { method = 'GET', headers, body, signal, timeoutMs = 30000 } = {}) {
+/** Fetch con manejo de JSON, timeout y CORS “amigable” */
+async function jfetch(
+  path,
+  { method = 'GET', headers, body, signal, timeoutMs = 30000 } = {}
+) {
   const url = buildUrl(path);
-
-  // Soporte timeout
   const ctrl = new AbortController();
   const t = setTimeout(() => ctrl.abort(new DOMException('Timeout', 'AbortError')), timeoutMs);
 
@@ -22,71 +22,71 @@ async function jfetch(path, { method = 'GET', headers, body, signal, timeoutMs =
   const mergedHeaders = { ...(headers || {}) };
   let finalBody = body;
 
-  // Si el body es objeto/array → JSON
+  // Si el body es objeto → lo mandamos como JSON y seteamos Content-Type
   if (body && !isFormData && typeof body !== 'string' && !(body instanceof Blob)) {
     mergedHeaders['Content-Type'] = 'application/json';
     finalBody = JSON.stringify(body);
   }
 
-  try {
-    const res = await fetch(url, {
-      method,
-      mode: 'cors',
-      headers: mergedHeaders,
-      body: finalBody,
-      signal: signal || ctrl.signal,
-    });
+  // Importante: en GET/HEAD sin body NO agregamos Content-Type para evitar preflight
+  const res = await fetch(url, {
+    method,
+    mode: 'cors',
+    headers: mergedHeaders,
+    body: finalBody,
+    signal: signal || ctrl.signal,
+  });
 
-    if (!res.ok) {
-      let msg = `${res.status} ${res.statusText}`;
-      try {
-        const j = await res.json();
-        msg = j?.message || j?.error || msg;
-      } catch (_) {}
-      const err = new Error(msg);
-      err.status = res.status;
-      throw err;
-    }
+  clearTimeout(t);
 
-    // 204 No Content
-    if (res.status === 204) return null;
-
-    const ctype = res.headers.get('content-type') || '';
-    if (ctype.includes('application/json')) return res.json();
-    return res.text(); // fallback
-  } finally {
-    clearTimeout(t);
+  if (!res.ok) {
+    let msg = `${res.status} ${res.statusText}`;
+    try {
+      const j = await res.json();
+      msg = j?.message || j?.error || msg;
+    } catch (_) {}
+    const err = new Error(msg);
+    err.status = res.status;
+    throw err;
   }
+
+  if (res.status === 204) return null;
+
+  const ctype = res.headers.get('content-type') || '';
+  if (ctype.includes('application/json')) return res.json();
+  return res.text();
 }
 
-/** fetch Blob (para CSV/ZIP/PDF) */
-async function jfetchBlob(path, { method = 'GET', headers, body, signal, timeoutMs = 60000 } = {}) {
+/** Fetch de blobs (CSV/ZIP/PDF) */
+async function jfetchBlob(
+  path,
+  { method = 'GET', headers, body, signal, timeoutMs = 60000 } = {}
+) {
   const url = buildUrl(path);
   const ctrl = new AbortController();
   const t = setTimeout(() => ctrl.abort(new DOMException('Timeout', 'AbortError')), timeoutMs);
 
-  try {
-    const res = await fetch(url, {
-      method,
-      mode: 'cors',
-      headers,
-      body,
-      signal: signal || ctrl.signal,
-    });
-    if (!res.ok) {
-      let msg = `${res.status} ${res.statusText}`;
-      try {
-        const j = await res.json();
-        msg = j?.message || j?.error || msg;
-      } catch (_) {}
-      const err = new Error(msg);
-      err.status = res.status;
-      throw err;
-    }
-    return res.blob();
-  } finally {
-    clearTimeout(t);
+  const res = await fetch(url, {
+    method,
+    mode: 'cors',
+    headers,
+    body,
+    signal: signal || ctrl.signal,
+  });
+
+  clearTimeout(t);
+
+  if (!res.ok) {
+    let msg = `${res.status} ${res.statusText}`;
+    try {
+      const j = await res.json();
+      msg = j?.message || j?.error || msg;
+    } catch (_) {}
+    const err = new Error(msg);
+    err.status = res.status;
+    throw err;
   }
+  return res.blob();
 }
 
 /** Descarga un blob con nombre sugerido */
@@ -100,29 +100,29 @@ export function descargarBlob(nombre, blob) {
   setTimeout(() => URL.revokeObjectURL(a.href), 1000);
 }
 
-// ===== Endpoints Salud/Diagnóstico =====
-export async function ping() { return jfetch('/api/ping'); }
-export async function envInfo() { return jfetch('/api/env'); }
+/* ================== Salud / Diagnóstico ================== */
+export async function ping()    { return jfetch('/api/ping'); }
+export async function envInfo() { return jfetch('/api/env');  }
+// Diagnóstico de backend (opcional si lo añadiste)
+export async function diagDoc() { return jfetch('/api/documentos/_diag'); }
 
-// ===== Documentos (lista/búsqueda) =====
+/* ================== Documentos ================== */
 
-/** Lista todos los documentos (puedes ampliar con querystring si lo necesitas) */
+// Listar
 export async function listarDocumentos() {
   return jfetch('/api/documentos', { method: 'GET' });
 }
 
-/** Búsqueda óptima (texto libre o lista de códigos) */
+// Búsqueda óptima/avanzada
 export async function buscarOptima(texto) {
   return jfetch('/api/documentos/search', {
     method: 'POST',
     body: { texto },
   });
 }
-
-// Alias para compatibilidad con tu código previo
 export const buscarOptimaAvanzada = buscarOptima;
 
-/** Búsqueda por código (exacto por defecto; usa modo: 'prefijo' para sugerencias) */
+// Búsqueda por código
 export async function buscarPorCodigo(codigo, modo = 'exacto') {
   return jfetch('/api/documentos/search_by_code', {
     method: 'POST',
@@ -130,7 +130,7 @@ export async function buscarPorCodigo(codigo, modo = 'exacto') {
   });
 }
 
-/** Sugerencias de códigos por prefijo (para autocompletado) */
+// Sugerencias (prefijo)
 export async function sugerirCodigos(prefix, { signal } = {}) {
   return jfetch('/api/documentos/search_by_code', {
     method: 'POST',
@@ -139,9 +139,18 @@ export async function sugerirCodigos(prefix, { signal } = {}) {
   });
 }
 
-// ===== CRUD =====
+/* ================== CRUD ================== */
 
-/** Subida JSON (si tu backend espera JSON). Para multipart usa subirDocumentoMultipart. */
+// Subir documento con FormData (recomendado: el backend espera 'file')
+export async function subirDocumentoMultipart(formData) {
+  // No seteamos Content-Type: el navegador pone el boundary correcto
+  return jfetch('/api/documentos/upload', {
+    method: 'POST',
+    body: formData,
+  });
+}
+
+// Wrapper JSON (solo si tu backend lo soporta; el actual requiere FormData)
 export async function subirDocumento(payload) {
   return jfetch('/api/documentos/upload', {
     method: 'POST',
@@ -149,64 +158,29 @@ export async function subirDocumento(payload) {
   });
 }
 
-/** Subida/edición con FormData (PDFs). Úsalo desde upload.js si manejas archivos. */
-export async function subirDocumentoMultipart(formData, { method = 'POST' } = {}) {
-  // NO pongas Content-Type aquí; el navegador agrega el boundary.
-  return jfetch('/api/documentos/upload', {
-    method,
-    body: formData,
-  });
-}
-
-/** Edición (mismo endpoint con PUT según tu backend) */
+// Editar documento (PUT /api/documentos/:id)
 export async function editarDocumento(id, payload) {
-  return jfetch('/api/documentos/upload', {
+  return jfetch(`/api/documentos/${id}`, {
     method: 'PUT',
-    body: { id, ...payload },
+    body: payload, // puede ser JSON; el backend lo acepta como form o json
   });
 }
 
-/** Eliminar documento (requiere clave de confirmación) */
-export async function eliminarDocumento(id, clave) {
-  return jfetch('/api/documentos', {
-    method: 'DELETE',
-    body: { id, clave },
-  });
+// Eliminar documento (DELETE /api/documentos/:id)
+export async function eliminarDocumento(id /*, clave opcional */) {
+  return jfetch(`/api/documentos/${id}`, { method: 'DELETE' });
 }
 
-// ===== Exportaciones (CSV / ZIP) =====
-
-/** Descargar CSV del estado/ filtro actual (si tu backend expone GET /export/csv?q=...) */
+/* ================== Export (si el backend lo expone) ================== */
+// Nota: Tu backend actual no tiene estos endpoints; déjalos deshabilitados
+// o impleméntalos en el backend antes de usarlos.
 export async function descargarCSV({ q } = {}) {
   const qs = q ? `?q=${encodeURIComponent(q)}` : '';
   const blob = await jfetchBlob(`/api/documentos/export/csv${qs}`, { method: 'GET' });
-  return blob; // el caller decide si llama a descargarBlob(nombre, blob)
-}
-
-/** Descargar ZIP. Acepta { ids } o { filtro } según tu backend. */
-export async function descargarZIP(payload) {
-  const blob = await jfetchBlob('/api/documentos/export/zip', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload || {}),
-  });
   return blob;
 }
 
-// ===== Exports por defecto (opcional) =====
-export default {
-  ping,
-  envInfo,
-  listarDocumentos,
-  buscarOptima,
-  buscarOptimaAvanzada,
-  buscarPorCodigo,
-  sugerirCodigos,
-  subirDocumento,
-  subirDocumentoMultipart,
-  editarDocumento,
-  eliminarDocumento,
-  descargarCSV,
-  descargarZIP,
-  descargarBlob,
-};
+export async function descargarZIP(payload) {
+  const blob = await jfetchBlob('/api/documentos/export/zip', {
+    method: 'POST',
+    headers:
