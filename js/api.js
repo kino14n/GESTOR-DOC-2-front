@@ -4,35 +4,36 @@ import { config } from './config.js';
 
 // Normaliza la base (sin / final)
 const API_BASE = (config?.API_BASE || '').replace(/\/$/, '');
-
-function buildUrl(path) {
-  return path.startsWith('http') ? path : `${API_BASE}${path}`;
-}
+const ABS = (p) => (p.startsWith('http') ? p : `${API_BASE}${p}`);
 
 /** Fetch con manejo de JSON, timeout y CORS “amigable” */
-async function jfetch(
-  path,
-  { method = 'GET', headers, body, signal, timeoutMs = 30000 } = {}
-) {
-  const url = buildUrl(path);
+async function jfetch(path, options = {}) {
+  const {
+    method = 'GET',
+    headers = {},
+    body = undefined,
+    signal,
+    timeoutMs = 30000,
+  } = options;
+
   const ctrl = new AbortController();
   const t = setTimeout(() => ctrl.abort(new DOMException('Timeout', 'AbortError')), timeoutMs);
 
-  const isFormData = typeof FormData !== 'undefined' && body instanceof FormData;
-  const mergedHeaders = { ...(headers || {}) };
+  let finalHeaders = { ...headers };
   let finalBody = body;
 
   // Si el body es objeto → lo mandamos como JSON y seteamos Content-Type
-  if (body && !isFormData && typeof body !== 'string' && !(body instanceof Blob)) {
-    mergedHeaders['Content-Type'] = 'application/json';
+  const isForm = typeof FormData !== 'undefined' && body instanceof FormData;
+  if (body && !isForm && typeof body !== 'string' && !(body instanceof Blob)) {
+    if (!finalHeaders['Content-Type']) finalHeaders['Content-Type'] = 'application/json';
     finalBody = JSON.stringify(body);
   }
 
   // Importante: en GET/HEAD sin body NO agregamos Content-Type para evitar preflight
-  const res = await fetch(url, {
+  const res = await fetch(ABS(path), {
     method,
     mode: 'cors',
-    headers: mergedHeaders,
+    headers: finalHeaders,
     body: finalBody,
     signal: signal || ctrl.signal,
   });
@@ -50,23 +51,26 @@ async function jfetch(
     throw err;
   }
 
+  const ct = res.headers.get('content-type') || '';
+  if (ct.includes('application/json')) return res.json();
   if (res.status === 204) return null;
-
-  const ctype = res.headers.get('content-type') || '';
-  if (ctype.includes('application/json')) return res.json();
   return res.text();
 }
 
 /** Fetch de blobs (CSV/ZIP/PDF) */
-async function jfetchBlob(
-  path,
-  { method = 'GET', headers, body, signal, timeoutMs = 60000 } = {}
-) {
-  const url = buildUrl(path);
+async function jfetchBlob(path, options = {}) {
+  const {
+    method = 'GET',
+    headers = {},
+    body = undefined,
+    signal,
+    timeoutMs = 60000,
+  } = options;
+
   const ctrl = new AbortController();
   const t = setTimeout(() => ctrl.abort(new DOMException('Timeout', 'AbortError')), timeoutMs);
 
-  const res = await fetch(url, {
+  const res = await fetch(ABS(path), {
     method,
     mode: 'cors',
     headers,
@@ -101,86 +105,94 @@ export function descargarBlob(nombre, blob) {
 }
 
 /* ================== Salud / Diagnóstico ================== */
-export async function ping()    { return jfetch('/api/ping'); }
-export async function envInfo() { return jfetch('/api/env');  }
-// Diagnóstico de backend (opcional si lo añadiste)
-export async function diagDoc() { return jfetch('/api/documentos/_diag'); }
+export const ping    = () => jfetch('/api/ping');
+export const envInfo = () => jfetch('/api/env');
+// (Opcional, si existe en tu backend)
+export const diagDoc = () => jfetch('/api/documentos/_diag');
 
 /* ================== Documentos ================== */
 
-// Listar
-export async function listarDocumentos() {
-  return jfetch('/api/documentos', { method: 'GET' });
-}
+// Listado general
+export const listarDocumentos = () =>
+  jfetch('/api/documentos', { method: 'GET' });
 
-// Búsqueda óptima/avanzada
-export async function buscarOptima(texto) {
-  return jfetch('/api/documentos/search', {
+// Búsqueda óptima / avanzada
+export const buscarOptimaAvanzada = (texto) =>
+  jfetch('/api/documentos/search', {
     method: 'POST',
     body: { texto },
   });
-}
-export const buscarOptimaAvanzada = buscarOptima;
 
-// Búsqueda por código
-export async function buscarPorCodigo(codigo, modo = 'exacto') {
-  return jfetch('/api/documentos/search_by_code', {
+// Búsqueda por código (exacto/like/prefijo)
+export const buscarPorCodigo = (codigo, modo = 'exacto') =>
+  jfetch('/api/documentos/search_by_code', {
     method: 'POST',
     body: { codigo, modo },
   });
-}
 
 // Sugerencias (prefijo)
-export async function sugerirCodigos(prefix, { signal } = {}) {
-  return jfetch('/api/documentos/search_by_code', {
+export const sugerirCodigos = (prefix, { signal } = {}) =>
+  jfetch('/api/documentos/search_by_code', {
     method: 'POST',
     body: { codigo: prefix, modo: 'prefijo' },
     signal,
   });
-}
 
 /* ================== CRUD ================== */
 
-// Subir documento con FormData (recomendado: el backend espera 'file')
-export async function subirDocumentoMultipart(formData) {
-  // No seteamos Content-Type: el navegador pone el boundary correcto
-  return jfetch('/api/documentos/upload', {
+// Subir documento con FormData (el backend espera 'file')
+export const subirDocumentoMultipart = (formData) =>
+  jfetch('/api/documentos/upload', {
     method: 'POST',
-    body: formData,
+    body: formData, // no seteamos Content-Type: el navegador pone el boundary
   });
-}
 
-// Wrapper JSON (solo si tu backend lo soporta; el actual requiere FormData)
-export async function subirDocumento(payload) {
-  return jfetch('/api/documentos/upload', {
+// (Compatibilidad) Subida vía JSON si tu backend lo soporta
+export const subirDocumento = (payload) =>
+  jfetch('/api/documentos/upload', {
     method: 'POST',
     body: payload,
   });
-}
 
 // Editar documento (PUT /api/documentos/:id)
-export async function editarDocumento(id, payload) {
-  return jfetch(`/api/documentos/${id}`, {
+export const editarDocumento = (id, payload) =>
+  jfetch(`/api/documentos/${id}`, {
     method: 'PUT',
-    body: payload, // puede ser JSON; el backend lo acepta como form o json
+    body: payload, // puede ser JSON o FormData
   });
-}
 
 // Eliminar documento (DELETE /api/documentos/:id)
-export async function eliminarDocumento(id /*, clave opcional */) {
-  return jfetch(`/api/documentos/${id}`, { method: 'DELETE' });
-}
+export const eliminarDocumento = (id) =>
+  jfetch(`/api/documentos/${id}`, { method: 'DELETE' });
 
-/* ================== Export (si el backend lo expone) ================== */
-// Nota: Tu backend actual no tiene estos endpoints; déjalos deshabilitados
-// o impleméntalos en el backend antes de usarlos.
-export async function descargarCSV({ q } = {}) {
+/* ================== Export (si tu backend lo expone) ================== */
+
+export const descargarCSV = ({ q } = {}) => {
   const qs = q ? `?q=${encodeURIComponent(q)}` : '';
-  const blob = await jfetchBlob(`/api/documentos/export/csv${qs}`, { method: 'GET' });
-  return blob;
-}
+  return jfetchBlob(`/api/documentos/export/csv${qs}`, { method: 'GET' });
+};
 
-export async function descargarZIP(payload) {
-  const blob = await jfetchBlob('/api/documentos/export/zip', {
+export const descargarZIP = (payload = {}) =>
+  jfetchBlob('/api/documentos/export/zip', {
     method: 'POST',
-    headers:
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+
+/* ================== Export por defecto (opcional) ================== */
+export default {
+  ping,
+  envInfo,
+  diagDoc,
+  listarDocumentos,
+  buscarOptimaAvanzada,
+  buscarPorCodigo,
+  sugerirCodigos,
+  subirDocumentoMultipart,
+  subirDocumento,
+  editarDocumento,
+  eliminarDocumento,
+  descargarCSV,
+  descargarZIP,
+  descargarBlob,
+};
