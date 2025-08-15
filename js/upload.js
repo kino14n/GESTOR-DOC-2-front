@@ -34,7 +34,8 @@ export function loadDocumentForEdit(docData) {
   // Mostrar info del PDF actual
   if (currentPdfInfo) {
     if (docData.path) {
-      currentPdfInfo.innerHTML = `PDF actual: <a href="uploads/${docData.path}" target="_blank">${docData.path}</a> (sube uno nuevo para reemplazar)`;
+      // Asumiendo que los archivos están en una carpeta 'uploads' accesible o se sirven desde una ruta específica
+      currentPdfInfo.innerHTML = `PDF actual: <a href="${config.API_BASE}/uploads/${docData.path}" target="_blank">${docData.path}</a> (sube uno nuevo para reemplazar)`;
     } else {
       currentPdfInfo.innerHTML = 'No hay PDF asociado.';
     }
@@ -54,30 +55,41 @@ export function initUploadForm() {
     const docId = form.querySelector('#docId').value.trim();
 
     const isEdit = docId !== '';
+    
+    // --- LÓGICA DE ENDPOINT CORREGIDA ---
+    // Usamos la URL completa y correcta para evitar ambigüedades.
     const endpoint = isEdit
-      ? `${config.API_BASE}/${docId}` // Usar config
-      : `${config.API_BASE}/upload`; // Usar config
+      ? `${config.API_BASE}/documentos/${docId}` // Para editar: /api/documentos/{id}
+      : `${config.API_BASE}/documentos/upload`;  // Para crear: /api/documentos/upload
+      
     const method = isEdit ? 'PUT' : 'POST';
 
     try {
+      // IMPORTANTE: No añadir 'Content-Type' en los headers, el navegador lo hace por ti con FormData.
       const res = await fetch(endpoint, { method, body: formData });
       const data = await res.json();
 
       if (res.ok && data.ok) {
-        showToast(isEdit ? 'Documento editado correctamente' : 'Documento subido correctamente');
+        showToast(isEdit ? 'Documento editado correctamente' : 'Documento subido correctamente', true);
         form.reset();
         form.querySelector('#docId').value = '';
         const currentPdfInfo = document.getElementById('currentPdfInfo');
         if (currentPdfInfo) currentPdfInfo.innerHTML = '';
+        
+        // Opcional: Recargar la lista de documentos si existe una función para ello
+        // if (typeof refreshDocumentList === 'function') {
+        //   refreshDocumentList();
+        // }
+
       } else {
-        showToast('Error: ' + (data.error || 'Desconocido'), false);
+        showToast('Error: ' + (data.error || 'Error desconocido del servidor'), false);
       }
     } catch (e) {
-      showToast('Error en la conexión', false);
-      console.error(e);
+      showToast('Error de conexión con el servidor. Revisa la consola.', false);
+      console.error('Error en fetch:', e);
     }
   });
 }
 
-// Haz global la función de edición para que consulta.js pueda llamarla:
+// Haz global la función de edición para que otros scripts puedan llamarla
 window.loadDocumentForEdit = loadDocumentForEdit;
