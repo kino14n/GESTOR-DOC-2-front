@@ -1,8 +1,11 @@
+// js/consulta.js
+
 import { listarDocumentos, eliminarDocumento } from './api.js';
 import { showModalConfirm } from './modals.js';
 import { showToast } from './toasts.js';
 import { bindCodeButtons } from './main.js';
 import { config } from './config.js';
+import { tenantConfig } from './tenant_config.js';
 
 // Contiene la lista actual de documentos para filtros o recargas
 let currentDocs = [];
@@ -43,8 +46,8 @@ function renderDocs(docs) {
           : '<span>Sin códigos.</span>'
       }</div>`;
 
-      // Genera el enlace para ver el PDF
-      const pdfLink = d.path ? `<a href="uploads/${d.path}" target="_blank" class="text-blue-600 hover:underline">Ver PDF</a>` : 'Sin PDF';
+      // Genera el enlace para ver el PDF usando la URL de R2
+      const pdfLink = d.path ? `<a href="${tenantConfig.r2PublicUrl}/${d.path}" target="_blank" class="text-blue-600 hover:underline">Ver PDF</a>` : 'Sin PDF';
 
       return `
         <div class="doc-item">
@@ -70,7 +73,7 @@ function renderDocs(docs) {
 // Editar documento y cambiar a pestaña “Subir”
 window.dispatchEdit = async id => {
   const res = await fetch(
-    `${config.API_BASE}/${id}`
+    `${config.API_BASE}/api/documentos/${id}`
   );
   const docData = await res.json();
   if (docData && !docData.error) {

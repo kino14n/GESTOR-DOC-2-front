@@ -1,6 +1,7 @@
-// GESTOR-DOC-2-front/js/api.js
+// js/api.js
 
 import { config } from './config.js';
+import { tenantConfig } from './tenant_config.js';
 
 // Normaliza la URL base de la API (sin / al final)
 const API_BASE = (config?.API_BASE || '').replace(/\/$/, '');
@@ -9,6 +10,7 @@ const ABS = (p) => (p.startsWith('http') ? p : `${API_BASE}${p}`);
 /**
  * Función genérica para hacer peticiones a la API.
  * Maneja JSON, timeouts y errores de forma automática.
+ * Además añade el encabezado X‑Tenant‑ID con el ID del cliente.
  */
 async function jfetch(path, options = {}) {
   const {
@@ -22,7 +24,8 @@ async function jfetch(path, options = {}) {
   const ctrl = new AbortController();
   const t = setTimeout(() => ctrl.abort(new DOMException('Timeout', 'AbortError')), timeoutMs);
 
-  let finalHeaders = { ...headers };
+  // Incluir siempre el identificador del inquilino en las cabeceras
+  const finalHeaders = { ...headers, 'X-Tenant-ID': tenantConfig.id };
   let finalBody = body;
 
   const isForm = typeof FormData !== 'undefined' && body instanceof FormData;
