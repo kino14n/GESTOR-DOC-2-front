@@ -80,7 +80,7 @@ export const diagDoc = () => jfetch('/api/documentos/_diag');
 
 // Listado general de todos los documentos
 export const listarDocumentos = () =>
-  jfetch('/api/documentos', { method: 'GET' });
+  jfetch('/api/documentos/', { method: 'GET' }); // <-- CORRECCIÓN APLICADA AQUÍ
 
 // Búsqueda "Inteligente"
 export const buscarOptimaAvanzada = (texto) =>
