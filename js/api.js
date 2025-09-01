@@ -10,7 +10,7 @@ const ABS = (p) => (p.startsWith('http') ? p : `${API_BASE}${p}`);
 /**
  * Función genérica para hacer peticiones a la API.
  * Maneja JSON, timeouts y errores de forma automática.
- * Además añade el encabezado X‑Tenant‑ID con el ID del cliente.
+ * Además añade el encabezado X-Tenant-ID con el ID del cliente.
  */
 async function jfetch(path, options = {}) {
   const {
@@ -22,15 +22,22 @@ async function jfetch(path, options = {}) {
   } = options;
 
   const ctrl = new AbortController();
-  const t = setTimeout(() => ctrl.abort(new DOMException('Timeout', 'AbortError')), timeoutMs);
+  const t = setTimeout(
+    () => ctrl.abort(new DOMException('Timeout', 'AbortError')),
+    timeoutMs
+  );
 
   // Incluir siempre el identificador del inquilino en las cabeceras
-  const finalHeaders = { ...headers, 'X-Tenant-ID': tenantConfig.id };
-  let finalBody = body;
+  const finalHeaders = { ...headers };
+  finalHeaders['X-Tenant-ID'] = tenantConfig.id;
 
+  let finalBody = body;
   const isForm = typeof FormData !== 'undefined' && body instanceof FormData;
+
+  // Si no es FormData ni string ni Blob → serializa como JSON
   if (body && !isForm && typeof body !== 'string' && !(body instanceof Blob)) {
-    if (!finalHeaders['Content-Type']) finalHeaders['Content-Type'] = 'application/json';
+    if (!finalHeaders['Content-Type'])
+      finalHeaders['Content-Type'] = 'application/json';
     finalBody = JSON.stringify(body);
   }
 
@@ -60,10 +67,9 @@ async function jfetch(path, options = {}) {
     if (ct.includes('application/json')) return res.json();
     if (res.status === 204) return null;
     return res.text();
-
   } catch (err) {
     console.error(`Error en jfetch para ${path}:`, err);
-    throw err; // Re-lanza el error para que el código que llamó a jfetch pueda manejarlo
+    throw err; // Re-lanza para que el código llamador maneje el error
   }
 }
 
@@ -80,7 +86,7 @@ export const diagDoc = () => jfetch('/api/documentos/_diag');
 
 // Listado general de todos los documentos
 export const listarDocumentos = () =>
-  jfetch('/api/documentos/', { method: 'GET' }); // <-- CORRECCIÓN APLICADA AQUÍ
+  jfetch('/api/documentos/', { method: 'GET' });
 
 // Búsqueda "Inteligente"
 export const buscarOptimaAvanzada = (texto) =>
@@ -104,7 +110,7 @@ export const sugerirCodigos = (prefix, { signal } = {}) =>
     signal,
   });
 
-/* ------------------ Operaciones CRUD (Crear, Leer, Actualizar, Eliminar) ------------------ */
+/* ------------------ Operaciones CRUD ------------------ */
 
 // Subir un nuevo documento
 export const subirDocumentoMultipart = (formData) =>
