@@ -1,10 +1,9 @@
 // js/consulta.js
 
-import { listarDocumentos, eliminarDocumento } from './api.js';
+import { listarDocumentos, eliminarDocumento, obtenerDocumento } from './api.js';
 import { showModalConfirm } from './modals.js';
 import { showToast } from './toasts.js';
 import { bindCodeButtons } from './main.js';
-import { config } from './config.js';
 import { tenantConfig } from './tenant_config.js';
 
 // Contiene la lista actual de documentos para filtros o recargas
@@ -58,8 +57,8 @@ function renderDocs(docs) {
             <p class="text-sm mt-2">${pdfLink}</p>
           </div>
           <div class="doc-item-actions">
-            <button class="btn btn--secondary btn--full-width" onclick="dispatchEdit(${d.id})">Editar</button>
-            <button class="btn btn--warning btn--full-width" onclick="eliminarDoc(${d.id})">Eliminar</button>
+            <button class="btn btn--secondary btn--full-width" data-action="edit" data-id="${d.id}">Editar</button>
+            <button class="btn btn--warning btn--full-width" data-action="delete" data-id="${d.id}">Eliminar</button>
             <button class="btn btn--secondary btn--full-width btn-ver-codigos" data-codes-id="${codesId}">Ver Códigos</button>
           </div>
           ${codesListHtml}
@@ -67,35 +66,89 @@ function renderDocs(docs) {
       `;
     })
     .join('');
+
+  // Delegación de eventos para Editar / Eliminar
+  container.addEventListener('click', onListClick, { once: true });
 }
 
+async function onListClick(ev) {
+  const btn = ev.target.closest('button[data-action]');
+  if (!btn) return;
 
-// Editar documento y cambiar a pestaña “Subir”
-window.dispatchEdit = async id => {
-  const res = await fetch(
-    `${config.API_BASE}/api/documentos/${id}`
-  );
-  const docData = await res.json();
-  if (docData && !docData.error) {
-    if (window.loadDocumentForEdit) {
-      window.loadDocumentForEdit(docData);
-    } else if (typeof loadDocumentForEdit === 'function') {
-      loadDocumentForEdit(docData);
-    } else {
-      document.dispatchEvent(new CustomEvent('load-edit', { detail: docData }));
-    }
-    window.showTab('tab-upload');
-  } else {
-    showToast('Error al cargar el documento', false);
+  const id = btn.getAttribute('data-id');
+  const action = btn.getAttribute('data-action');
+
+  if (action === 'delete') {
+    showModalConfirm('¿Eliminar documento?', async () => {
+      try {
+        await eliminarDocumento(id);
+        showToast('Documento eliminado', 'success');
+        cargarConsulta();
+      } catch {
+        showToast('No se pudo eliminar', 'error');
+      }
+    });
+    return;
   }
-};
+
+  if (action === 'edit') {
+    try {
+      // Usa la API que incluye X-Tenant-ID mediante jfetch
+      const d = await obtenerDocumento(id);
+      if (!d || d.error) throw new Error(d?.error || 'No se pudo cargar');
+
+      // Cambia a la pestaña "Subir"
+      if (window.showTab) window.showTab('tab-upload');
+
+      // Llena el formulario de subida/edición
+      const inputNombre = document.getElementById('nombre') || document.getElementById('input-nombre');
+      const inputFecha  = document.getElementById('fecha')  || document.getElementById('input-fecha');
+      const inputCods   = document.getElementById('codigos')|| document.getElementById('input-codigos');
+      if (inputNombre) inputNombre.value = d.name || '';
+      if (inputFecha)  inputFecha.value  = d.date || '';
+      if (inputCods)   inputCods.value   = (d.codigos_extraidos || '')
+        .split(',')
+        .map(s => s.trim())
+        .filter(Boolean)
+        .join('\n');
+
+      // Muestra enlace del PDF actual
+      const a = document.getElementById('link-pdf-actual');
+      if (a) {
+        if (d.path) {
+          a.href = `${tenantConfig.r2PublicUrl}/${d.path}`;
+          a.textContent = 'PDF actual';
+          a.target = '_blank';
+          a.classList.remove('hidden');
+        } else {
+          a.removeAttribute('href');
+          a.textContent = 'Sin PDF';
+          a.classList.remove('hidden');
+        }
+      }
+
+      // (Opcional) puedes guardar el id en un hidden si luego implementas PUT:
+      // let hidden = document.getElementById('doc-id');
+      // if (!hidden) {
+      //   hidden = document.createElement('input');
+      //   hidden.type = 'hidden';
+      //   hidden.id = 'doc-id';
+      //   document.getElementById('upload-form')?.appendChild(hidden);
+      // }
+      // hidden.value = d.id;
+
+    } catch (e) {
+      console.error(e);
+      showToast('Error al cargar el documento', 'error');
+    }
+  }
+}
 
 // Filtros cliente-side
 window.clearConsultFilter = () => {
   const input = document.getElementById('consultFilterInput');
   if (input) input.value = '';
   renderDocs(currentDocs);
-  // Volver a vincular los eventos de los botones después de filtrar
   const listEl = document.getElementById('results-list');
   if (listEl) bindCodeButtons(listEl);
 };
@@ -109,23 +162,9 @@ window.doConsultFilter = () => {
       (d.path || '').toLowerCase().includes(term)
     )
   );
-  // Vincular eventos a los botones en el resultado filtrado
   const listEl = document.getElementById('results-list');
   if (listEl) bindCodeButtons(listEl);
 };
 
 window.downloadCsv = () => window.open(`/api/documentos?format=csv`, '_blank');
 window.downloadPdfs = id => window.open(`/api/documentos?format=pdf&id=${id}`, '_blank');
-
-// Confirma eliminación y recarga la lista
-window.eliminarDoc = id => {
-  showModalConfirm('¿Eliminar documento?', async () => {
-    try {
-      await eliminarDocumento(id);
-      showToast('Documento eliminado', 'success');
-      cargarConsulta();
-    } catch {
-      showToast('No se pudo eliminar', 'error');
-    }
-  });
-};
