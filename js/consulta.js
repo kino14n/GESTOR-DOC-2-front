@@ -101,9 +101,10 @@ async function onListClick(ev) {
       if (window.showTab) window.showTab('tab-upload');
 
       // Llena el formulario de subida/edición
-      const inputNombre = document.getElementById('nombre') || document.getElementById('input-nombre');
-      const inputFecha  = document.getElementById('fecha')  || document.getElementById('input-fecha');
-      const inputCods   = document.getElementById('codigos')|| document.getElementById('input-codigos');
+      const inputNombre = document.getElementById('name');
+      const inputFecha  = document.getElementById('date');
+      const inputCods   = document.getElementById('codes');
+      
       if (inputNombre) inputNombre.value = d.name || '';
       if (inputFecha)  inputFecha.value  = d.date || '';
       if (inputCods)   inputCods.value   = (d.codigos_extraidos || '')
