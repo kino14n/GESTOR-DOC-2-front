@@ -119,6 +119,12 @@ export const subirDocumentoMultipart = (formData) =>
     body: formData, // FormData establece su propio Content-Type
   });
 
+
+  // Obtener un solo documento por su ID
+export const obtenerDocumento = (id) =>
+  jfetch(`/api/documentos/${id}`, { method: 'GET' });
+  
+
 // Editar un documento existente
 export const editarDocumento = (id, payload) =>
   jfetch(`/api/documentos/${id}`, {
