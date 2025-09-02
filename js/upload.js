@@ -5,23 +5,21 @@
  * - Normaliza la fecha a YYYY-MM-DD (acepta múltiples formatos).
  * - Envía FormData al backend /api/documentos/upload.
  * - Muestra toasts de éxito/error.
+ * - EXPONE: export function initUploadForm()
  * ============================================================ */
 
 /* =========================
  * Configuración del API
- * =========================
- * Puedes ajustar API_BASE si usas un dominio distinto.
- * Por defecto usa ruta relativa (mismo host/gh-pages) hacia el backend.
- */
+ * ========================= */
 const API_BASE =
   window.API_BASE ||
-  (typeof getApiBase === "function" ? getApiBase() : "") || // por si existe api.js con getApiBase()
-  ""; // relativo (ej. https://gestor-doc-backend-production.up.railway.app proxied con /api)
+  (typeof getApiBase === "function" ? getApiBase() : "") ||
+  "";
 
 /* =========================
  * Utilidades UI (toasts)
  * ========================= */
-function createToastContainer() {
+function ensureToastContainer() {
   let c = document.getElementById("toast-container");
   if (!c) {
     c = document.createElement("div");
@@ -38,8 +36,8 @@ function createToastContainer() {
   return c;
 }
 
-function showToast(message, type = "error", timeout = 4000) {
-  const container = createToastContainer();
+function toast(msg, type = "error", ms = 4000) {
+  const c = ensureToastContainer();
   const box = document.createElement("div");
   box.style.minWidth = "260px";
   box.style.maxWidth = "360px";
@@ -53,13 +51,13 @@ function showToast(message, type = "error", timeout = 4000) {
   box.style.border = "1px solid transparent";
   box.style.background =
     type === "success" ? "#16a34a" : type === "warn" ? "#f59e0b" : "#dc2626";
-  box.textContent = message;
-  container.appendChild(box);
+  box.textContent = msg;
+  c.appendChild(box);
   setTimeout(() => {
     box.style.transition = "opacity .25s ease";
     box.style.opacity = "0";
-    setTimeout(() => container.removeChild(box), 300);
-  }, timeout);
+    setTimeout(() => c.removeChild(box), 300);
+  }, ms);
 }
 
 /* =========================
@@ -67,62 +65,38 @@ function showToast(message, type = "error", timeout = 4000) {
  * =========================
  * Devuelve YYYY-MM-DD o null si no puede convertir.
  */
-function normalizeDate(inputValue) {
-  if (!inputValue) return null;
-  const raw = String(inputValue).trim();
+function normalizeDate(value) {
+  if (!value) return null;
+  const raw = String(value).trim();
 
-  // Si ya viene en ISO (value de <input type="date">)
-  // Chrome/Safari/Edge envían exactamente YYYY-MM-DD
-  const isoMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(raw);
-  if (isoMatch) return raw;
+  // ISO nativo de <input type="date">
+  if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) return raw;
 
-  const tryParse = (str, fmt) => {
-    // fmt: "DMY", "MDY" con separador "/" o "-"
+  const tryParse = (str, order) => {
     const sep = str.includes("/") ? "/" : "-";
     const parts = str.split(sep).map((x) => x.trim());
     if (parts.length !== 3) return null;
 
     let d, m, y;
-    if (fmt === "DMY") {
-      [d, m, y] = parts;
-    } else if (fmt === "MDY") {
-      [m, d, y] = parts;
-    } else {
-      return null;
-    }
-    if (!/^\d{1,2}$/.test(d) || !/^\d{1,2}$/.test(m) || !/^\d{4}$/.test(y)) {
-      return null;
-    }
-    // Normalizar con ceros a la izquierda
+    if (order === "DMY") [d, m, y] = parts;
+    else if (order === "MDY") [m, d, y] = parts;
+    else return null;
+
+    if (!/^\d{1,2}$/.test(d) || !/^\d{1,2}$/.test(m) || !/^\d{4}$/.test(y)) return null;
+
     const dd = d.padStart(2, "0");
     const mm = m.padStart(2, "0");
+    const nY = +y, nM = +mm, nD = +dd;
+    if (nY < 1900 || nY > 9999 || nM < 1 || nM > 12 || nD < 1 || nD > 31) return null;
 
-    // Validación básica de rango
-    const nY = Number(y),
-      nM = Number(mm),
-      nD = Number(dd);
-    if (nY < 1900 || nY > 9999 || nM < 1 || nM > 12 || nD < 1 || nD > 31) {
-      return null;
-    }
-
-    // Check de fecha real
     const dt = new Date(`${y}-${mm}-${dd}T00:00:00Z`);
-    if (
-      !dt ||
-      Number.isNaN(dt.getTime()) ||
-      dt.getUTCFullYear() !== nY ||
-      dt.getUTCMonth() + 1 !== nM ||
-      dt.getUTCDate() !== nD
-    ) {
-      return null;
-    }
+    if (!dt || Number.isNaN(dt.getTime())) return null;
+    if (dt.getUTCFullYear() !== nY || dt.getUTCMonth() + 1 !== nM || dt.getUTCDate() !== nD) return null;
 
     return `${y}-${mm}-${dd}`;
   };
 
-  // Soportar: DD/MM/YYYY, DD-MM-YYYY
   if (/^\d{1,2}[\/-]\d{1,2}[\/-]\d{4}$/.test(raw)) {
-    // Probar DMY primero (lo más común en ES), si falla intenta MDY
     return tryParse(raw, "DMY") || tryParse(raw, "MDY");
   }
 
@@ -132,13 +106,11 @@ function normalizeDate(inputValue) {
 /* =========================
  * Helpers DOM
  * ========================= */
-function $(sel) {
-  return document.querySelector(sel);
-}
+const $ = (sel) => document.querySelector(sel);
 function getVal(...selectors) {
   for (const s of selectors) {
     const el = $(s);
-    if (el && typeof el.value !== "undefined") return el.value;
+    if (el && "value" in el) return el.value;
   }
   return "";
 }
@@ -151,108 +123,82 @@ function getFile(...selectors) {
 }
 
 /* =========================
- * Subida de documento
+ * Lógica principal de subida
  * ========================= */
-async function uploadDocument(e) {
-  if (e && typeof e.preventDefault === "function") e.preventDefault();
+async function handleUpload(e) {
+  if (e?.preventDefault) e.preventDefault();
 
   try {
-    // 1) Leer campos (tolerante a distintos IDs)
     const name =
-      getVal("#name", "#nombre", "input[name='name']", "input[name='nombre']") ||
-      "";
+      getVal("#name", "#nombre", "input[name='name']", "input[name='nombre']") || "";
     const dateRaw = getVal("#date", "input[name='date']", "input[name='fecha']");
     const codes =
-      getVal("#codes", "#codigos", "textarea[name='codes']", "textarea[name='codigos']") ||
-      "";
+      getVal("#codes", "#codigos", "textarea[name='codes']", "textarea[name='codigos']") || "";
     const pdf = getFile("#pdf", "input[type='file']");
 
     if (!name.trim()) {
-      showToast("El nombre es obligatorio.", "error");
+      toast("El nombre es obligatorio.", "error");
       return;
     }
     if (!pdf) {
-      showToast("Debes seleccionar un PDF.", "error");
+      toast("Debes seleccionar un PDF.", "error");
       return;
     }
 
-    // 2) Normalizar fecha a ISO (YYYY-MM-DD)
     const dateISO = normalizeDate(dateRaw);
     if (!dateISO) {
-      showToast(
-        "Formato de fecha no válido; utilice YYYY-MM-DD o DD/MM/YYYY.",
-        "error"
-      );
+      toast("Formato de fecha no válido; utilice YYYY-MM-DD o DD/MM/YYYY.", "error");
       return;
     }
 
-    // 3) Construir FormData
     const fd = new FormData();
     fd.append("name", name);
-    fd.append("date", dateISO);     // clave 'date' (preferida)
-    fd.append("fecha", dateISO);    // y 'fecha' por compatibilidad backend
+    fd.append("date", dateISO);   // clave preferida
+    fd.append("fecha", dateISO);  // compatibilidad
     fd.append("codigos", codes);
     fd.append("pdf", pdf);
 
-    // 4) POST al backend
-    // Si tu backend está detrás de un path /api, mantenlo.
     const url = `${API_BASE}/api/documentos/upload`.replace(/\/{2,}/g, "/");
-    const resp = await fetch(url, {
-      method: "POST",
-      body: fd,
-    });
+    const resp = await fetch(url, { method: "POST", body: fd });
 
-    // 5) Manejo de respuesta
     const isJson = resp.headers.get("content-type")?.includes("application/json");
     const data = isJson ? await resp.json() : await resp.text();
 
     if (!resp.ok) {
-      // Mensaje legible
       const msg =
         (data && data.error) ||
         (typeof data === "string" && data) ||
         `Error ${resp.status}`;
-      showToast(`Error al subir: ${msg}`, "error");
+      toast(`Error al subir: ${msg}`, "error");
       return;
     }
 
-    // Éxito
-    showToast("Documento subido correctamente.", "success");
-
-    // 6) Opcional: limpiar formulario
-    const form = $("#upload-form");
-    if (form) form.reset();
+    toast("Documento subido correctamente.", "success");
+    $("#upload-form")?.reset();
   } catch (err) {
     console.error(err);
-    showToast("Error inesperado al subir el documento.", "error");
+    toast("Error inesperado al subir el documento.", "error");
   }
 }
 
 /* =========================
- * Enlazar eventos
+ * Enlace de eventos
  * =========================
- * - Botón Guardar con id #btn-upload (si existe).
- * - Submit del form con id #upload-form (si existe).
+ * Exportamos initUploadForm para que main.js pueda importarlo.
  */
-function bindUploadEvents() {
+export function initUploadForm() {
   const form = $("#upload-form");
-  if (form) {
-    form.addEventListener("submit", uploadDocument);
+  if (form && !form.__uploadBound) {
+    form.addEventListener("submit", handleUpload);
+    form.__uploadBound = true;
   }
-
   const btn = $("#btn-upload");
-  if (btn) {
-    btn.addEventListener("click", uploadDocument);
+  if (btn && !btn.__uploadBound) {
+    btn.addEventListener("click", handleUpload);
+    btn.__uploadBound = true;
   }
+  return { handleUpload };
 }
 
-// Auto-inicializar cuando el DOM esté listo
-if (document.readyState === "loading") {
-  document.addEventListener("DOMContentLoaded", bindUploadEvents);
-} else {
-  bindUploadEvents();
-}
-
-/* ============================================================
- * Fin de upload.js
- * ============================================================ */
+/* Export por defecto opcional */
+export default { initUploadForm };
