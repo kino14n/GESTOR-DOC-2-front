@@ -1,260 +1,314 @@
 <!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="google" content="notranslate" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
-  <meta http-equiv="Pragma" content="no-cache" />
-  <meta http-equiv="Expires" content="0" />
-  <script src="https://cdn.tailwindcss.com"></script>
-  <title>Gestor de Documentos - Kino Company SAS</title>
-  <link href="css/main.css" rel="stylesheet" />
-  <link href="css/modals.css" rel="stylesheet" />
-  <link rel="icon" href="data:," />
-  <style>
-    /* Estilos del modal y generales */
-    .overlay { position: fixed; top:0; left:0; width:100vw; height:100vh; background: rgba(0,0,0,0.6); display:flex; align-items:center; justify-content:center; z-index:9999; }
-    .overlay.hidden { display:none; }
-    .modal { background:white; border-radius:0.5rem; max-width:320px; width:90%; padding:1.5rem; box-shadow:0 7px 32px 0 #ef444430;
-    min-width: 270px;
-    max-width: 410px;
-    animation: cardPop .23s cubic-bezier(.74,-0.1,.44,1.6);
-    position: relative;
-    z-index: 1010; }
-    .modal input, .modal button { font-size:1rem; }
-    .modal input { width:100%; padding:0.5rem; margin-top:0.5rem; border:1px solid #ccc; border-radius:0.25rem; }
-    .modal button { margin-top:1rem; }
-    #toast-container { position:fixed; top:1rem; left:50%; transform:translateX(-50%); display:flex; flex-direction:column; gap:0.5rem; z-index:10000; }
-    .toast { min-width:240px; max-width:480px; background-color:#2563EB; color:white; padding:1rem 1.5rem; border-radius:0.375rem; box-shadow:0 2px 6px rgba(0,0,0,0.2); display:flex; align-items:center; justify-content:space-between; font-size:1.125rem; }
-    .toast button { background:transparent; border:none; color:white; font-weight:bold; margin-left:1rem; cursor:pointer; font-size:1.125rem; }
-    #confirmOverlay, #deleteOverlay { position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.6); display:flex; align-items:center; justify-content:center; z-index:10001; }
-    #confirmOverlay.hidden { display:none; }
-    .modal.confirm, .modal.deleteKey { background:white; border-radius:0.5rem; padding:1.5rem; max-width:320px; width:90%; box-shadow:0 2px 10px rgba(0,0,0,0.3); text-align:center; }
-    .modal.confirm p { margin-bottom:1rem; }
-    .modal.confirm button, .modal.deleteKey button { margin:0.5rem; padding:0.5rem 1rem; font-size:1rem; border-radius:0.25rem; }
-    .tab.active { border-bottom:2px solid #F87171; color:#F87171; }
-    .button-group { display: flex; flex-direction: column; align-items: stretch; gap: 5px; }
-    :root {
-      --btn-padding: 0.5rem 1rem;
-      --btn-radius: 0.375rem;
-      --btn-font-size: 1rem;
-      --btn-transition: background-color .2s;
-      --color-primary: #F87171;
-      --color-primary-hover: #DC2626;
-      --color-secondary: #D1D5DB;
-      --color-secondary-hover: #9CA3AF;
-      --color-dark: #374151;
-      --color-dark-hover: #1F2937;
-      --color-warning: #8B5E5E;
-      --color-warning-hover: #6B4542;
-      --color-on-light: #1F2937;
-      --color-on-dark: #FFFFFF;
-    }
-    .btn { padding: var(--btn-padding); border-radius: var(--btn-radius); font-size: var(--btn-font-size); transition: var(--btn-transition); border: none; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
-    .btn--primary { background: var(--color-primary); color: var(--color-on-dark); }
-    .btn--primary:hover { background: var(--color-primary-hover); }
-    .btn--secondary { background: var(--color-secondary); color: var(--color-on-light); }
-    .btn--secondary:hover { background: var(--color-secondary-hover); }
-    .btn--dark { background: var(--color-dark); color: var(--color-on-dark); }
-    .btn--dark:hover { background: var(--color-dark-hover); }
-    .btn--warning { background: var(--color-warning); color: var(--color-on-dark); }
-    .btn--warning:hover { background: var(--color-warning-hover); }
-    .btn--full { width: 100%; }
-    .btn--flex1 { flex: 1; }
-    @media (max-width: 1024px) {
-      .max-w-4xl { max-width: 90%; }
-    }
-    @media (max-width: 768px) {
-      #tabs { flex-direction: column; }
-      .flex.gap-4 { flex-direction: column; }
-      .p-6 { padding: 1rem; }
-    }
-    @media (max-width: 480px) {
-      h1.text-2xl { font-size: 1.5rem; }
-      .modal { max-width: 95%; padding: 1rem; }
-      .btn { padding: 0.5rem; font-size: 0.875rem; }
-      textarea, input { font-size: 0.875rem; }
-    }
-    #suggestions {
-      position: absolute;
-      top: 100%;
-      left: 0;
-      right: 0;
-      background: white;
-      border: 1px solid #e5e7eb;
-      border-top: none;
-      border-radius: 0 0 .375rem .375rem;
-      max-height: 12rem;
-      overflow-y: auto;
-      z-index: 9999;
-    }
-    #suggestions div:hover {
-      background-color: #f3f4f6;
-      cursor: pointer;
-    }
-    .hidden {
-      display: none !important;
-    }
-    .doc-item {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 0.75rem;
-      border: 1px solid #e5e7eb;
-      border-radius: 0.5rem;
-      flex-wrap: wrap;
-    }
-    .doc-item .actions {
-      display: flex;
-      gap: 0.5rem;
-      margin-left: auto;
-    }
-    .codes-list {
-      flex-basis: 100%;
-      margin-top: 0.75rem;
-      padding: 0.5rem;
-      background-color: #f9fafb;
-      border-radius: 0.375rem;
-    }
-    .code-item {
-      padding: 0.25rem 0;
-    }
-    .btn-small {
-      font-size: 0.75rem;
-      padding: 0.2rem 0.5rem;
-    }
-  </style>
-</head>
-<body class="bg-gray-100 min-h-screen flex items-start justify-center p-6">
+    <html lang="es">
+    <head>
+      <meta charset="UTF-8" />
+      <meta name="google" content="notranslate" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <meta http-equiv="Cache-Control" content="no-cache, no-store, must-
+revalidate" />
+      <meta http-equiv="Pragma" content="no-cache" />
+      <meta http-equiv="Expires" content="0" />
+      <script src="https://cdn.tailwindcss.com"></script>
+      <title>Gestor de Documentos - Kino Company SAS</title>
+      <link href="css/main.css" rel="stylesheet" />
+      <link href="css/modals.css" rel="stylesheet" />
+      <link rel="icon" href="data:," />
+      <style>
+        /* Estilos del modal y generales */
+        .overlay { position: fixed; top:0; left:0; width:100vw; height:100vh; 
+background: rgba(0,0,0,0.6); display:flex; align-items:center; justify-
+content:center; z-index:9999; }
+        .overlay.hidden { display:none; }
+        .modal { background:white; border-radius:0.5rem; max-width:320px; 
+width:90%; padding:1.5rem; box-shadow:0 7px 32px 0 #ef444430;
+        min-width: 270px;
+        max-width: 410px;
+        animation: cardPop .23s cubic-bezier(.74,-0.1,.44,1.6);
+        position: relative;
+        z-index: 1010; }
+        .modal input, .modal button { font-size:1rem; }
+        .modal input { width:100%; padding:0.5rem; margin-top:0.5rem; border:1px
+ solid #ccc; border-radius:0.25rem; }
+        .modal button { margin-top:1rem; }
+        #toast-container { position:fixed; top:1rem; left:50%; 
+transform:translateX(-50%); display:flex; flex-direction:column; gap:0.5rem; 
+z-index:10000; }
+        .toast { min-width:240px; max-width:480px; background-color:#2563EB; 
+color:white; padding:1rem 1.5rem; border-radius:0.375rem; box-shadow:0 2px 6px 
+rgba(0,0,0,0.2); display:flex; align-items:center; justify-content:space-
+between; font-size:1.125rem; }
+        .toast button { background:transparent; border:none; color:white; font-
+weight:bold; margin-left:1rem; cursor:pointer; font-size:1.125rem; }
+        #confirmOverlay, #deleteOverlay { position:fixed; top:0; left:0; 
+width:100vw; height:100vh; background:rgba(0,0,0,0.6); display:flex; align-
+items:center; justify-content:center; z-index:10001; }
+        #confirmOverlay.hidden { display:none; }
+        .modal.confirm, .modal.deleteKey { background:white; border-
+radius:0.5rem; padding:1.5rem; max-width:320px; width:90%; box-shadow:0 2px 10px
+ rgba(0,0,0,0.3); text-align:center; }
+        .modal.confirm p { margin-bottom:1rem; }
+        .modal.confirm button, .modal.deleteKey button { margin:0.5rem; 
+padding:0.5rem 1rem; font-size:1rem; border-radius:0.25rem; }
+        .tab.active { border-bottom:2px solid #F87171; color:#F87171; }
+        .button-group { display: flex; flex-direction: column; align-items: 
+stretch; gap: 5px; }
+        :root {
+          --btn-padding: 0.5rem 1rem;
+          --btn-radius: 0.375rem;
+          --btn-font-size: 1rem;
+          --btn-transition: background-color .2s;
+          --color-primary: #F87171;
+          --color-primary-hover: #DC2626;
+          --color-secondary: #D1D5DB;
+          --color-secondary-hover: #9CA3AF;
+          --color-dark: #374151;
+          --color-dark-hover: #1F2937;
+          --color-warning: #8B5E5E;
+          --color-warning-hover: #6B4542;
+          --color-on-light: #1F2937;
+          --color-on-dark: #FFFFFF;
+        }
+        .btn { padding: var(--btn-padding); border-radius: var(--btn-radius); 
+font-size: var(--btn-font-size); transition: var(--btn-transition); border: 
+none; cursor: pointer; display: inline-flex; align-items: center; justify-
+content: center; }
+        .btn--primary { background: var(--color-primary); color: var(--color-on-
+dark); }
+        .btn--primary:hover { background: var(--color-primary-hover); }
+        .btn--secondary { background: var(--color-secondary); color: 
+var(--color-on-light); }
+        .btn--secondary:hover { background: var(--color-secondary-hover); }
+        .btn--dark { background: var(--color-dark); color: var(--color-on-dark);
+ }
+        .btn--dark:hover { background: var(--color-dark-hover); }
+        .btn--warning { background: var(--color-warning); color: var(--color-on-
+dark); }
+        .btn--warning:hover { background: var(--color-warning-hover); }
+        .btn--full { width: 100%; }
+        .btn--flex1 { flex: 1; }
+        @media (max-width: 1024px) {
+          .max-w-4xl { max-width: 90%; }
+        }
+        @media (max-width: 768px) {
+          #tabs { flex-direction: column; }
+          .flex.gap-4 { flex-direction: column; }
+          .p-6 { padding: 1rem; }
+        }
+        @media (max-width: 480px) {
+          h1.text-2xl { font-size: 1.5rem; }
+          .modal { max-width: 95%; padding: 1rem; }
+          .btn { padding: 0.5rem; font-size: 0.875rem; }
+          textarea, input { font-size: 0.875rem; }
+        }
+        #suggestions {
+          position: absolute;
+          top: 100%;
+          left: 0;
+          right: 0;
+          background: white;
+          border: 1px solid #e5e7eb;
+          border-top: none;
+          border-radius: 0 0 .375rem .375rem;
+          max-height: 12rem;
+          overflow-y: auto;
+          z-index: 9999;
+        }
+        #suggestions div:hover {
+          background-color: #f3f4f6;
+          cursor: pointer;
+        }
+        .hidden {
+          display: none !important;
+        }
+        .doc-item {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 0.75rem;
+          border: 1px solid #e5e7eb;
+          border-radius: 0.5rem;
+          flex-wrap: wrap;
+        }
+        .doc-item .actions {
+          display: flex;
+          gap: 0.5rem;
+          margin-left: auto;
+        }
+        .codes-list {
+          flex-basis: 100%;
+          margin-top: 0.75rem;
+          padding: 0.5rem;
+          background-color: #f9fafb;
+          border-radius: 0.375rem;
+        }
+        .code-item {
+          padding: 0.25rem 0;
+        }
+        .btn-small {
+          font-size: 0.75rem;
+          padding: 0.2rem 0.5rem;
+        }
+      </style>
+    </head>
+    <body class="bg-gray-100 min-h-screen flex items-start justify-center p-6">
 
-  <div id="loginOverlay" class="overlay">
-    <div class="modal">
-      <h2 class="text-xl font-semibold">Acceso Restringido</h2>
-      <p class="mt-2 text-gray-700">Ingrese su número de acceso:</p>
-      <input id="accessInput" type="password" placeholder="Número de acceso" />
-      <button id="submitAccess" class="btn btn--primary btn--full">Enviar</button>
-      <p id="errorMsg" class="mt-2 text-red-500 hidden">Número incorrecto. Intente de nuevo.</p>
-    </div>
-  </div>
-
-  <div id="confirmOverlay" class="overlay hidden">
-    <div id="confirmBox" class="modal confirm">
-      <p id="confirmMsg">¿Confirmar acción?</p>
-      <button id="confirmOk" class="btn btn--primary">Aceptar</button>
-      <button id="confirmCancel" class="btn btn--secondary">Cancelar</button>
-    </div>
-  </div>
-
-  <div id="deleteOverlay" class="overlay hidden">
-    <div class="modal deleteKey">
-      <h2 class="text-xl font-semibold">Clave de Eliminación</h2>
-      <p class="mt-2 text-gray-700">Ingrese la clave para eliminar:</p>
-      <input id="deleteKeyInput" type="password" placeholder="Clave de borrado" class="mt-2 w-full border rounded px-3 py-2" />
-      <p id="deleteKeyError" class="mt-2 text-red-500 hidden">Clave incorrecta.</p>
-      <button id="deleteKeyOk" class="btn btn--primary btn--full">Enviar</button>
-      <button id="deleteKeyCancel" class="btn btn--secondary btn--full">Cancelar</button>
-    </div>
-  </div>
-
-  <div id="toast-container"></div>
-
-  <div id="modals"></div>
-
-  <div id="mainContent" class="w-full max-w-4xl bg-white rounded-2xl shadow-lg hidden">
-    <div class="bg-white border-b">
-      <h1 class="text-2xl font-bold text-center py-4">Gestor de Documentos V1</h1>
-    </div>
-
-    <nav class="border-b bg-white shadow-sm">
-      <ul id="tabs" class="flex">
-        <li class="tab flex-1 text-center cursor-pointer px-6 py-4 active" data-tab="tab-search">Buscar</li>
-        <li class="tab flex-1 text-center cursor-pointer px-6 py-4" data-tab="tab-upload">Subir</li>
-        <li class="tab flex-1 text-center cursor-pointer px-6 py-4" data-tab="tab-list">Consultar</li>
-        <li class="tab flex-1 text-center cursor-pointer px-6 py-4" data-tab="tab-code">Buscar por Código</li>
-      </ul>
-    </nav>
-
-    <div class="p-6 space-y-6">
-      <div id="tab-search" class="tab-content">
-        <h2 class="text-xl font-semibold mb-4">Búsqueda Óptima (Inteligente)</h2>
-        <textarea id="optimaSearchInput" rows="5" class="w-full border rounded px-3 py-2 text-lg mb-4" placeholder="Pega aquí uno o varios códigos, nombres o bloques de texto…"></textarea>
-        <div class="flex gap-4 mb-4">
-          <button id="doOptimaSearchButton" class="btn btn--primary btn--flex1 text-lg">Buscar</button>
-          <button id="clearOptimaSearchButton" class="btn btn--secondary btn--flex1 text-lg">Limpiar</button>
+      <div id="loginOverlay" class="overlay">
+        <div class="modal">
+          <h2 class="text-xl font-semibold">Acceso Restringido</h2>
+          <p class="mt-2 text-gray-700">Ingrese su número de acceso:</p>
+          <input id="accessInput" type="password" placeholder="Número de acceso"
+ />
+          <button id="submitAccess" class="btn btn--primary btn--
+full">Enviar</button>
+          <p id="errorMsg" class="mt-2 text-red-500 hidden">Número incorrecto. 
+Intente de nuevo.</p>
         </div>
-        <div id="search-alert" class="text-red-600 font-medium text-lg mb-4"></div>
-        <div id="results-optima-search" class="space-y-4"></div>
       </div>
 
-      <div id="tab-upload" class="tab-content hidden">
-        <h2 class="text-xl font-semibold mb-4">Subir / Editar Documento</h2>
-        <form id="form-upload" enctype="multipart/form-data" class="space-y-4">
-          <input id="docId" type="hidden" name="id" />
-          <div>
-            <label class="block mb-1 text-lg">Nombre</label>
-            <input id="name" name="name" type="text" required class="w-full border rounded px-3 py-2 text-lg" />
-          </div>
-          <div>
-            <label class="block mb-1 text-lg">Fecha</label>
-            <input id="date" name="date" type="date" required class="w-full border rounded px-3 py-2 text-lg" />
-          </div>
-          <div>
-            <label class="block mb-1 text-lg">PDF</label>
-            <input id="file" name="file" type="file" accept="application/pdf" class="w-full text-lg" />
-            <p id="uploadWarning" class="mt-1 text-red-600 text-sm hidden">
-              El archivo excede los 10 MB. Por favor, sube uno menor.
-            </p>
-            <p id="currentPdfInfo" class="mt-1 text-gray-600 text-sm"></p>
-          </div>
-          <div>
-            <label class="block mb-1 text-lg">Códigos</label>
-            <textarea id="codes" name="codigos" rows="4" class="w-full border rounded px-3 py-2 text-lg"></textarea>
-          </div>
-          <button type="submit" class="btn btn--primary btn--full text-lg">Guardar</button>
-        </form>
-      </div>
-
-      <div id="tab-list" class="tab-content hidden">
-        <h2 class="text-xl font-semibold mb-4">Consultar Documentos</h2>
-        <div class="flex gap-4 mb-4">
-          <input
-            id="consultFilterInput"
-            type="text"
-            class="flex-1 border rounded px-3 py-2 text-lg"
-            placeholder="Filtrar por nombre o código"
-            oninput="doConsultFilter()"
-          />
-          <button onclick="clearConsultFilter()" class="btn btn--secondary text-lg">Limpiar</button>
-          <button onclick="downloadCsv()" class="btn btn--primary text-lg">Descargar CSV</button>
+      <div id="confirmOverlay" class="overlay hidden">
+        <div id="confirmBox" class="modal confirm">
+          <p id="confirmMsg">¿Confirmar acción?</p>
+          <button id="confirmOk" class="btn btn--primary">Aceptar</button>
+          <button id="confirmCancel" class="btn btn--
+secondary">Cancelar</button>
         </div>
-        <div id="results-list" class="space-y-4"></div>
       </div>
 
-      <div id="tab-code" class="tab-content hidden">
-        <h2 class="text-xl font-semibold mb-4">Buscar por Código</h2>
-        <div class="relative mb-4">
-          <input
-            id="codeInput"
-            type="text"
-            class="w-full border rounded px-3 py-2 text-lg"
-            placeholder="Escribe un código"
-            autocomplete="off"
-          />
-          <div
-            id="suggestions"
-            class="absolute top-full left-0 right-0 bg-white border rounded-b px-2 shadow max-h-48 overflow-auto hidden z-20"
-          ></div>
+      <div id="deleteOverlay" class="overlay hidden">
+        <div class="modal deleteKey">
+          <h2 class="text-xl font-semibold">Clave de Eliminación</h2>
+          <p class="mt-2 text-gray-700">Ingrese la clave para eliminar:</p>
+          <input id="deleteKeyInput" type="password" placeholder="Clave de 
+borrado" class="mt-2 w-full border rounded px-3 py-2" />
+          <p id="deleteKeyError" class="mt-2 text-red-500 hidden">Clave 
+incorrecta.</p>
+          <button id="deleteKeyOk" class="btn btn--primary btn--
+full">Enviar</button>
+          <button id="deleteKeyCancel" class="btn btn--secondary btn--
+full">Cancelar</button>
         </div>
-        <button id="doCodeSearchButton" class="btn btn--primary btn--full mb-4 text-lg">Buscar por Código</button>
-        <div id="results-code" class="space-y-4"></div>
       </div>
-    </div>
-  </div>
 
-  <script src="js/config.js" type="module"></script>
-  <script src="js/main.js" type="module"></script>
+      <div id="toast-container"></div>
 
-  <script type="module" src="js/main.js"></script>
-</body>
-</html>
+      <div id="modals"></div>
+
+      <div id="mainContent" class="w-full max-w-4xl bg-white rounded-2xl shadow-
+lg hidden">
+        <div class="bg-white border-b">
+          <h1 class="text-2xl font-bold text-center py-4">Gestor de Documentos 
+V1</h1>
+        </div>
+
+        <nav class="border-b bg-white shadow-sm">
+          <ul id="tabs" class="flex">
+            <li class="tab flex-1 text-center cursor-pointer px-6 py-4 active" 
+data-tab="tab-search">Buscar</li>
+            <li class="tab flex-1 text-center cursor-pointer px-6 py-4" data-
+tab="tab-upload">Subir</li>
+            <li class="tab flex-1 text-center cursor-pointer px-6 py-4" data-
+tab="tab-list">Consultar</li>
+            <li class="tab flex-1 text-center cursor-pointer px-6 py-4" data-
+tab="tab-code">Buscar por Código</li>
+          </ul>
+        </nav>
+
+        <div class="p-6 space-y-6">
+          <div id="tab-search" class="tab-content">
+            <h2 class="text-xl font-semibold mb-4">Búsqueda Óptima 
+(Inteligente)</h2>
+            <textarea id="optimaSearchInput" rows="5" class="w-full border 
+rounded px-3 py-2 text-lg mb-4" placeholder="Pega aquí uno o varios códigos, 
+nombres o bloques de texto…"></textarea>
+            <div class="flex gap-4 mb-4">
+              <button id="doOptimaSearchButton" class="btn btn--primary btn--
+flex1 text-lg">Buscar</button>
+              <button id="clearOptimaSearchButton" class="btn btn--secondary btn
+--flex1 text-lg">Limpiar</button>
+            </div>
+            <div id="search-alert" class="text-red-600 font-medium text-lg 
+mb-4"></div>
+            <div id="results-optima-search" class="space-y-4"></div>
+          </div>
+
+          <div id="tab-upload" class="tab-content hidden">
+            <h2 class="text-xl font-semibold mb-4">Subir / Editar Documento</h2>
+            <form id="form-upload" enctype="multipart/form-data" 
+class="space-y-4">
+              <input id="docId" type="hidden" name="id" />
+              <div>
+                <label class="block mb-1 text-lg">Nombre</label>
+                <input id="name" name="name" type="text" required class="w-full 
+border rounded px-3 py-2 text-lg" />
+              </div>
+              <div>
+                <label class="block mb-1 text-lg">Fecha</label>
+                <input id="date" name="date" type="date" required class="w-full 
+border rounded px-3 py-2 text-lg" />
+              </div>
+              <div>
+                <label class="block mb-1 text-lg">PDF</label>
+                <input id="file" name="file" type="file" 
+accept="application/pdf" class="w-full text-lg" />
+                <p id="uploadWarning" class="mt-1 text-red-600 text-sm hidden">
+                  El archivo excede los 10 MB. Por favor, sube uno menor.
+                </p>
+                <p id="currentPdfInfo" class="mt-1 text-gray-600 text-sm"></p>
+              </div>
+              <div>
+                <label class="block mb-1 text-lg">Códigos</label>
+                <textarea id="codes" name="codigos" rows="4" class="w-full 
+border rounded px-3 py-2 text-lg"></textarea>
+              </div>
+              <button type="submit" class="btn btn--primary btn--full text-
+lg">Guardar</button>
+            </form>
+          </div>
+
+          <div id="tab-list" class="tab-content hidden">
+            <h2 class="text-xl font-semibold mb-4">Consultar Documentos</h2>
+            <div class="flex gap-4 mb-4">
+              <input
+                id="consultFilterInput"
+                type="text"
+                class="flex-1 border rounded px-3 py-2 text-lg"
+                placeholder="Filtrar por nombre o código"
+                oninput="doConsultFilter()"
+              />
+              <button onclick="clearConsultFilter()" class="btn btn--secondary 
+text-lg">Limpiar</button>
+              <button onclick="downloadCsv()" class="btn btn--primary text-
+lg">Descargar CSV</button>
+            </div>
+            <div id="results-list" class="space-y-4"></div>
+          </div>
+
+          <div id="tab-code" class="tab-content hidden">
+            <h2 class="text-xl font-semibold mb-4">Buscar por Código</h2>
+            <div class="relative mb-4">
+              <input
+                id="codeInput"
+                type="text"
+                class="w-full border rounded px-3 py-2 text-lg"
+                placeholder="Escribe un código"
+                autocomplete="off"
+              />
+              <div
+                id="suggestions"
+                class="absolute top-full left-0 right-0 bg-white border 
+rounded-b px-2 shadow max-h-48 overflow-auto hidden z-20"
+              ></div>
+            </div>
+            <button id="doCodeSearchButton" class="btn btn--primary btn--full 
+mb-4 text-lg">Buscar por Código</button>
+            <div id="results-code" class="space-y-4"></div>
+          </div>
+        </div>
+      </div>
+
+      <script src="js/config.js" type="module"></script>
+      <script src="js/main.js" type="module"></script>
+
+      <script type="module" src="js/main.js"></script>
+    </body>
+    </html>
